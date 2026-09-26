@@ -41,7 +41,9 @@
 				<div>
 					<div class="section-title-row">
 						<h2>Fastcup Match Sync</h2>
-						<Chip tone="blu" :dot="false">{{ $t("Planned") }}</Chip>
+						<Chip :tone="fastcup.config.providerActive ? 'grn' : 'blu'" :pulse="fastcup.config.providerActive">
+							{{ fastcup.config.providerActive ? $t("Active Provider") : $t("Ready") }}
+						</Chip>
 					</div>
 					<p>{{ $t("Connect to fastcup.net matches to pull team rosters, player avatars, and veto stages directly into HUD.") }}</p>
 				</div>
@@ -52,18 +54,236 @@
 					<label class="field-label">
 						<span>Fastcup Match ID / URL</span>
 						<input
+							v-model="fastcup.config.matchId"
 							type="text"
 							class="text-input"
-							placeholder="e.g. 1048294 or https://fastcup.net/match/..."
-							disabled
+							placeholder="e.g. 1048294 or https://cs.fastcup.net/match/1048294"
+							:disabled="fastcupLoading"
 						>
 					</label>
-					<span class="field-hint">{{ $t("Fastcup integration is coming soon in an upcoming update.") }}</span>
+					<span class="field-hint">Match ID or direct match page URL from cs.fastcup.net.</span>
+				</div>
+
+				<div class="field-row">
+					<label class="toggle-label">
+						<input
+							v-model="fastcup.config.providerActive"
+							type="checkbox"
+							:disabled="fastcupLoading"
+						>
+						<span>Enable FastCup Sync for HUD</span>
+					</label>
+					<label class="toggle-label">
+						<input
+							v-model="fastcup.config.autoRefresh"
+							type="checkbox"
+							:disabled="fastcupLoading"
+						>
+						<span>Auto-Refresh Polling</span>
+					</label>
+				</div>
+
+				<!-- Collapsible Advanced Cookie Settings -->
+				<div class="advanced-section">
+					<button class="btn-ghost btn-sm" @click="showAdvanced = !showAdvanced">
+						{{ showAdvanced ? '▼ Hide Advanced Protection Settings' : '▶ Advanced Bypass Settings (Session Cookie)' }}
+					</button>
+					<div v-if="showAdvanced" class="field-group advanced-box">
+						<label class="field-label">
+							<span>Session Cookie (Optional for private matches)</span>
+							<input
+								v-model="fastcup.config.sessionCookie"
+								type="text"
+								class="text-input text-mono"
+								placeholder="session=abc123xyz..."
+								:disabled="fastcupLoading"
+							>
+						</label>
+						<span class="field-hint">Required only if match page requires authentication or returns 403 Forbidden.</span>
+					</div>
 				</div>
 
 				<div class="actions">
-					<button class="btn-primary" disabled>{{ $t("Save Match") }}</button>
-					<button class="btn-secondary" disabled>{{ $t("Refresh Data") }}</button>
+					<button
+						class="btn-primary"
+						:disabled="fastcupLoading || !fastcup.config.matchId"
+						@click="saveFastcup"
+					>
+						{{ fastcupLoading ? $t("Saving...") : $t("Save Match") }}
+					</button>
+					<button
+						class="btn-secondary"
+						:disabled="fastcupLoading || !fastcup.config.matchId"
+						@click="refreshFastcup"
+					>
+						{{ $t("Refresh Data") }}
+					</button>
+					<button
+						class="btn-secondary"
+						:disabled="fastcupLoading || !fastcup.config.matchId"
+						@click="previewFastcup"
+					>
+						Preview Match Data
+					</button>
+				</div>
+
+				<div
+					v-if="fastcupStatus"
+					:class="['status-callout', { '--error': fastcupError }]"
+				>
+					<span class="status-indicator"></span>
+					<span class="status-text">{{ fastcupStatus }}</span>
+				</div>
+			</div>
+
+			<!-- MATCH PREVIEW CARD -->
+			<div v-if="fastcup.match" class="match-preview-container">
+				<div class="preview-header">
+					<div class="preview-meta">
+						<span class="badge-bo">{{ fastcup.match.format }}</span>
+						<span :class="['badge-status', `--${fastcup.match.status}`]">{{ fastcup.match.status.toUpperCase() }}</span>
+						<span class="meta-time">Fetched: {{ formatTime(fastcup.fetchedAt) }}</span>
+					</div>
+					<div class="preview-actions">
+						<Chip tone="acc" :dot="false">SteamID Quorum Active</Chip>
+					</div>
+				</div>
+
+				<div class="teams-preview-grid">
+					<!-- TEAM 1 -->
+					<div class="team-card">
+						<div class="team-card-header">
+							<img :src="fastcup.match.teams.team1.logoUrl || '/hud/img/icons/radar-dead-player.svg'" class="team-logo-img" alt="">
+							<div class="team-info">
+								<div class="team-name-row">
+									<h3>{{ fastcup.match.teams.team1.name }}</h3>
+									<button
+										class="btn-icon-lock"
+										:class="{ '--locked': isFieldLocked('teams.team1.name') }"
+										title="Toggle Override Lock"
+										@click="toggleLockField('teams.team1.name', fastcup.match.teams.team1.name)"
+									>
+										{{ isFieldLocked('teams.team1.name') ? '🔒' : '🔓' }}
+									</button>
+								</div>
+								<span class="team-tag">TAG: {{ fastcup.match.teams.team1.tag }}</span>
+							</div>
+						</div>
+
+						<div class="players-table">
+							<div v-for="(p, i) in fastcup.match.teams.team1.players" :key="p.steamId64" class="player-row">
+								<img :src="p.avatarUrl" class="player-avatar" alt="">
+								<div class="player-details">
+									<div class="player-nick">
+										<span>{{ p.nickname }}</span>
+										<button
+											class="btn-icon-lock-sm"
+											:class="{ '--locked': isFieldLocked(`teams.team1.players.${i}.nickname`) }"
+											@click="toggleLockField(`teams.team1.players.${i}.nickname`, p.nickname)"
+										>
+											{{ isFieldLocked(`teams.team1.players.${i}.nickname`) ? '🔒' : '🔓' }}
+										</button>
+									</div>
+									<span class="player-steam text-mono">{{ p.steamId64 }}</span>
+								</div>
+								<div class="player-elo">
+									<span class="elo-val">{{ p.rating }}</span>
+									<span class="elo-lbl">ELO</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- TEAM 2 -->
+					<div class="team-card">
+						<div class="team-card-header">
+							<img :src="fastcup.match.teams.team2.logoUrl || '/hud/img/icons/radar-dead-player.svg'" class="team-logo-img" alt="">
+							<div class="team-info">
+								<div class="team-name-row">
+									<h3>{{ fastcup.match.teams.team2.name }}</h3>
+									<button
+										class="btn-icon-lock"
+										:class="{ '--locked': isFieldLocked('teams.team2.name') }"
+										title="Toggle Override Lock"
+										@click="toggleLockField('teams.team2.name', fastcup.match.teams.team2.name)"
+									>
+										{{ isFieldLocked('teams.team2.name') ? '🔒' : '🔓' }}
+									</button>
+								</div>
+								<span class="team-tag">TAG: {{ fastcup.match.teams.team2.tag }}</span>
+							</div>
+						</div>
+
+						<div class="players-table">
+							<div v-for="(p, i) in fastcup.match.teams.team2.players" :key="p.steamId64" class="player-row">
+								<img :src="p.avatarUrl" class="player-avatar" alt="">
+								<div class="player-details">
+									<div class="player-nick">
+										<span>{{ p.nickname }}</span>
+										<button
+											class="btn-icon-lock-sm"
+											:class="{ '--locked': isFieldLocked(`teams.team2.players.${i}.nickname`) }"
+											@click="toggleLockField(`teams.team2.players.${i}.nickname`, p.nickname)"
+										>
+											{{ isFieldLocked(`teams.team2.players.${i}.nickname`) ? '🔒' : '🔓' }}
+										</button>
+									</div>
+									<span class="player-steam text-mono">{{ p.steamId64 }}</span>
+								</div>
+								<div class="player-elo">
+									<span class="elo-val">{{ p.rating }}</span>
+									<span class="elo-lbl">ELO</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- MAP VETO STAGE -->
+				<div v-if="fastcup.match.veto && fastcup.match.veto.steps.length" class="veto-stage-box">
+					<h4>Pick / Ban Map Veto</h4>
+					<div class="veto-steps-row">
+						<div
+							v-for="s in fastcup.match.veto.steps"
+							:key="s.order"
+							:class="['veto-chip', `--${s.action}`]"
+						>
+							<span class="veto-num">#{{ s.order }}</span>
+							<span class="veto-team">{{ s.team === 'team1' ? fastcup.match.teams.team1.name : fastcup.match.teams.team2.name }}</span>
+							<span class="veto-act">{{ s.action.toUpperCase() }}</span>
+							<span class="veto-map">{{ s.mapName }}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Cache Diagnostics Card -->
+			<div class="cache-diagnostics-box">
+				<div class="cache-header">
+					<div class="cache-title-row">
+						<h4>{{ $t("Cache Health") }}</h4>
+						<Chip :tone="fastcup.match ? 'grn' : 'red'">
+							{{ fastcup.match ? 'Cached' : 'Empty' }}
+						</Chip>
+					</div>
+					<button
+						class="btn-ghost"
+						:disabled="fastcupLoading"
+						@click="resetFastcupCache"
+					>
+						{{ $t("Reset Cache") }}
+					</button>
+				</div>
+
+				<div class="cache-grid">
+					<div class="cache-stat">
+						<span class="stat-label">Active Match ID:</span>
+						<strong class="stat-value text-mono">{{ fastcup.config.matchId || 'None' }}</strong>
+					</div>
+					<div class="cache-stat">
+						<span class="stat-label">Last Polled:</span>
+						<strong class="stat-value text-mono">{{ formatTime(fastcup.fetchedAt) }}</strong>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -225,6 +445,16 @@ export default {
 	data() {
 		return {
 			activePlatform: 'fastcup',
+			showAdvanced: false,
+			fastcup: {
+				config: { matchId: '', sessionCookie: '', providerActive: false, autoRefresh: true },
+				match: null,
+				fetchedAt: 0,
+			},
+			fastcupLoading: false,
+			fastcupStatus: '',
+			fastcupError: false,
+
 			komplettligaen: { matchId: '', activeView: 'match' },
 			komplettligaenLoading: false,
 			komplettligaenStatus: '',
@@ -233,112 +463,226 @@ export default {
 		}
 	},
 	async mounted() {
+		await this.loadFastcup()
 		await this.loadKomplettligaen()
 		await this.loadCacheStatus()
 	},
 	methods: {
-		formatTime(iso) {
-			if (!iso) return translateText('Never')
+		formatTime(isoOrTs) {
+			if (!isoOrTs) return translateText('Never')
 			try {
-				const d = new Date(iso)
+				const d = new Date(isoOrTs)
 				return isNaN(d.getTime()) ? translateText('Never') : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 			} catch (_) {
 				return translateText('Never')
 			}
 		},
+		isFieldLocked(fieldPath) {
+			const locked = this.fastcup.match?.overrides?.lockedFields || []
+			return locked.includes(fieldPath)
+		},
+
+		// FASTCUP METHODS
+		async loadFastcup() {
+			try {
+				const res = await fetch('/config/fastcup')
+				if (!res.ok) return
+				const data = await res.json()
+				if (data.config) this.fastcup.config = { ...this.fastcup.config, ...data.config }
+				if (data.match) this.fastcup.match = data.match
+				if (data.fetchedAt) this.fastcup.fetchedAt = data.fetchedAt
+			} catch (err) {
+				// Silence load error
+			}
+		},
+		async saveFastcup() {
+			this.fastcupLoading = true
+			this.fastcupStatus = 'Saving FastCup configuration...'
+			this.fastcupError = false
+			try {
+				const res = await fetch('/config/fastcup', {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(this.fastcup.config),
+				})
+				const data = await res.json()
+				if (res.ok && data.success) {
+					this.fastcup.config = data.config
+					this.fastcup.match = data.match
+					this.fastcupStatus = 'FastCup match configuration saved successfully!'
+				} else {
+					this.fastcupError = true
+					this.fastcupStatus = data.error || 'Failed to save FastCup match.'
+				}
+			} catch (err) {
+				this.fastcupError = true
+				this.fastcupStatus = err.message
+			} finally {
+				this.fastcupLoading = false
+			}
+		},
+		async refreshFastcup() {
+			this.fastcupLoading = true
+			this.fastcupStatus = 'Refreshing FastCup match data...'
+			this.fastcupError = false
+			try {
+				const res = await fetch('/config/fastcup/refresh', { method: 'POST' })
+				const data = await res.json()
+				if (res.ok && data.success) {
+					this.fastcup.match = data.match
+					this.fastcupStatus = 'FastCup match data refreshed successfully!'
+				} else {
+					this.fastcupError = true
+					this.fastcupStatus = data.error || 'Failed to refresh FastCup match.'
+				}
+			} catch (err) {
+				this.fastcupError = true
+				this.fastcupStatus = err.message
+			} finally {
+				this.fastcupLoading = false
+			}
+		},
+		async previewFastcup() {
+			if (!this.fastcup.config.matchId) return
+			this.fastcupLoading = true
+			this.fastcupStatus = 'Fetching preview from FastCup...'
+			this.fastcupError = false
+			try {
+				const res = await fetch(`/api/fastcup/preview?matchId=${encodeURIComponent(this.fastcup.config.matchId)}&cookie=${encodeURIComponent(this.fastcup.config.sessionCookie || '')}`)
+				const data = await res.json()
+				if (res.ok && data.match) {
+					this.fastcup.match = data.match
+					this.fastcupStatus = 'Preview loaded successfully!'
+				} else {
+					this.fastcupError = true
+					this.fastcupStatus = data.error || 'Preview failed.'
+				}
+			} catch (err) {
+				this.fastcupError = true
+				this.fastcupStatus = err.message
+			} finally {
+				this.fastcupLoading = false
+			}
+		},
+		async toggleLockField(fieldPath, value) {
+			const isLocked = !this.isFieldLocked(fieldPath)
+			try {
+				const res = await fetch('/config/fastcup/override', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ fieldPath, value, isLocked }),
+				})
+				const data = await res.json()
+				if (res.ok && data.match) {
+					this.fastcup.match = data.match
+				}
+			} catch (err) {
+				// Lock toggle error
+			}
+		},
+		async resetFastcupCache() {
+			this.fastcupLoading = true
+			try {
+				await fetch('/config/fastcup/cache-reset', { method: 'POST' })
+				this.fastcup.match = null
+				this.fastcupStatus = 'FastCup cache and asset storage cleared.'
+			} catch (err) {
+				// Cache reset error
+			} finally {
+				this.fastcupLoading = false
+			}
+		},
+
+		// KOMPLETTLIGAEN METHODS
 		async loadKomplettligaen() {
 			try {
 				const res = await fetch('/config/komplettligaen')
-				this.komplettligaen = await res.json()
-			} catch (err) {
-				this.komplettligaenStatus = 'Could not load Komplettligaen config'
-				this.komplettligaenError = true
-			}
+				if (!res.ok) return
+				const data = await res.json()
+				if (data.config) this.komplettligaen = { ...this.komplettligaen, ...data.config }
+			} catch (_) {}
 		},
 		async saveKomplettligaen() {
 			this.komplettligaenLoading = true
+			this.komplettligaenStatus = translateText('Saving...')
 			this.komplettligaenError = false
-			this.komplettligaenStatus = 'Saving...'
 			try {
 				const res = await fetch('/config/komplettligaen', {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(this.komplettligaen),
 				})
-				this.komplettligaen = await res.json()
-				this.komplettligaenStatus = 'Saved. HUD scenes will refresh.'
-				await this.loadCacheStatus()
+				if (res.ok) {
+					this.komplettligaenStatus = translateText('Komplettligaen match saved.')
+					await this.loadCacheStatus()
+				} else {
+					this.komplettligaenError = true
+					this.komplettligaenStatus = translateText('Failed to save Komplettligaen match.')
+				}
 			} catch (err) {
-				this.komplettligaenStatus = 'Save failed'
 				this.komplettligaenError = true
+				this.komplettligaenStatus = err.message
 			} finally {
 				this.komplettligaenLoading = false
 			}
 		},
 		async refreshKomplettligaen() {
 			this.komplettligaenLoading = true
+			this.komplettligaenStatus = translateText('Refreshing...')
 			this.komplettligaenError = false
-			this.komplettligaenStatus = 'Refreshing cache...'
 			try {
-				await fetch('/config/komplettligaen/refresh', { method: 'POST' })
-				this.komplettligaenStatus = 'Cache cleared. Re-fetching data...'
-				await this.testKomplettligaen()
+				const res = await fetch('/config/komplettligaen/refresh', { method: 'POST' })
+				if (res.ok) {
+					this.komplettligaenStatus = translateText('Komplettligaen data refreshed.')
+					await this.loadCacheStatus()
+				} else {
+					this.komplettligaenError = true
+					this.komplettligaenStatus = translateText('Failed to refresh data.')
+				}
 			} catch (err) {
-				this.komplettligaenStatus = 'Refresh failed'
 				this.komplettligaenError = true
+				this.komplettligaenStatus = err.message
 			} finally {
 				this.komplettligaenLoading = false
 			}
 		},
 		async testKomplettligaen() {
+			if (!this.komplettligaen.matchId) return
 			this.komplettligaenLoading = true
+			this.komplettligaenStatus = translateText('Testing connection...')
 			this.komplettligaenError = false
-			this.komplettligaenStatus = 'Fetching...'
 			try {
-				const res = await fetch(`/api/komplettligaen/preview?matchId=${encodeURIComponent(this.komplettligaen.matchId)}`)
+				const res = await fetch(`/api/komplettligaen/match/${encodeURIComponent(this.komplettligaen.matchId)}`)
 				const data = await res.json()
-				if (!res.ok || data.error) throw new Error(data.error || 'Fetch failed')
-				this.komplettligaenStatus = `${data.match.home.name} vs ${data.match.away.name}`
-				await this.loadCacheStatus()
+				if (res.ok && data.match) {
+					this.komplettligaenStatus = `Match found: ${data.match.home?.name || 'Home'} vs ${data.match.away?.name || 'Away'}`
+				} else {
+					this.komplettligaenError = true
+					this.komplettligaenStatus = data.error || translateText('Failed to fetch match.')
+				}
 			} catch (err) {
-				this.komplettligaenStatus = err.message || 'Fetch failed'
 				this.komplettligaenError = true
-				await this.loadCacheStatus()
+				this.komplettligaenStatus = err.message
 			} finally {
 				this.komplettligaenLoading = false
 			}
 		},
 		async loadCacheStatus() {
 			try {
-				const res = await fetch('/api/komplettligaen/cache-status')
-				if (res.ok) {
-					this.cacheStatus = await res.json()
-				}
-			} catch (err) {
-				console.warn('Failed to load cache status:', err)
-			}
+				const res = await fetch('/config/komplettligaen/cache-status')
+				if (res.ok) this.cacheStatus = await res.json()
+			} catch (_) {}
 		},
 		async resetCache() {
-			if (!confirm(translateText("Are you sure you want to completely clear NeuronCast's offline tournament cache?"))) return
-
 			this.komplettligaenLoading = true
-			this.komplettligaenStatus = 'Resetting cache...'
 			try {
-				const res = await fetch('/config/komplettligaen/cache-reset', { method: 'POST' })
-				if (res.ok) {
-					this.komplettligaenStatus = 'Offline cache reset successfully.'
-					await this.loadCacheStatus()
-				} else {
-					this.komplettligaenStatus = 'Failed to reset cache'
-				}
-			} catch (err) {
-				this.komplettligaenStatus = 'Reset failed'
-				this.komplettligaenError = true
-			} finally {
+				await fetch('/config/komplettligaen/cache-reset', { method: 'POST' })
+				await this.loadCacheStatus()
+			} catch (_) {} finally {
 				this.komplettligaenLoading = false
 			}
-		},
-	},
+		}
+	}
 }
 </script>
 
@@ -346,365 +690,348 @@ export default {
 .platforms-page {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
-	max-width: 1180px;
+	gap: 1.25rem;
 }
-
-/* Panel Containers */
-.panel {
-	background: #161b22;
-	border: 1px solid #30363d;
-	border-radius: 8px;
-	padding: 24px;
-}
-
 .header-panel {
 	display: flex;
-	flex-direction: column;
-	gap: 18px;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 1rem;
 }
-
-.header-title-row,
+.header-title-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.25rem;
+}
 .section-title-row {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	margin-bottom: 6px;
+	gap: 0.75rem;
+	margin-bottom: 0.25rem;
 }
-
-.header-title-row h2,
-.section-title-row h2 {
-	margin: 0;
-	font-size: 1.25rem;
-	color: #fff;
-	font-weight: 600;
-}
-
-.header-copy p,
-.panel-header p {
-	margin: 0;
-	color: #8b949e;
-	line-height: 1.45;
-	font-size: 0.9rem;
-}
-
-.panel-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: flex-start;
-	gap: 16px;
-	margin-bottom: 20px;
-	padding-bottom: 16px;
-	border-bottom: 1px solid #21262d;
-}
-
-/* Segmented Control Tabs */
-.segmented {
-	display: inline-flex;
-	gap: 8px;
-	background: #0d1117;
-	padding: 4px;
-	border-radius: 8px;
-	border: 1px solid #30363d;
-	width: fit-content;
-}
-
-.segmented button {
-	border: 1px solid transparent;
-	border-radius: 6px;
-	padding: 8px 16px;
-	color: #8b949e;
-	background: transparent;
-	cursor: pointer;
-	font: inherit;
-	font-size: 0.85rem;
-	font-weight: 600;
-	transition: all 0.15s ease;
-}
-
-.segmented button:hover {
-	color: #fff;
-	background: rgba(255, 255, 255, 0.04);
-}
-
-.segmented button.--active {
-	color: #fff;
-	background: #1f6feb;
-	border-color: #1f6feb;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-/* Form Layout */
 .platform-form {
+	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
-	gap: 18px;
-	max-width: 600px;
+	gap: 1rem;
 }
-
 .field-group {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 0.35rem;
 }
-
-.field-label span {
-	display: block;
-	margin-bottom: 6px;
-	color: #adbac7;
-	font-size: 0.85rem;
-	font-weight: 600;
+.field-label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-weight: 500;
 }
-
 .field-hint {
-	color: #768390;
-	font-size: 0.78rem;
+	font-size: 0.85rem;
+	color: var(--color-text-dim, #8b949e);
 }
-
-.text-input {
-	width: 100%;
-	box-sizing: border-box;
-	padding: 9px 12px;
-	background: #0d1117;
-	border: 1px solid #30363d;
-	border-radius: 6px;
-	color: #c9d1d9;
-	font: inherit;
-	font-size: 0.9rem;
-	transition: border-color 0.15s ease;
+.field-row {
+	display: flex;
+	gap: 1.5rem;
+	align-items: center;
 }
-
-.text-input:focus {
-	outline: none;
-	border-color: #1f6feb;
-	box-shadow: 0 0 0 1px #1f6feb;
-}
-
-.text-input:disabled {
-	opacity: 0.55;
-	cursor: not-allowed;
-	background: #090d12;
-}
-
-/* Actions & Buttons */
-.actions {
+.toggle-label {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	margin-top: 4px;
-}
-
-.btn-primary {
-	border: 1px solid #1f6feb;
-	border-radius: 6px;
-	padding: 8px 16px;
-	color: #fff;
-	background: #1f6feb;
+	gap: 0.5rem;
 	cursor: pointer;
-	font: inherit;
-	font-size: 0.85rem;
-	font-weight: 600;
-	transition: background 0.15s ease;
+	font-size: 0.9rem;
 }
-
-.btn-primary:hover:not(:disabled) {
-	background: #388bfd;
+.advanced-section {
+	margin-top: 0.5rem;
 }
-
-.btn-primary:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
-
-.btn-secondary {
-	border: 1px solid #30363d;
+.advanced-box {
+	margin-top: 0.5rem;
+	padding: 0.75rem;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 6px;
-	padding: 8px 16px;
-	color: #c9d1d9;
-	background: #21262d;
-	cursor: pointer;
-	font: inherit;
-	font-size: 0.85rem;
-	font-weight: 500;
-	transition: all 0.15s ease;
 }
-
-.btn-secondary:hover:not(:disabled) {
-	color: #fff;
-	background: #30363d;
-	border-color: #8b949e;
+.actions {
+	display: flex;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
 }
-
-.btn-secondary:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-}
-
-.btn-ghost {
-	background: transparent;
-	border: 1px solid #30363d;
-	color: #8b949e;
-	padding: 4px 10px;
-	border-radius: 6px;
-	font: inherit;
-	font-size: 0.8rem;
-	cursor: pointer;
-	transition: all 0.15s ease;
-}
-
-.btn-ghost:hover:not(:disabled) {
-	color: #fff;
-	border-color: #8b949e;
-	background: rgba(255, 255, 255, 0.05);
-}
-
-/* Status Callout */
 .status-callout {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	padding: 10px 14px;
-	background: rgba(74, 222, 128, 0.08);
-	border: 1px solid rgba(74, 222, 128, 0.25);
+	gap: 0.5rem;
+	padding: 0.6rem 0.8rem;
+	background: rgba(46, 160, 67, 0.15);
+	border: 1px solid rgba(46, 160, 67, 0.4);
 	border-radius: 6px;
-	color: #4ade80;
-	font-size: 0.85rem;
-	font-weight: 500;
+	color: #3fb950;
+	font-size: 0.88rem;
 }
-
 .status-callout.--error {
-	background: rgba(248, 113, 113, 0.08);
-	border-color: rgba(248, 113, 113, 0.25);
-	color: #f87171;
+	background: rgba(248, 81, 73, 0.15);
+	border-color: rgba(248, 81, 73, 0.4);
+	color: #f85149;
 }
-
-.status-indicator {
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: currentColor;
-	flex-shrink: 0;
-}
-
-/* Cache Diagnostics Box */
-.cache-diagnostics-box {
-	margin-top: 24px;
-	padding: 18px;
-	background: #0d1117;
-	border: 1px solid #30363d;
+.match-preview-container {
+	margin-top: 1.5rem;
+	padding: 1rem;
+	background: rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 8px;
 }
-
+.preview-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.preview-meta {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+.badge-bo {
+	background: #1f6feb;
+	color: #fff;
+	padding: 0.2rem 0.5rem;
+	border-radius: 4px;
+	font-weight: bold;
+	font-size: 0.8rem;
+}
+.badge-status {
+	padding: 0.2rem 0.5rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	background: #30363d;
+	color: #c9d1d9;
+}
+.badge-status.--live {
+	background: #238636;
+	color: #fff;
+}
+.meta-time {
+	font-size: 0.85rem;
+	color: #8b949e;
+}
+.teams-preview-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+}
+.team-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 6px;
+	padding: 0.85rem;
+}
+.team-card-header {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 0.75rem;
+}
+.team-logo-img {
+	width: 42px;
+	height: 42px;
+	object-fit: contain;
+	border-radius: 4px;
+	background: rgba(0, 0, 0, 0.3);
+}
+.team-name-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+.team-name-row h3 {
+	margin: 0;
+	font-size: 1.1rem;
+}
+.team-tag {
+	font-size: 0.8rem;
+	color: #8b949e;
+}
+.btn-icon-lock {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	font-size: 0.9rem;
+	opacity: 0.6;
+}
+.btn-icon-lock.--locked {
+	opacity: 1;
+}
+.btn-icon-lock-sm {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	font-size: 0.75rem;
+	opacity: 0.6;
+}
+.btn-icon-lock-sm.--locked {
+	opacity: 1;
+}
+.players-table {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.player-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0.35rem 0.5rem;
+	background: rgba(0, 0, 0, 0.15);
+	border-radius: 4px;
+}
+.player-avatar {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+.player-details {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	margin-left: 0.5rem;
+}
+.player-nick {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-weight: 600;
+	font-size: 0.88rem;
+}
+.player-steam {
+	font-size: 0.72rem;
+	color: #8b949e;
+}
+.player-elo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+}
+.elo-val {
+	font-weight: bold;
+	color: #58a6ff;
+	font-size: 0.88rem;
+}
+.elo-lbl {
+	font-size: 0.68rem;
+	color: #8b949e;
+}
+.veto-stage-box {
+	margin-top: 1rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.veto-stage-box h4 {
+	margin: 0 0 0.5rem 0;
+	font-size: 0.95rem;
+	color: #c9d1d9;
+}
+.veto-steps-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+.veto-chip {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.3rem 0.6rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.veto-chip.--ban {
+	border-color: rgba(248, 81, 73, 0.4);
+	background: rgba(248, 81, 73, 0.1);
+}
+.veto-chip.--pick {
+	border-color: rgba(46, 160, 67, 0.4);
+	background: rgba(46, 160, 67, 0.1);
+}
+.veto-chip.--decider {
+	border-color: rgba(88, 166, 255, 0.4);
+	background: rgba(88, 166, 255, 0.1);
+}
+.veto-num {
+	font-weight: bold;
+	opacity: 0.7;
+}
+.veto-team {
+	font-weight: 500;
+}
+.veto-act {
+	font-weight: bold;
+	font-size: 0.72rem;
+}
+.veto-map {
+	font-family: monospace;
+	color: #58a6ff;
+}
+.cache-diagnostics-box {
+	margin-top: 1.25rem;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 8px;
+}
 .cache-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 14px;
-	padding-bottom: 12px;
-	border-bottom: 1px solid #21262d;
+	margin-bottom: 0.75rem;
 }
-
 .cache-title-row {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 0.5rem;
 }
-
-.cache-title-row h4 {
-	margin: 0;
-	font-size: 0.88rem;
-	font-weight: 600;
-	color: #c9d1d9;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
 .cache-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-	gap: 14px;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 0.75rem;
 }
-
 .cache-stat {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	padding: 10px 12px;
-	background: #161b22;
-	border: 1px solid #21262d;
-	border-radius: 6px;
+	gap: 0.2rem;
 }
-
 .stat-label {
-	color: #768390;
-	font-size: 0.78rem;
-}
-
-.stat-value {
-	font-size: 0.88rem;
-	color: #e6edf3;
-}
-
-.text-mono {
-	font-family: var(--eon-font-mono, ui-monospace, Consolas, monospace);
-}
-
-.text-grn { color: #4ade80 !important; }
-.text-red { color: #f87171 !important; }
-.text-amb { color: #f59e0b !important; }
-
-.failure-callout {
-	margin-top: 14px;
-	padding: 12px;
-	background: rgba(248, 113, 113, 0.06);
-	border: 1px solid rgba(248, 113, 113, 0.2);
-	border-radius: 6px;
-}
-
-.failure-header {
-	color: #f87171;
 	font-size: 0.8rem;
-	font-weight: 600;
-	margin-bottom: 6px;
+	color: #8b949e;
 }
-
-.failure-code {
-	font-family: var(--eon-font-mono, ui-monospace, Consolas, monospace);
-	font-size: 0.76rem;
-	color: #e6edf3;
-	white-space: pre-wrap;
-	word-break: break-all;
+.stat-value {
+	font-size: 0.9rem;
 }
-
-/* Manual Features Grid */
 .manual-features-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-	gap: 16px;
-	margin-top: 8px;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 1rem;
+	margin-top: 1rem;
 }
-
 .feature-card {
-	padding: 18px;
-	background: #0d1117;
-	border: 1px solid #30363d;
-	border-radius: 8px;
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
+	padding: 1rem;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 6px;
 }
-
 .feature-card h4 {
-	margin: 0;
-	font-size: 0.95rem;
-	color: #e6edf3;
-	font-weight: 600;
+	margin: 0 0 0.5rem 0;
+	color: #58a6ff;
 }
-
 .feature-card p {
 	margin: 0;
+	font-size: 0.88rem;
 	color: #8b949e;
-	font-size: 0.82rem;
-	line-height: 1.45;
 }
 </style>

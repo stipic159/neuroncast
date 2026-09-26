@@ -28,6 +28,7 @@ const pickFirstValid = (candidates) => candidates.find((item) => item.valid && i
 
 const confidenceForSource = (source) => ({
 	override: 'high',
+	fastcup: 'high',
 	komplettligaen: 'high',
 	'match-session': 'medium',
 	gsi: 'medium',
@@ -39,6 +40,7 @@ export const resolveTeamIdentity = (side, context) => {
 	const sideKey = side.toLowerCase()
 	const slot = context.slots?.[sideKey] || {}
 	const gsiName = slot.gsi?.name || ''
+	const fc = slot.fastcup || {}
 	const kl = slot.komplettligaen || {}
 	const session = slot.session || {}
 	const fsLogo = slot.filesystemLogo || {}
@@ -46,6 +48,10 @@ export const resolveTeamIdentity = (side, context) => {
 	const nameCandidates = [
 		candidate('override', slot.override?.name, {
 			reason: slot.override?.name ? 'Manual operator override for this sidebar slot.' : 'No manual override configured.',
+		}),
+		candidate('fastcup', fc.name, {
+			reason: fc.name ? 'FastCup match identity mapped via SteamID quorum to this side.' : 'No FastCup team name available.',
+			meta: { matchId: context.fastcup?.config?.matchId || null },
 		}),
 		candidate('komplettligaen', kl.name, {
 			reason: kl.name ? 'GG Arena match identity mapped to the current sidebar slot.' : 'No GG Arena team name available for this slot.',
@@ -73,6 +79,10 @@ export const resolveTeamIdentity = (side, context) => {
 		candidate('override', slot.override?.logo, {
 			reason: 'No manual team logo override is currently configured.',
 			valid: false,
+		}),
+		candidate('fastcup', fc.logo, {
+			reason: fc.logo ? 'FastCup match identity provides this team logo.' : 'No FastCup logo available for this side.',
+			meta: { matchId: context.fastcup?.config?.matchId || null },
 		}),
 		candidate('komplettligaen', kl.logo, {
 			reason: kl.logo ? 'GG Arena match identity provides this logo.' : 'No GG Arena logo available for this slot.',
@@ -319,5 +329,78 @@ export const buildHudTeamIdentityContext = ({ teams = [], options = {}, match = 
 				klEntry: klSides.t,
 			}),
 		},
+	}
+}
+
+let stickyFastcupSides = null
+
+export const assignFastcupSides = ({ match, gsiAllPlayers }) => {
+	if (!match || !match.teams || !match.teams.team1 || !match.teams.team2) {
+		return { ct: null, t: null, source: 'none' }
+	}
+
+	const fcTeam1 = match.teams.team1
+	const fcTeam2 = match.teams.team2
+
+	const team1SteamIds = new Set((fcTeam1.players || []).map(p => p.steamId64))
+	const team2SteamIds = new Set((fcTeam2.players || []).map(p => p.steamId64))
+
+	let team1CtCount = 0
+	let team1TCount = 0
+	let team2CtCount = 0
+	let team2TCount = 0
+
+	const playersList = Array.isArray(gsiAllPlayers) 
+		? gsiAllPlayers 
+		: Object.entries(gsiAllPlayers || {}).map(([steamId, p]) => ({ ...p, steamId64: steamId }))
+
+	for (const p of playersList) {
+		const sId = p.steam64Id || p.steamId || p.steamid
+		const team = String(p.team || p.side || '').toUpperCase()
+		const side = (team === 'CT' || p.side === 3) ? 'CT' : ((team === 'T' || p.side === 2) ? 'T' : null)
+
+		if (!sId || !side) continue
+
+		if (team1SteamIds.has(sId)) {
+			if (side === 'CT') team1CtCount++
+			else if (side === 'T') team1TCount++
+		}
+		if (team2SteamIds.has(sId)) {
+			if (side === 'CT') team2CtCount++
+			else if (side === 'T') team2TCount++
+		}
+	}
+
+	let resolvedSideTeam1 = null
+
+	if (team1CtCount > team1TCount && (team1CtCount >= 2 || team1CtCount > team2CtCount)) {
+		resolvedSideTeam1 = 'CT'
+	} else if (team1TCount > team1CtCount && (team1TCount >= 2 || team1TCount > team2TCount)) {
+		resolvedSideTeam1 = 'T'
+	} else if (team2CtCount > team2TCount) {
+		resolvedSideTeam1 = 'T'
+	} else if (team2TCount > team2CtCount) {
+		resolvedSideTeam1 = 'CT'
+	}
+
+	if (resolvedSideTeam1) {
+		const ctTeam = resolvedSideTeam1 === 'CT' ? fcTeam1 : fcTeam2
+		const tTeam = resolvedSideTeam1 === 'CT' ? fcTeam2 : fcTeam1
+		stickyFastcupSides = {
+			ct: { name: ctTeam.name, logo: ctTeam.logoUrl, tag: ctTeam.tag, players: ctTeam.players },
+			t: { name: tTeam.name, logo: tTeam.logoUrl, tag: tTeam.tag, players: tTeam.players },
+			source: 'fastcup-quorum',
+		}
+		return stickyFastcupSides
+	}
+
+	if (stickyFastcupSides) {
+		return stickyFastcupSides
+	}
+
+	return {
+		ct: { name: fcTeam1.name, logo: fcTeam1.logoUrl, tag: fcTeam1.tag, players: fcTeam1.players },
+		t: { name: fcTeam2.name, logo: fcTeam2.logoUrl, tag: fcTeam2.tag, players: fcTeam2.players },
+		source: 'fastcup-default',
 	}
 }

@@ -5,8 +5,9 @@ import { getSettings } from './settings.js'
 import { gsiState } from './state.js'
 import { getActiveSession } from './sessions/session-store.js'
 import { getKomplettligaenBundle, getKomplettligaenConfig } from './komplettligaen.js'
+import { getFastcupBundle, getFastcupConfig } from './fastcup.js'
 import { builtinThemesDirectory, customThemesDirectory } from './helpers/paths.js'
-import { assignKlSides, isGenericGsiTeamName } from './team-identity-resolver.js'
+import { assignKlSides, assignFastcupSides, isGenericGsiTeamName } from './team-identity-resolver.js'
 
 const optionValue = (settings, key) => settings.options?.[key]?.value ?? settings.options?.[key]?.fallback ?? null
 
@@ -42,8 +43,8 @@ const mapSessionSlots = (session) => ({
 	right: session?.teams?.away || null,
 })
 
-const makeSlot = async ({ side, sidebarSlot, overrideName, klEntry, sessionEntry, gsiEntry, themeTree }) => {
-	const candidateNameForLogo = overrideName || klEntry?.name || sessionEntry?.name || (!isGenericGsiTeamName(gsiEntry?.name) ? gsiEntry?.name : side)
+const makeSlot = async ({ side, sidebarSlot, overrideName, fcEntry, klEntry, sessionEntry, gsiEntry, themeTree }) => {
+	const candidateNameForLogo = overrideName || fcEntry?.name || klEntry?.name || sessionEntry?.name || (!isGenericGsiTeamName(gsiEntry?.name) ? gsiEntry?.name : side)
 
 	return {
 		side,
@@ -51,6 +52,11 @@ const makeSlot = async ({ side, sidebarSlot, overrideName, klEntry, sessionEntry
 		override: {
 			name: overrideName || null,
 			logo: null,
+		},
+		fastcup: {
+			name: fcEntry?.name || null,
+			logo: fcEntry?.logo || null,
+			tag: fcEntry?.tag || null,
 		},
 		komplettligaen: {
 			name: klEntry?.name || null,
@@ -79,15 +85,19 @@ export const buildTeamIdentityContext = async () => {
 	const komplettligaenConfig = await getKomplettligaenConfig()
 	const komplettligaenBundle = await getKomplettligaenBundle(komplettligaenConfig.matchId)
 	const match = komplettligaenBundle?.match || null
-	// scraped identity per SIDE (not per sidebar slot): matched against the
-	// game feed's team names, else the match page's starting sides + round,
-	// else the old positional guess - see assignKlSides
 	const klSides = assignKlSides({
 		match, options,
 		ct: { name: gsiState.map?.team_ct?.name, score: gsiState.map?.team_ct?.score },
 		t: { name: gsiState.map?.team_t?.name, score: gsiState.map?.team_t?.score },
 		mapName: gsiState.map?.name || null,
 	})
+
+	const fastcupBundle = await getFastcupBundle()
+	const fcSides = assignFastcupSides({
+		match: fastcupBundle?.match || null,
+		gsiAllPlayers: gsiState.allplayers || {},
+	})
+
 	const session = getActiveSession()
 	const sessionSlots = mapSessionSlots(session)
 
@@ -108,6 +118,11 @@ export const buildTeamIdentityContext = async () => {
 	return {
 		options,
 		themeTree,
+		fastcup: {
+			config: fastcupBundle?.config || null,
+			match: fastcupBundle?.match || null,
+			sideSource: fcSides.source,
+		},
 		komplettligaen: {
 			config: komplettligaenConfig,
 			source: komplettligaenBundle?.source || null,
@@ -121,6 +136,7 @@ export const buildTeamIdentityContext = async () => {
 				side: 'CT',
 				sidebarSlot: ctSidebarSlot,
 				overrideName: ctSidebarSlot === 'left' ? options['teams.leftTeamName'] : options['teams.rightTeamName'],
+				fcEntry: fcSides.ct,
 				klEntry: klSides.ct,
 				sessionEntry: ctSidebarSlot === 'left' ? sessionSlots.left : sessionSlots.right,
 				gsiEntry: gsiState.map?.team_ct,
@@ -130,6 +146,7 @@ export const buildTeamIdentityContext = async () => {
 				side: 'T',
 				sidebarSlot: tSidebarSlot,
 				overrideName: tSidebarSlot === 'left' ? options['teams.leftTeamName'] : options['teams.rightTeamName'],
+				fcEntry: fcSides.t,
 				klEntry: klSides.t,
 				sessionEntry: tSidebarSlot === 'left' ? sessionSlots.left : sessionSlots.right,
 				gsiEntry: gsiState.map?.team_t,
