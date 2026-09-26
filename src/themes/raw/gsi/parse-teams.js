@@ -1,5 +1,6 @@
 import { gsiState, options, players } from '/hud/core/state.js'
 import { getOverriddenTeamName, getTeamNameOverrides } from '/hud/gsi/helpers/team-name-overrides.js'
+import { isGenericGsiTeamName } from '/hud/helpers/team-identity-resolver.js'
 
 const getGrenadeKey = (weaponName) => {
 	switch (weaponName) {
@@ -14,8 +15,34 @@ const getGrenadeKey = (weaponName) => {
 	}
 }
 
-const getFallbackNameFromSide = (side) => {
-	return ''
+const getAutoDerivedTeamName = (gsiTeamObject, teamMembers, side) => {
+	const rawName = gsiTeamObject?.name?.trim()
+	if (rawName && !isGenericGsiTeamName(rawName)) {
+		return rawName
+	}
+
+	if (teamMembers && teamMembers.length > 0) {
+		const clanCounts = {}
+		for (const p of teamMembers) {
+			const clan = p.clanTag?.trim()
+			if (clan) {
+				clanCounts[clan] = (clanCounts[clan] || 0) + 1
+			}
+		}
+		let bestClan = null
+		let maxCount = 0
+		for (const [clan, count] of Object.entries(clanCounts)) {
+			if (count > maxCount) {
+				maxCount = count
+				bestClan = clan
+			}
+		}
+		if (bestClan && maxCount >= 2) {
+			return bestClan
+		}
+	}
+
+	return rawName || (side === 3 ? 'COUNTER-TERRORISTS' : 'TERRORISTS')
 }
 
 const makeTeam = (side, gsiTeamObject, teamNameOverrides) => {
@@ -23,14 +50,15 @@ const makeTeam = (side, gsiTeamObject, teamNameOverrides) => {
 	gsiTeamObject = gsiTeamObject || {}
 
 	const overriddenTeamName = getOverriddenTeamName(teamNameOverrides, teamMembers)
+	const derivedName = getAutoDerivedTeamName(gsiTeamObject, teamMembers, side)
 
 	const team = {
 		side,
 
 		consecutiveRoundLosses: gsiTeamObject.consecutive_round_losses,
 		flag: gsiTeamObject.flag,
-		matchesWonThisSeries: gsiTeamObject.matches_won_this_series, // TODO we may want to have options override this
-		name: overriddenTeamName || gsiTeamObject.name || getFallbackNameFromSide(side),
+		matchesWonThisSeries: gsiTeamObject.matches_won_this_series,
+		name: overriddenTeamName || derivedName,
 		players: teamMembers,
 		score: gsiTeamObject.score,
 		timeoutsRemaining: gsiTeamObject.timeouts_remaining,

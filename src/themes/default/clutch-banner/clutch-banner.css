@@ -1,0 +1,102 @@
+.clutch-banner-root {
+	position: absolute;
+	top: 85px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 35;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 6px 16px;
+	border-radius: 999px;
+	background: linear-gradient(135deg, rgba(14, 20, 32, 0.95) 0%, rgba(7, 10, 18, 0.98) 100%);
+	border: 1.5px solid rgba(255, 255, 255, 0.2);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+	font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+	pointer-events: none;
+	user-select: none;
+}
+
+.clutch-banner-root.--side-ct {
+	border-color: rgba(88, 166, 255, 0.6);
+	box-shadow: 0 0 20px rgba(31, 111, 235, 0.4), inset 0 1px 0 rgba(88, 166, 255, 0.3);
+}
+
+.clutch-banner-root.--side-t {
+	border-color: rgba(241, 196, 15, 0.7);
+	box-shadow: 0 0 20px rgba(241, 196, 15, 0.35), inset 0 1px 0 rgba(241, 196, 15, 0.3);
+}
+
+.clutch-banner-badge {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: rgba(255, 71, 87, 0.2);
+	border: 1px solid rgba(255, 71, 87, 0.5);
+}
+
+.clutch-banner-root.--side-ct .clutch-banner-badge {
+	background: rgba(31, 111, 235, 0.25);
+	border-color: rgba(88, 166, 255, 0.5);
+}
+
+.clutch-banner-root.--side-t .clutch-banner-badge {
+	background: rgba(176, 136, 0, 0.25);
+	border-color: rgba(241, 196, 15, 0.6);
+}
+
+.clutch-flame-icon {
+	font-size: 1.1rem;
+	animation: clutch-flame-bounce 1s infinite alternate ease-in-out;
+}
+
+@keyframes clutch-flame-bounce {
+	0% { transform: scale(1) translateY(0); }
+	100% { transform: scale(1.18) translateY(-2px); }
+}
+
+.clutch-title-text {
+	font-size: 0.85rem;
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	color: #fff;
+	text-transform: uppercase;
+}
+
+.clutch-banner-player {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.clutch-player-name {
+	font-size: 0.95rem;
+	font-weight: 800;
+	color: #ffffff;
+	letter-spacing: 0.03em;
+}
+
+.clutch-player-hp {
+	font-size: 0.8rem;
+	font-weight: 900;
+	font-family: monospace;
+	color: #2ecc71;
+	background: rgba(46, 204, 113, 0.15);
+	padding: 2px 6px;
+	border-radius: 4px;
+	border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+/* Transitions */
+.clutch-pop-enter-active,
+.clutch-pop-leave-active {
+	transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.clutch-pop-enter-from,
+.clutch-pop-leave-to {
+	opacity: 0;
+	transform: translate(-50%, -20px) scale(0.85);
+}

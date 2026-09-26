@@ -1,0 +1,15 @@
+<transition name="clutch-pop">
+	<div 
+		v-if="activeClutch && ($opts['match.activeScene'] || 'default') === 'default'" 
+		:class="['clutch-banner-root', '--side-' + activeClutch.side.toLowerCase()]"
+	>
+		<div class="clutch-banner-badge">
+			<span class="clutch-flame-icon">🔥</span>
+			<span class="clutch-title-text">{{ activeClutch.title }}</span>
+		</div>
+		<div class="clutch-banner-player">
+			<span class="clutch-player-name">{{ activeClutch.name }}</span>
+			<span class="clutch-player-hp">{{ activeClutch.hp }} HP</span>
+		</div>
+	</div>
+</transition>

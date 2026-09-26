@@ -297,6 +297,8 @@ const RemoteApp = {
 								<div class="player-top-row">
 									<span class="player-name-text">{{ p.name }}</span>
 									<span v-if="p.isSpectated" class="spectated-pill">🎥 КАМЕРА</span>
+									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)">⭐ В ЭФИР</button>
+									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)">⭐ В ЭФИР</button>
 									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
 									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
 								</div>
@@ -526,6 +528,19 @@ const RemoteApp = {
 		formatWeaponName(name) {
 			if (!name) return ''
 			return WEAPON_MAP[name] || name.replace('weapon_', '').toUpperCase()
+		},
+		triggerSpotlight(player) {
+			this.vibrate(50)
+			if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
+			this.socket.send(JSON.stringify({
+				event: 'draw:highlight',
+				body: {
+					steamid: player.steamid,
+					tag: 'PLAYER SPOTLIGHT',
+					side: player.team.toLowerCase(),
+					durationMs: 8000
+				}
+			}))
 		},
 		getHpClass(hp) {
 			if (hp > 50) return '--hp-high'

@@ -20,6 +20,7 @@ import MapsSleek from '/hud/maps-sleek/maps-sleek.vue'
 import KlSeries from '/hud/kl-series/kl-series.vue'
 import BombCallout from '/hud/bomb-callout/bomb-callout.vue'
 import WaitingIdle from '/hud/waiting-idle/waiting-idle.vue'
+import ClutchBanner from '/hud/clutch-banner/clutch-banner.vue'
 import { getPlayerDisplayName, getTeamLogoPath } from '/hud/helpers/player-resolver.js'
 import { buildHudTeamIdentityContext, resolveTeamIdentities } from '/hud/helpers/team-identity-resolver.js'
 import { applyResolvedCssVariables, getMigratedOptionKeys, resolveOption, RADAR_OPTION_DEFINITIONS, TOPBAR_OPTION_DEFINITIONS, SIDEBAR_POSITION_OPTION_DEFINITIONS, SIDEBAR_VISIBILITY_OPTION_DEFINITIONS, PLAYERS_ALIVE_OPTION_DEFINITIONS, FOCUSED_PLAYER_OPTION_DEFINITIONS, CURRENT_MAP_OPTION_DEFINITIONS, EVENT_BADGE_OPTION_DEFINITIONS, SPONSOR_OPTION_DEFINITIONS, MAPS_OPTION_DEFINITIONS, THEME_MATERIALS_OPTION_DEFINITIONS, THEME_COLORS_OPTION_DEFINITIONS, THEME_SHAPES_OPTION_DEFINITIONS, THEME_TYPOGRAPHY_OPTION_DEFINITIONS, PROMOTION_OPTION_DEFINITIONS } from '/hud/core/resolve-option.js'
@@ -49,6 +50,7 @@ export default {
 		KlSeries,
 		BombCallout,
 		WaitingIdle,
+		ClutchBanner,
 	},
 
 	computed: {
