@@ -1,0 +1,216 @@
+.additional-stats {
+	grid-area: additional-stats;
+	width: var(--sidebar-player-additional-stats-width);
+	height: 100%;
+	overflow: visible; /* Allowing the inner box to be fully visible */
+	pointer-events: none;
+	position: relative;
+	z-index: 10;
+}
+
+/* 
+   Ghosting Logic: 
+   On the right, we shift the stats box 14rem to the left of its 0-width anchor.
+   On the left, it naturally sits to the right of the roster.
+*/
+.additional-stats.--right {
+	margin-left: calc(-1 * var(--sidebar-player-additional-stats-width));
+}
+
+.additional-stats-inner {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(2.4rem, 1fr)) minmax(3.4rem, 1.35fr);
+	gap: 0 0.25rem;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 0 0.35rem;
+	background: var(--black-75);
+	box-shadow: 0 0.5rem 1.0rem rgba(0, 0, 0, 0.4);
+	border-radius: 0.1rem;
+}
+
+.additional-stats .stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.additional-stats .label {
+	font-size: 0.9rem;
+	font-weight: 700;
+	color: var(--white-40);
+	text-transform: uppercase;
+	line-height: 1;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: clip;
+	white-space: nowrap;
+}
+
+.additional-stats .value {
+	font-size: 1.35rem;
+	font-weight: 700;
+	color: var(--white-90);
+	font-variant-numeric: tabular-nums;
+	line-height: 1.05;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: clip;
+	white-space: nowrap;
+}
+
+.hud-viewport.--style-compact .additional-stats-inner {
+	grid-template-columns: repeat(3, minmax(2.7rem, 1fr)) minmax(4.2rem, 1.45fr);
+	padding: 0 0.3rem;
+}
+
+.hud-viewport.--style-compact .additional-stats .label {
+	font-size: 0.78rem;
+}
+
+.hud-viewport.--style-compact .additional-stats .value {
+	font-size: 1.2rem;
+}
+
+/*
+ * Slanted (default) + diagonal presets — match the player card's parallelogram
+ * surface. Clip-paths mirror .player.--left/--right so the K/D/A/ADR panel
+ * reads as a continuation of the sidebar aesthetic rather than a floating
+ * rectangle.
+ */
+
+.hud-viewport.--style-slanted .additional-stats-inner,
+.hud-viewport.--style-diagonal .additional-stats-inner {
+	border: 0.1rem solid rgba(255, 255, 255, 0.14);
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.06),
+		0 0.55rem 1.4rem rgba(0, 0, 0, 0.42);
+	border-radius: 0;
+	padding: 0 0.9rem;
+}
+
+/*
+ * Inner edge (meets player card) matches the player card's outward slant
+ * exactly: 0.35rem for slanted, 1rem for diagonal. Outer edge mirrors so
+ * the widget reads as a balanced parallelogram aligned with the row.
+ */
+
+.hud-viewport.--style-slanted .additional-stats.--left .additional-stats-inner {
+	background:
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.22) 0%, rgba(var(--black-rgb), 0.84) 38%, rgba(var(--black-rgb), 0.84) 100%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+		rgba(var(--black-rgb), 0.82);
+	clip-path: polygon(0.35rem 0, 100% 0, calc(100% - 0.35rem) 100%, 0 100%);
+}
+
+.hud-viewport.--style-slanted .additional-stats.--right .additional-stats-inner {
+	background:
+		linear-gradient(270deg, rgba(var(--terrorists-fill-rgb), 0.22) 0%, rgba(var(--black-rgb), 0.84) 38%, rgba(var(--black-rgb), 0.84) 100%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+		rgba(var(--black-rgb), 0.82);
+	clip-path: polygon(0 0, calc(100% - 0.35rem) 0, 100% 100%, 0.35rem 100%);
+}
+
+.hud-viewport.--style-diagonal .additional-stats.--left .additional-stats-inner {
+	background:
+		linear-gradient(110deg, rgba(var(--counter-terrorists-fill-rgb), 0.26), rgba(10, 12, 24, 0.84) 36%, rgba(var(--terrorists-fill-rgb), 0.14)),
+		rgba(var(--black-rgb), 0.8);
+	border-color: rgba(255, 255, 255, 0.18);
+	clip-path: polygon(1rem 0, 100% 0, calc(100% - 1rem) 100%, 0 100%);
+}
+
+.hud-viewport.--style-diagonal .additional-stats.--right .additional-stats-inner {
+	background:
+		linear-gradient(250deg, rgba(var(--terrorists-fill-rgb), 0.26), rgba(10, 12, 24, 0.84) 36%, rgba(var(--counter-terrorists-fill-rgb), 0.14)),
+		rgba(var(--black-rgb), 0.8);
+	border-color: rgba(255, 255, 255, 0.18);
+	clip-path: polygon(0 0, calc(100% - 1rem) 0, 100% 100%, 1rem 100%);
+}
+
+/*
+ * Slanted divider strokes between stat columns — pick up the preset's skew
+ * for visual cohesion with the top bar and player cards.
+ */
+
+.hud-viewport.--style-slanted .additional-stats .stat,
+.hud-viewport.--style-diagonal .additional-stats .stat {
+	position: relative;
+}
+
+.hud-viewport.--style-slanted .additional-stats .stat + .stat::before,
+.hud-viewport.--style-diagonal .additional-stats .stat + .stat::before {
+	content: '';
+	position: absolute;
+	left: -0.15rem;
+	top: 0.45rem;
+	bottom: 0.45rem;
+	width: 0.08rem;
+	background: rgba(255, 255, 255, 0.12);
+	pointer-events: none;
+}
+
+.hud-viewport.--style-slanted .additional-stats .stat + .stat::before {
+	transform: skewX(calc(-1 * var(--skew-20)));
+}
+
+.hud-viewport.--style-diagonal .additional-stats .stat + .stat::before {
+	transform: skewX(calc(-1 * var(--skew-20)));
+}
+
+/*
+ * Slanted/diagonal widget shifts toward the player card to compensate for
+ * the slant. Without this, the visible gap is bbox-gap + slant (5.65px on
+ * slanted, 11.5px on diagonal) instead of the ~2.5px other presets show.
+ *
+ * The bbox gap (2.5px) already matches classic. Shifting by the slant
+ * amount cancels the extra space the slant adds, so the visible gap also
+ * lands at ~2.5px.
+ *
+ *   slanted   -> -0.35rem  (matches the 0.35rem slant)
+ *   diagonal  -> -1rem     (matches the 1rem slant)
+ */
+.hud-viewport.--style-slanted .additional-stats.--left {
+	transform: translateX(-0.35rem);
+}
+.hud-viewport.--style-slanted .additional-stats.--right {
+	transform: translateX(0.35rem);
+}
+.hud-viewport.--style-diagonal .additional-stats.--left {
+	transform: translateX(-1rem);
+}
+.hud-viewport.--style-diagonal .additional-stats.--right {
+	transform: translateX(1rem);
+}
+
+/*
+ * Rounded preset: no clip-path; mirror the rounded player card's
+ * border-radius (0.55rem) and matched surface treatment.
+ */
+.hud-viewport.--style-rounded .additional-stats-inner {
+	border: 0.1rem solid rgba(255, 255, 255, 0.14);
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.06),
+		0 0.55rem 1.4rem rgba(0, 0, 0, 0.42);
+	border-radius: 0.55rem;
+	padding: 0 0.6rem;
+}
+
+.hud-viewport.--style-rounded .additional-stats.--left .additional-stats-inner {
+	background:
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.2) 0%, rgba(var(--black-rgb), 0.84) 40%, rgba(var(--black-rgb), 0.84) 100%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+		rgba(var(--black-rgb), 0.82);
+}
+
+.hud-viewport.--style-rounded .additional-stats.--right .additional-stats-inner {
+	background:
+		linear-gradient(270deg, rgba(var(--terrorists-fill-rgb), 0.2) 0%, rgba(var(--black-rgb), 0.84) 40%, rgba(var(--black-rgb), 0.84) 100%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+		rgba(var(--black-rgb), 0.82);
+}
+
+

@@ -1,0 +1,21 @@
+<Transition name="rrb">
+	<div v-if="visible" class="rrb" :class="[sideClass, positionClass]">
+		<div class="rrb__card">
+			<div class="rrb__logo-wrap">
+				<img
+					v-if="teamLogoSrc && !logoFailed"
+					:src="teamLogoSrc"
+					class="rrb__logo"
+					alt=""
+					@error="logoFailed = true"
+				/>
+				<div v-else class="rrb__logo-placeholder">{{ teamTag }}</div>
+			</div>
+			<div class="rrb__body">
+				<div class="rrb__headline">{{ teamName }}</div>
+				<div class="rrb__sub">Wins the round</div>
+				<div v-if="showReasonEnabled && reasonLabel" class="rrb__reason">{{ reasonLabel }}</div>
+			</div>
+		</div>
+	</div>
+</Transition>

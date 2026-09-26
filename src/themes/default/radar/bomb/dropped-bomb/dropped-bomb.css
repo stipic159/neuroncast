@@ -1,0 +1,19 @@
+.dropped-bomb {
+	position: absolute;
+	top: 0;
+	left: 0;
+
+	transform: translate(-50%, -50%);
+	transition: left 0.15s linear, top 0.15s linear;
+}
+
+.dropped-bomb:not(.--default-level) {
+	opacity: 0.75;
+}
+
+img {
+	display: block;
+	height: 1.25rem;
+}
+
+

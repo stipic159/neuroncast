@@ -1,0 +1,26 @@
+.round-kills {
+	grid-area: round-kills;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background: var(--red); /* Making it a dedicated red square for the subtitle */
+	color: var(--white);
+}
+
+.round-kills.--right {
+	justify-content: center;
+}
+
+img.label {
+	display: none;
+}
+
+.value {
+	font-size: 1rem;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+

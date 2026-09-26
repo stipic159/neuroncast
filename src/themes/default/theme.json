@@ -1,0 +1,997 @@
+{
+    "name": "default",
+    "parent": "raw",
+    "options":  {
+                    "series.maps.1.name":  {
+                                               "type":  "string",
+                                               "section":  "Series",
+                                               "label":  "Map 1 Name (including prefix, e.g. `de_cache`)"
+                                           },
+                    "series.maps.1.pickTeam":  {
+                                                   "type":  "string",
+                                                   "section":  "Series",
+                                                   "label":  "Team that picked Map 1"
+                                               },
+                    "series.maps.1.isDecider":  {
+                                                    "type":  "boolean",
+                                                    "section":  "Series",
+                                                    "label":  "If Map 1 is the Decider (for Best of 1s, set this to false)"
+                                                },
+                    "series.maps.1.pickTeamScore":  {
+                                                        "type":  "number",
+                                                        "section":  "Series",
+                                                        "label":  "Final Score of the team that picked this map"
+                                                    },
+                    "series.maps.1.enemyTeamScore":  {
+                                                         "type":  "number",
+                                                         "section":  "Series",
+                                                         "label":  "Final Score of the team that did not pick this map"
+                                                     },
+                    "series.maps.2.name":  {
+                                               "type":  "string",
+                                               "section":  "Series",
+                                               "label":  "Map 2 Name (including prefix, e.g. `de_cache`)"
+                                           },
+                    "series.maps.2.pickTeam":  {
+                                                   "type":  "string",
+                                                   "section":  "Series",
+                                                   "label":  "Team that picked Map 2"
+                                               },
+                    "series.maps.2.isDecider":  {
+                                                    "type":  "boolean",
+                                                    "section":  "Series",
+                                                    "label":  "If Map 2 is the Decider (for Best of 1s, set this to false)"
+                                                },
+                    "series.maps.2.pickTeamScore":  {
+                                                        "type":  "number",
+                                                        "section":  "Series",
+                                                        "label":  "Final Score of the team that picked this map"
+                                                    },
+                    "series.maps.2.enemyTeamScore":  {
+                                                         "type":  "number",
+                                                         "section":  "Series",
+                                                         "label":  "Final Score of the team that did not pick this map"
+                                                     },
+                    "series.maps.3.name":  {
+                                               "type":  "string",
+                                               "section":  "Series",
+                                               "label":  "Map 3 Name (including prefix, e.g. `de_cache`)"
+                                           },
+                    "series.maps.3.pickTeam":  {
+                                                   "type":  "string",
+                                                   "section":  "Series",
+                                                   "label":  "Team that picked Map 3"
+                                               },
+                    "series.maps.3.isDecider":  {
+                                                    "type":  "boolean",
+                                                    "section":  "Series",
+                                                    "label":  "If Map 3 is the Decider (for Best of 1s, set this to false)"
+                                                },
+                    "series.maps.3.pickTeamScore":  {
+                                                        "type":  "number",
+                                                        "section":  "Series",
+                                                        "label":  "Final Score of the team that picked this map"
+                                                    },
+                    "series.maps.3.enemyTeamScore":  {
+                                                         "type":  "number",
+                                                         "section":  "Series",
+                                                         "label":  "Final Score of the team that did not pick this map"
+                                                     },
+                    "series.maps.4.name":  {
+                                               "type":  "string",
+                                               "section":  "Series",
+                                               "label":  "Map 4 Name (including prefix, e.g. `de_cache`)"
+                                           },
+                    "series.maps.4.pickTeam":  {
+                                                   "type":  "string",
+                                                   "section":  "Series",
+                                                   "label":  "Team that picked Map 4"
+                                               },
+                    "series.maps.4.isDecider":  {
+                                                    "type":  "boolean",
+                                                    "section":  "Series",
+                                                    "label":  "If Map 4 is the Decider (for Best of 1s, set this to false)"
+                                                },
+                    "series.maps.4.pickTeamScore":  {
+                                                        "type":  "number",
+                                                        "section":  "Series",
+                                                        "label":  "Final Score of the team that picked this map"
+                                                    },
+                    "series.maps.4.enemyTeamScore":  {
+                                                         "type":  "number",
+                                                         "section":  "Series",
+                                                         "label":  "Final Score of the team that did not pick this map"
+                                                     },
+                    "series.maps.5.name":  {
+                                               "type":  "string",
+                                               "section":  "Series",
+                                               "label":  "Map 5 Name (including prefix, e.g. `de_cache`)"
+                                           },
+                    "series.maps.5.pickTeam":  {
+                                                   "type":  "string",
+                                                   "section":  "Series",
+                                                   "label":  "Team that picked Map 5"
+                                               },
+                    "series.maps.5.isDecider":  {
+                                                    "type":  "boolean",
+                                                    "section":  "Series",
+                                                    "label":  "If Map 5 is the Decider (for Best of 1s, set this to false)"
+                                                },
+                    "series.maps.5.pickTeamScore":  {
+                                                        "type":  "number",
+                                                        "section":  "Series",
+                                                        "label":  "Final Score of the team that picked this map"
+                                                    },
+                    "series.maps.5.enemyTeamScore":  {
+                                                         "type":  "number",
+                                                         "section":  "Series",
+                                                         "label":  "Final Score of the team that did not pick this map"
+                                                     },
+                    "sponsors.left.imageUrl":  {
+                                                   "type":  "string",
+                                                   "section":  "Sponsors",
+                                                   "label":  "Left sponsor image URL or local `/hud/...` path"
+                                               },
+                    "sponsors.left.title":  {
+                                                "type":  "string",
+                                                "section":  "Sponsors",
+                                                "label":  "Left sponsor label"
+                                            },
+                    "sponsors.right.imageUrl":  {
+                                                    "type":  "string",
+                                                    "section":  "Sponsors",
+                                                    "label":  "Right sponsor image URL or local `/hud/...` path"
+                                                },
+                    "sponsors.right.title":  {
+                                                 "type":  "string",
+                                                 "section":  "Sponsors",
+                                                 "label":  "Right sponsor label"
+                                             },
+                    "cvars.cash_team_loser_bonus":  {
+                                                         "type":  "number",
+                                                         "fallback":  1400,
+                                                         "section":  "Cvars",
+                                                         "label":  "Value of cash_team_loser_bonus, i.e. the initial loss bonus amount"
+                                                     },
+                    "cvars.cash_team_loser_bonus_consecutive_rounds":  {
+                                                                            "type":  "number",
+                                                                            "fallback":  500,
+                                                                            "section":  "Cvars",
+                                                                            "label":  "Value of cash_team_loser_bonus_consecutive_rounds, i.e. the additional loss bonus amount per consecutive round lost"
+                                                                        },
+                    "cvars.mp_c4timer":  {
+                                             "type":  "number",
+                                             "fallback":  40,
+                                             "section":  "Cvars",
+                                             "advanced":  true,
+                                             "label":  "Value of mp_c4timer, i.e. the number of seconds from when the bomb is planted until it explodes"
+                                         },
+                    "cvars.mp_roundtime":  {
+                                               "type":  "number",
+                                               "fallback":  1.92,
+                                               "section":  "Cvars",
+                                               "advanced":  true,
+                                               "label":  "Value of mp_roundtime, i.e. the default number of minutes a round can take"
+                                           },
+                    "cvars.mp_team_timeout_max":  {
+                                                      "type":  "number",
+                                                      "fallback":  4,
+                                                      "section":  "Cvars",
+                                                      "label":  "Value of mp_team_timeout_max, i.e. the number of tactical timeouts available per team"
+                                                  },
+                    "cvars.mp_team_timeout_time":  {
+                                                       "type":  "number",
+                                                       "fallback":  30,
+                                                       "section":  "Cvars",
+                                                       "label":  "Value of mp_team_timeout_time, i.e. the duration in seconds of each tactical timeout"
+                                                   },
+                    "cvars.mp_freezetime":  {
+                                                "type":  "number",
+                                                "fallback":  20,
+                                                "section":  "Cvars",
+                                                "advanced":  true,
+                                                "label":  "Value of mp_freezetime, i.e. the duration in seconds of each freezetime"
+                                            },
+                    "preferences.playersAlive.showDuringFreezetime":  {
+                                                                          "type":  "boolean",
+                                                                          "section":  "Preferences",
+                                                                          "label":  "Show \"Players Alive\" during freezetime"
+                                                                      },
+                    "preferences.sidebar.teamGrenades.hideDuringRound":  {
+                                                                             "type":  "boolean",
+                                                                             "section":  "Preferences",
+                                                                             "label":  "Hide Team Grenades panels in sidebars during the round (if no, will only show during freezetimes, and the first few seconds of the round (defined in preferences.sidebar.teamGrenades.activeIntoRoundSec))"
+                                                                         },
+                    "preferences.sidebar.teamGrenades.activeIntoRoundSec":  {
+                                                                                "type":  "number",
+                                                                                "fallback":  5,
+                                                                                "section":  "Preferences",
+                                                                                "label":  "Number of seconds into the round the Team Grenades panel should be visible (0 to disable; ignored when preferences.sidebar.teamGrenades.hideDuringRound is set to no)"
+                                                                            },
+                    "preferences.sidebar.teamEquipment.activeIntoRoundSec":  {
+                                                                                 "type":  "number",
+                                                                                 "fallback":  5,
+                                                                                 "section":  "Preferences",
+                                                                                 "label":  "Number of seconds into the round the Team Money and Equipment panel should be visible (0 to disable)"
+                                                                             },
+                    "preferences.seriesGraph.showMapForOnlyMatch":  {
+                                                                        "type":  "boolean",
+                                                                        "section":  "Preferences",
+                                                                        "label":  "Show map name and screenshot in the Series Graph, even if there is only a single match in the series"
+                                                                    },
+                    "preferences.maps.sleek":  {
+                                                   "type":  "boolean",
+                                                   "section":  "Preferences",
+                                                   "label":  "Use minimalistic sleek maps on the HUD (requires Komplettligaen scraper match)",
+                                                   "value":  true
+                                               },
+                    "preferences.topBar.teamLogos":  {
+                                                        "type":  "boolean",
+                                                        "section":  "Preferences",
+                                                        "label":  "Show team logos in the Top Bar (requires Komplettligaen scraper match)",
+                                                        "value":  false
+                                                    },
+                    "preferences.topBar.swapScrapedTeams":  {
+                                                                "type":  "boolean",
+                                                                "section":  "Preferences",
+                                                                "label":  "Swap Home/Away logos and names in the Top Bar",
+                                                                "value":  false
+                                                            },
+                    "preferences.topBar.clock.tenSecondsRedInFreezetime":  {
+                                                                               "type":  "boolean",
+                                                                               "section":  "Preferences",
+                                                                               "label":  "Show clock in red at less than 10 seconds in Freezetime"
+                                                                           },
+                    "preferences.topBar.clock.tenSecondsRedInTacticalTimeout":  {
+                                                                                    "type":  "boolean",
+                                                                                    "section":  "Preferences",
+                                                                                    "label":  "Show clock in red at less than 10 seconds during Tactical Timeouts"
+                                                                                },
+                    "preferences.topBar.clock.tenSecondsRedInRoundRestartDelay":  {
+                                                                                      "type":  "boolean",
+                                                                                      "section":  "Preferences",
+                                                                                      "label":  "Show clock in red at less than 10 seconds after round end"
+                                                                                  },
+                    "preferences.topBar.matchPointRounds.showDuringRound":  {
+                                                                                "type":  "boolean",
+                                                                                "section":  "Preferences",
+                                                                                "label":  "Show \"First to X Rounds\" panel (visible during Overtime) during round (otherwise only in Freezetime)"
+                                                                            },
+                    "preferences.topBar.team.roundWinnerPanel.showIntoFreezetimeSec":  {
+                                                                                           "type":  "number",
+                                                                                           "fallback":  0,
+                                                                                           "section":  "Preferences",
+                                                                                           "label":  "Number of seconds into the following round\u0027s freezetime the \"Wins the Round\" panel should be visible (0 to disable; 1000 to show during entire freezetime)"
+                                                                                       },
+                    "preferences.focusedPlayer.maximumRedHealthPoints":  {
+                                                                             "type":  "number",
+                                                                             "section":  "Preferences",
+                                                                             "label":  "Maximum HP that will be highlighted in red (e.g. 20)"
+                                                                         },
+                    "director.armed":  {
+                                           "type":  "boolean",
+                                           "value":  false,
+                                           "section":  "Director",
+                                           "label":  "Master arm: allow the AI director to drive cameras and overlays"
+                                       },
+                    "director.cards.enabled":  {
+                                                   "type":  "boolean",
+                                                   "value":  true,
+                                                   "section":  "Director",
+                                                   "label":  "Player spotlight cards (ACE, clutch, multi-kill, big damage, knife)"
+                                               },
+                    "director.cards.endgame":  {
+                                                   "type":  "boolean",
+                                                   "value":  true,
+                                                   "section":  "Director",
+                                                   "label":  "End-of-match showcase (best moments chained, MVP finale)"
+                                               },
+                    "director.cards.performances":  {
+                                                        "type":  "boolean",
+                                                        "value":  true,
+                                                        "section":  "Director",
+                                                        "label":  "Native CS2 performances on spotlight cards (per-kind celebration instead of the turntable stance)"
+                                                    },
+                    "director.cards.minKills":  {
+                                                    "type":  "number",
+                                                    "fallback":  3,
+                                                    "min":  2,
+                                                    "max":  5,
+                                                    "section":  "Director",
+                                                    "label":  "Minimum kills in a round before a multi-kill spotlight fires"
+                                                },
+                    "director.cards.damageThreshold":  {
+                                                           "type":  "number",
+                                                           "fallback":  200,
+                                                           "min":  100,
+                                                           "max":  500,
+                                                           "step":  10,
+                                                           "section":  "Director",
+                                                           "label":  "Round damage that earns a big-damage spotlight"
+                                                       },
+                    "director.scoreboard.enabled":  {
+                                                        "type":  "boolean",
+                                                        "value":  true,
+                                                        "section":  "Director",
+                                                        "label":  "Scoreboard takeover during freezetime (sidebars fade, lower-third scoreboard)"
+                                                    },
+                    "director.scoreboard.everyRounds":  {
+                                                            "type":  "number",
+                                                            "fallback":  3,
+                                                            "min":  1,
+                                                            "max":  10,
+                                                            "section":  "Director",
+                                                            "label":  "Show the scoreboard takeover every Nth round"
+                                                        },
+                    "director.reconnect.enabled":  {
+                                                     "type":  "boolean",
+                                                     "value":  false,
+                                                     "section":  "Director",
+                                                     "label":  "Auto reconnect: when CS2 sits in the main menu (GOTV down between maps), type the connect string into the console"
+                                                 },
+                    "director.reconnect.connect":  {
+                                                     "type":  "string",
+                                                     "section":  "Director",
+                                                     "label":  "GOTV connect string typed into the console (e.g. `connect 10.0.0.5:27020; password abc`)"
+                                                 },
+                    "director.reconnect.consoleKey":  {
+                                                        "type":  "string",
+                                                        "value":  "F10",
+                                                        "section":  "Director",
+                                                        "label":  "Key bound to the CS2 console (F10, F11, ` ...)"
+                                                    },
+                    "director.reconnect.retrySeconds":  {
+                                                          "type":  "number",
+                                                          "value":  30,
+                                                          "section":  "Director",
+                                                          "label":  "Seconds between reconnect attempts while still in the menu"
+                                                      },
+                    "director.scenes.auto":  {
+                                                 "type":  "boolean",
+                                                 "value":  true,
+                                                 "section":  "Director",
+                                                 "label":  "Auto scenes: KL Waiting at warmup and halftime, Live HUD when play starts, KL Result at the end"
+                                             },
+                    "director.cameras.flyby":  {
+                                                   "type":  "boolean",
+                                                   "value":  true,
+                                                   "section":  "Director",
+                                                   "label":  "Freezetime flyby: cinematic establishing shot over the spawns (x-ray off)"
+                                               },
+                    "director.cameras.idleShots":  {
+                                                       "type":  "boolean",
+                                                       "value":  false,
+                                                       "section":  "Director",
+                                                       "label":  "Mid-round establishing shots when nothing is happening (dead-air reclaim)"
+                                                   },
+                    "director.waitingIdle.enabled":  {
+                                                         "type":  "boolean",
+                                                         "value":  true,
+                                                         "section":  "Director",
+                                                         "label":  "Waiting scene idle character (breathing loop at the screen edge with occasional watch-check fidgets)"
+                                                     },
+                    "director.waitingIdle.agent":  {
+                                                       "type":  "select",
+                                                       "section":  "Director",
+                                                       "label":  "Waiting scene idle character agent",
+                                                       "value":  "ct-sas",
+                                                       "options":  [
+                                                                       "ct-sas",
+                                                                       "ct-fbi",
+                                                                       "ct-diver",
+                                                                       "ct-gendarmerie",
+                                                                       "ct-heavy",
+                                                                       "ct-st6",
+                                                                       "ct-swat",
+                                                                       "t-phoenix",
+                                                                       "t-balkan",
+                                                                       "t-jumpsuit",
+                                                                       "t-jungleraider",
+                                                                       "t-leet",
+                                                                       "t-phoenixheavy",
+                                                                       "t-professional"
+                                                                   ]
+                                                   },
+                    "director.waitingIdle.side":  {
+                                                      "type":  "select",
+                                                      "section":  "Director",
+                                                      "label":  "Waiting scene idle character screen edge",
+                                                      "value":  "right",
+                                                      "options":  [
+                                                                      "right",
+                                                                      "left"
+                                                                  ]
+                                                  },
+                    "director.waitingIdle.loopsShort":  {
+                                                            "type":  "number",
+                                                            "fallback":  5,
+                                                            "min":  1,
+                                                            "max":  30,
+                                                            "section":  "Director",
+                                                            "label":  "Breathing loops before a fidget (short block; alternates with the long block)"
+                                                        },
+                    "director.waitingIdle.loopsLong":  {
+                                                           "type":  "number",
+                                                           "fallback":  10,
+                                                           "min":  1,
+                                                           "max":  60,
+                                                           "section":  "Director",
+                                                           "label":  "Breathing loops before a fidget (long block; alternates with the short block)"
+                                                       },
+                    "preferences.roundResultBanner.enabled":  {
+                                                                  "type":  "boolean",
+                                                                  "value":  true,
+                                                                  "section":  "Preferences",
+                                                                  "label":  "Show round result banner after each round ends (replaces legacy round-won poster when enabled)"
+                                                              },
+                    "preferences.roundResultBanner.durationMs":  {
+                                                                     "type":  "number",
+                                                                     "fallback":  3500,
+                                                                     "section":  "Preferences",
+                                                                     "label":  "How long (ms) the round result banner stays visible (default 3500)"
+                                                                 },
+                    "preferences.roundResultBanner.position":  {
+                                                                   "type":  "select",
+                                                                   "section":  "Preferences",
+                                                                   "label":  "Round result banner position",
+                                                                   "options":  [
+                                                                                   "top-center",
+                                                                                   "center"
+                                                                               ]
+                                                               },
+                    "preferences.roundResultBanner.showReason":  {
+                                                                     "type":  "boolean",
+                                                                     "section":  "Preferences",
+                                                                     "label":  "Show round win reason on banner (Bomb defused, Elimination, etc.)",
+                                                                     "fallback":  true
+                                                                 },
+                    "css.radar-width":  {
+                                            "type":  "select",
+                                            "section":  "Style Overrides",
+                                            "label":  "Radar width",
+                                            "value":  "21%",
+                                            "options":  [
+                                                            "18%",
+                                                            "20%",
+                                                            "21%",
+                                                            "22%"
+                                                        ]
+                                        },
+                    "css.counter-terrorists-fill-rgb":  {
+                                                            "type":  "color",
+                                                            "section":  "Style Overrides",
+                                                            "label":  "CT fill color (used for most CT-colored surfaces)"
+                                                        },
+                    "css.counter-terrorists-border-rgb":  {
+                                                              "type":  "color",
+                                                              "section":  "Style Overrides",
+                                                              "label":  "CT border color (used for small or thing CT-colored surfaces)"
+                                                          },
+                    "css.counter-terrorists-text-rgb":  {
+                                                            "type":  "color",
+                                                            "section":  "Style Overrides",
+                                                            "label":  "CT text color (used for CT-colored text)"
+                                                        },
+                    "css.terrorists-fill-rgb":  {
+                                                    "type":  "color",
+                                                    "section":  "Style Overrides",
+                                                    "label":  "T fill color (used for most T-colored surfaces)"
+                                                },
+                    "css.terrorists-border-rgb":  {
+                                                      "type":  "color",
+                                                      "section":  "Style Overrides",
+                                                      "label":  "T border color (used for small or thing T-colored surfaces)"
+                                                  },
+                    "css.terrorists-text-rgb":  {
+                                                    "type":  "color",
+                                                    "section":  "Style Overrides",
+                                                    "label":  "T text color (used for T-colored text)"
+                                                },
+                    "css.ct-background":  {
+                                              "type":  "string",
+                                              "section":  "Style Overrides",
+                                              "label":  "CT Custom Background (e.g. linear-gradient(90deg, #1d9ede, #005080)). Overrides the plain CT fill color."
+                                          },
+                    "css.t-background":  {
+                                             "type":  "string",
+                                             "section":  "Style Overrides",
+                                             "label":  "T Custom Background (e.g. linear-gradient(90deg, #e1b43b, #b37e00)). Overrides the plain T fill color."
+                                         },
+                    "css.primary-font-family":  {
+                                                    "type":  "select",
+                                                    "section":  "Style Overrides",
+                                                    "label":  "HUD font",
+                                                    "value":  "'Quantico'",
+                                                    "options":  [
+                                                                    {
+                                                                        "value":  "'Quantico'",
+                                                                        "label":  "Quantico"
+                                                                    },
+                                                                    {
+                                                                        "value":  "'Noto Sans'",
+                                                                        "label":  "Noto Sans"
+                                                                    },
+                                                                    {
+                                                                        "value":  "'Arial Narrow'",
+                                                                        "label":  "Arial Narrow"
+                                                                    }
+                                                                ]
+                                                },
+                    "css.custom-font-url":  {
+                                                "type":  "string",
+                                                "section":  "Style Overrides",
+                                                "label":  "Uploaded HUD font URL",
+                                                "value":  ""
+                                            },
+                    "series.name.left":  {
+                                             "section":  "Event",
+                                             "value":  "Selfors / Fossetangen"
+                                         },
+                    "series.name.center":  {
+                                               "section":  "Event",
+                                               "value":  "NeuronCast"
+                                           },
+                    "series.name.right":  {
+                                               "section":  "Event",
+                                               "value":  "17-19 APRIL 2026"
+                                           },
+                    "series.logoUrl":  {
+                                           "section":  "Event",
+                                           "label":  "Event Logo URL",
+                                           "value":  "/hud/img/branding/logo-ubg.png"
+                                       },
+                    "css.base-scale-factor":  {
+                                                  "value":  "0.9vh"
+                                              },
+                    "css.sponsor-panel-width":  {
+                                                    "value":  "13rem"
+                                                },
+                    "css.sponsor-panel-height":  {
+                                                     "value":  "4.8rem"
+                                                 },
+                    "css.viewport-margin-top":  {
+                                                    "type":  "text",
+                                                    "section":  "HUD Layout",
+                                                    "label":  "Global top screen margin; e.g. `1.5rem`",
+                                                    "value":  "1.15rem"
+                                                },
+                    "css.viewport-margin-right":  {
+                                                      "type":  "text",
+                                                      "section":  "HUD Layout",
+                                                      "label":  "Global right screen margin; e.g. `2rem`",
+                                                      "value":  "2rem"
+                                                  },
+                    "css.viewport-margin-bottom":  {
+                                                       "type":  "text",
+                                                       "section":  "HUD Layout",
+                                                       "label":  "Global bottom screen margin; e.g. `1.5rem`",
+                                                       "value":  "1.5rem"
+                                                   },
+                    "css.viewport-margin-left":  {
+                                                     "type":  "text",
+                                                     "section":  "HUD Layout",
+                                                     "label":  "Global left screen margin; e.g. `2rem`",
+                                                     "value":  "2rem"
+                                                 },
+                    "css.lan66-radar-top":  {
+                                                "type":  "text",
+                                                "section":  "HUD Layout",
+                                                "label":  "Radar top position; e.g. `var(--viewport-margin-top)`",
+                                                "value":  "var(--viewport-margin-top)"
+                                            },
+                    "css.lan66-radar-left":  {
+                                                 "type":  "text",
+                                                 "section":  "HUD Layout",
+                                                 "label":  "Radar left position; e.g. `var(--viewport-margin-left)`",
+                                                 "value":  "var(--viewport-margin-left)"
+                                             },
+                    "css.lan66-top-bar-top":  {
+                                                  "type":  "text",
+                                                  "section":  "HUD Layout",
+                                                  "label":  "Top bar top position; e.g. `var(--viewport-margin-top)`",
+                                                  "value":  "var(--viewport-margin-top)"
+                                              },
+                    "css.lan66-focused-player-bottom":  {
+                                                            "type":  "text",
+                                                            "section":  "HUD Layout",
+                                                            "label":  "Focused player bottom position; e.g. `var(--viewport-margin-bottom)`",
+                                                            "value":  "var(--viewport-margin-bottom)"
+                                                        },
+                    "css.lan66-players-alive-top":  {
+                                                        "type":  "text",
+                                                        "section":  "HUD Layout",
+                                                        "label":  "Players alive top position; e.g. `var(--viewport-margin-top)`",
+                                                        "value":  "var(--viewport-margin-top)"
+                                                    },
+                    "css.lan66-players-alive-right":  {
+                                                          "type":  "text",
+                                                          "section":  "HUD Layout",
+                                                          "label":  "Players alive right position; e.g. `var(--viewport-margin-right)`",
+                                                          "value":  "var(--viewport-margin-right)"
+                                                      },
+                    "css.lan66-sidebar-left":  {
+                                                   "type":  "text",
+                                                   "section":  "HUD Layout",
+                                                   "label":  "Left roster position from screen edge; e.g. `var(--viewport-margin-left)`",
+                                                   "value":  "var(--viewport-margin-left)"
+                                               },
+                    "css.lan66-sidebar-right":  {
+                                                    "type":  "text",
+                                                    "section":  "HUD Layout",
+                                                    "label":  "Right roster position from screen edge; e.g. `var(--viewport-margin-right)`",
+                                                    "value":  "var(--viewport-margin-right)"
+                                                },
+                    "css.lan66-sidebar-bottom":  {
+                                                     "type":  "text",
+                                                     "section":  "HUD Layout",
+                                                     "label":  "Roster bottom position; e.g. `var(--viewport-margin-bottom)`",
+                                                     "value":  "var(--viewport-margin-bottom)"
+                                                 },
+                    "css.lan66-event-badge-top":  {
+                                                      "type":  "text",
+                                                      "section":  "HUD Layout",
+                                                      "label":  "LAN badge top offset; e.g. `calc(var(--radar-width) + 0.9rem)`",
+                                                      "value":  "calc(var(--radar-width) + 0.9rem)"
+                                                  },
+                    "css.lan66-event-badge-left":  {
+                                                       "type":  "text",
+                                                       "section":  "HUD Layout",
+                                                       "label":  "LAN badge left offset; e.g. `1rem`",
+                                                       "value":  "1rem"
+                                                   },
+                    "css.lan66-event-badge-width":  {
+                                                        "type":  "text",
+                                                        "section":  "HUD Layout",
+                                                        "label":  "LAN badge width; e.g. `clamp(14rem, calc(var(--radar-width) - 2rem), 22rem)`",
+                                                        "value":  "clamp(14rem, calc(var(--radar-width) - 2rem), 22rem)"
+                                                    },
+                    "css.lan66-event-badge-logo-height":  {
+                                                              "type":  "text",
+                                                              "section":  "HUD Layout",
+                                                              "label":  "LAN badge logo height; e.g. `2.1rem`",
+                                                              "value":  "2.1rem"
+                                                          },
+                    "css.lan66-event-badge-title-size":  {
+                                                             "type":  "text",
+                                                             "section":  "HUD Layout",
+                                                             "label":  "LAN badge title size; e.g. `0.98rem`",
+                                                             "value":  "0.98rem"
+                                                         },
+                    "style.eventBadge.titleSize":  {
+                                                       "type":  "text",
+                                                       "section":  "Event Badge",
+                                                       "label":  "Event Badge title font size (e.g. 0.98rem, 1.4rem)",
+                                                       "value":  "0.98rem"
+                                                   },
+                    "css.lan66-event-badge-meta-size":  {
+                                                            "type":  "text",
+                                                            "section":  "HUD Layout",
+                                                            "label":  "LAN badge meta text size; e.g. `0.72rem`",
+                                                            "value":  "0.72rem"
+                                                        },
+                    "css.lan66-current-map-bottom":  {
+                                                         "type":  "text",
+                                                         "section":  "HUD Layout",
+                                                         "label":  "Current map panel bottom position; e.g. `var(--viewport-margin-bottom)`",
+                                                         "value":  "var(--viewport-margin-bottom)"
+                                                     },
+                    "css.lan66-current-map-right":  {
+                                                        "type":  "text",
+                                                        "section":  "HUD Layout",
+                                                        "label":  "Current map panel right position; e.g. `var(--viewport-margin-right)`",
+                                                        "value":  "var(--viewport-margin-right)"
+                                                    },
+                    "css.lan66-current-map-width":  {
+                                                        "type":  "text",
+                                                        "section":  "HUD Layout",
+                                                        "label":  "Current map panel width; e.g. `16rem`",
+                                                        "value":  "16rem"
+                                                    },
+                    "css.lan66-sponsor-left-top":  {
+                                                       "type":  "text",
+                                                       "section":  "HUD Layout",
+                                                       "label":  "Left sponsor top position; e.g. `var(--viewport-margin-top)`",
+                                                       "value":  "var(--viewport-margin-top)"
+                                                   },
+                    "css.lan66-sponsor-left-left":  {
+                                                        "type":  "text",
+                                                        "section":  "HUD Layout",
+                                                        "label":  "Left sponsor left position; e.g. `var(--viewport-margin-left)`",
+                                                        "value":  "var(--viewport-margin-left)"
+                                                    },
+                    "css.lan66-sponsor-right-top":  {
+                                                        "type":  "text",
+                                                        "section":  "HUD Layout",
+                                                        "label":  "Right sponsor top position; e.g. `var(--viewport-margin-top)`",
+                                                        "value":  "var(--viewport-margin-top)"
+                                                    },
+                    "css.lan66-sponsor-right-right":  {
+                                                          "type":  "text",
+                                                          "section":  "HUD Layout",
+                                                          "label":  "Right sponsor right position; e.g. `var(--viewport-margin-right)`",
+                                                          "value":  "var(--viewport-margin-right)"
+                                                      },
+                    "css.lan66-sponsor-width":  {
+                                                    "type":  "text",
+                                                    "section":  "HUD Layout",
+                                                    "label":  "Sponsor panel width; e.g. `13rem`",
+                                                    "value":  "13rem"
+                                                },
+                    "css.lan66-sponsor-height":  {
+                                                     "type":  "text",
+                                                     "section":  "HUD Layout",
+                                                     "label":  "Sponsor panel height; e.g. `4.8rem`",
+                                                     "value":  "4.8rem"
+                                                 },
+                    "sponsors.rotationInterval":  {
+                                                      "type":  "number",
+                                                      "section":  "Sponsors",
+                                                      "label":  "Sponsor rotation interval (ms); e.g. `5000`",
+                                                      "value":  5000
+                                                  },
+                    "preferences.seriesGraph.sideMode":  {
+                                                             "type":  "boolean",
+                                                             "section":  "HUD Layout",
+                                                             "label":  "Show Series Graph on the side (vertical)",
+                                                             "value":  false
+                                                         },
+                    "promotion.visible":  {
+                                              "type":  "boolean",
+                                              "section":  "Promotion",
+                                              "label":  "Show Promotion Panel (Manual Toggle)",
+                                              "value":  false
+                                          },
+                    "promotion.autoShow":  {
+                                               "type":  "boolean",
+                                               "section":  "Promotion",
+                                               "label":  "Auto-show during Freezetime",
+                                               "value":  false
+                                           },
+                    "promotion.side":  {
+                                           "type":  "select",
+                                           "section":  "Promotion",
+                                           "label":  "Alignment Side",
+                                           "value":  "left",
+                                           "options":  [
+                                                           "left",
+                                                           "right"
+                                                       ]
+                                       },
+                    "promotion.imageUrl":  {
+                                               "type":  "string",
+                                               "section":  "Promotion",
+                                               "label":  "Image URL (Badge/Logo)"
+                                           },
+                    "promotion.title":  {
+                                            "type":  "string",
+                                            "section":  "Promotion",
+                                            "label":  "Title Text"
+                                        },
+                    "promotion.subtitle":  {
+                                               "type":  "string",
+                                               "section":  "Promotion",
+                                               "label":  "Subtitle / CTA"
+                                           },
+                    "css.promotion-panel-width":  {
+                                                      "type":  "text",
+                                                      "section":  "Promotion",
+                                                      "label":  "Panel Width (e.g. 40rem)",
+                                                      "value":  "40rem"
+                                                  },
+                    "css.promotion-panel-height":  {
+                                                       "type":  "text",
+                                                       "section":  "Promotion",
+                                                       "label":  "Panel Height (e.g. 40rem or auto)",
+                                                       "value":  "auto"
+                                                   },
+                    "css.promotion-panel-padding":  {
+                                                        "type":  "text",
+                                                        "section":  "Promotion",
+                                                        "label":  "Internal Padding (e.g. 1.5rem)",
+                                                        "value":  "1.5rem"
+                                                    },
+                    "css.promotion-panel-image-height":  {
+                                                             "type":  "text",
+                                                             "section":  "Promotion",
+                                                             "label":  "Image Height (e.g. 20rem)",
+                                                             "value":  "20rem"
+                                                         },
+                    "css.promotion-panel-title-size":  {
+                                                           "type":  "text",
+                                                           "section":  "Promotion",
+                                                           "label":  "Title Font Size (e.g. 2.8rem)",
+                                                           "value":  "2.8rem"
+                                                       },
+                    "css.promotion-panel-subtitle-size":  {
+                                                               "type":  "text",
+                                                               "section":  "Promotion",
+                                                               "label":  "Subtitle Font Size (e.g. 1.2rem)",
+                                                               "value":  "1.2rem"
+                                                           },
+                    "match.mode":  {
+                                       "type":  "select",
+                                       "section":  "Match Rules",
+                                       "label":  "Game mode",
+                                       "value":  "standard",
+                                       "options":  [
+                                                       "standard",
+                                                       "wingman"
+                                                   ]
+                                   },
+                    "match.activeScene": {
+                    	"type": "string",
+                    	"section": "Match Rules",
+                    	"label": "Active HUD Scene",
+                    	"value": "default"
+                    },
+                    "css.ui-style": {
+                    	"type": "select",
+                    	"section": "Style Overrides",
+                    	"label": "HUD style preset",
+                    	"value": "slanted",
+                    	"options": [
+                            { "value": "slanted", "label": "Default" },
+                            { "value": "classic", "label": "Classic" },
+                            { "value": "compact", "label": "Compact" },
+                            { "value": "diagonal", "label": "Diagonal" },
+                            { "value": "rounded", "label": "Rounded" },
+                            { "value": "squared", "label": "Squared (legacy)" },
+                            { "value": "abstract", "label": "Abstract (legacy)" }
+                        ]
+                    },
+                    "preferences.celebration.forceWinner": {
+                                                                "type":  "select",
+                                                                "section":  "Match Rules",
+                                                                "label":  "Manual Win Celebration (FOR REHEARSAL)",
+                                                                "options":  [
+                                                                                {
+                                                                                    "value":  "none",
+                                                                                    "label":  "None (Automatic)"
+                                                                                },
+                                                                                {
+                                                                                    "value":  "team1",
+                                                                                    "label":  "Force Team 1 Win"
+                                                                                },
+                                                                                {
+                                                                                    "value":  "team2",
+                                                                                    "label":  "Force Team 2 Win"
+                                                                                }
+                                                                            ],
+                                                                "value":  "none"
+                                                            },
+                    "teams.leftTeamName":  {
+                                               "type":  "string",
+                                               "section":  "Teams",
+                                               "label":  "Force left roster team name"
+                                           },
+                    "teams.rightTeamName":  {
+                                                "type":  "string",
+                                                "section":  "Teams",
+                                                "label":  "Force right roster team name"
+                                            },
+                    "teams.teamNameOverrides":  {
+                                                    "type":  "textarea",
+                                                    "section":  "Teams",
+                                                    "label":  "Team name overrides",
+                                                    "placeholder":  "Use the add/remove form below"
+                                                },
+                    "teams.playerNameOverrides":  {
+                                                      "type":  "textarea",
+                                                      "section":  "Teams",
+                                                      "label":  "Player name overrides",
+                                                      "placeholder":  "Use the add/remove form below"
+                                                  },
+                    "teams.playerSubtitleOverrides":  {
+                                                          "type":  "textarea",
+                                                          "section":  "Teams",
+                                                          "label":  "Player subtitle overrides",
+                                                          "placeholder":  "Use the add/remove form below"
+                                                      },
+                    "css.lan66-radar-display":  {
+                                                    "type":  "boolean",
+                                                    "section":  "HUD Layout",
+                                                    "label":  "Show Radar",
+                                                    "value":  true
+                                                },
+                    "css.lan66-top-bar-display":  {
+                                                      "type":  "boolean",
+                                                      "section":  "HUD Layout",
+                                                      "label":  "Show Top Bar",
+                                                      "value":  true
+                                                  },
+                    "css.lan66-players-alive-display":  {
+                                                            "type":  "boolean",
+                                                            "section":  "HUD Layout",
+                                                            "label":  "Show Players Alive",
+                                                            "value":  true
+                                                        },
+                    "css.lan66-sidebar-left-display":  {
+                                                           "type":  "boolean",
+                                                           "section":  "HUD Layout",
+                                                           "label":  "Show Left Sidebar",
+                                                           "value":  true
+                                                       },
+                    "css.lan66-sidebar-right-display":  {
+                                                            "type":  "boolean",
+                                                            "section":  "HUD Layout",
+                                                            "label":  "Show Right Sidebar",
+                                                            "value":  true
+                                                        },
+                    "css.lan66-focused-player-display":  {
+                                                             "type":  "boolean",
+                                                             "section":  "HUD Layout",
+                                                             "label":  "Show Focused Player",
+                                                             "value":  true
+                                                         },
+                    "css.lan66-event-badge-display":  {
+                                                          "type":  "boolean",
+                                                          "section":  "HUD Layout",
+                                                          "label":  "Show Event Badge",
+                                                          "value":  true
+                                                      },
+                    "css.lan66-current-map-display":  {
+                                                          "type":  "boolean",
+                                                          "section":  "HUD Layout",
+                                                          "label":  "Show Current Map",
+                                                          "value":  true
+                                                      },
+                    "css.lan66-sponsor-left-display":  {
+                                                           "type":  "boolean",
+                                                           "section":  "HUD Layout",
+                                                           "label":  "Show Left Sponsor",
+                                                           "value":  true
+                                                       },
+                    "css.lan66-sponsor-right-display":  {
+                                                            "type":  "boolean",
+                                                            "section":  "HUD Layout",
+                                                            "label":  "Show Right Sponsor",
+                                                            "value":  true
+                                                        },
+                    "css.lan66-maps-display":  {
+                                                   "type":  "boolean",
+                                                   "section":  "HUD Layout",
+                                                   "label":  "Show Series Maps",
+                                                   "value":  true
+                                               },
+                    "css.lan66-maps-top":  {
+                                               "type":  "string",
+                                               "section":  "HUD Layout",
+                                               "label":  "Maps Top Position",
+                                               "value":  "2.5rem"
+                                           },
+                    "css.lan66-maps-left":  {
+                                                "type":  "string",
+                                                "section":  "HUD Layout",
+                                                "label":  "Maps Left Position",
+                                                "value":  "50%"
+                                            },
+                    "css.lan66-maps-scale":  {
+                                                 "type":  "string",
+                                                 "section":  "HUD Layout",
+                                                 "label":  "Maps Scale Factor",
+                                                 "value":  "1"
+                                             },
+                    "css.lan66-maps-sleek-top":  {
+                                                     "type":  "string",
+                                                     "section":  "HUD Layout",
+                                                     "label":  "Sleek Maps Top Position",
+                                                     "value":  "7.5rem"
+                                                 },
+                    "css.lan66-maps-sleek-left":  {
+                                                      "type":  "string",
+                                                      "section":  "HUD Layout",
+                                                      "label":  "Sleek Maps Left Position",
+                                                      "value":  "50%"
+                                                  },
+                    "css.lan66-maps-sleek-scale":  {
+                                                       "type":  "string",
+                                                       "section":  "HUD Layout",
+                                                       "label":  "Sleek Maps Scale Factor",
+                                                       "value":  "1"
+                                                   }
+                },
+    "optionSectionDescriptions":  {
+                                      "Style Overrides":  "NB: To apply changes, click Save, then Force HUD Refresh.",
+                                      "Director":  "AI director features: cameras, spotlight cards and scoreboard takeovers. Managed on the Director page."
+                                  }
+}

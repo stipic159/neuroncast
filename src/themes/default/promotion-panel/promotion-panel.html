@@ -1,0 +1,12 @@
+<div :class="['promotion-panel', sideClass, { '--active': isVisible }]">
+	<div class="promotion-panel__content">
+		<img v-if="imageUrl" :src="imageUrl" class="promotion-panel__image" alt="">
+		
+		<div class="promotion-panel__copy">
+			<div v-if="title" class="promotion-panel__title">{{ title }}</div>
+			<div v-if="subtitle" class="promotion-panel__subtitle">{{ subtitle }}</div>
+		</div>
+	</div>
+</div>
+
+

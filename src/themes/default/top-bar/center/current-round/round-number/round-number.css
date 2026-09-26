@@ -1,0 +1,16 @@
+.round-number {
+	margin-top: 0.12rem;
+	color: rgba(var(--white-rgb), 0.82);
+	font-size: 0.92rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.hud-viewport.--style-compact .round-number {
+	font-size: 0.78rem;
+	letter-spacing: 0.06em;
+}
+
+

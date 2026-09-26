@@ -1,0 +1,20 @@
+.radar {
+	position: absolute;
+	top: var(--lan66-radar-top, 1.5rem);
+	left: var(--lan66-radar-left, 2.5rem);
+
+	width: var(--layout-radar-width, var(--radar-width));
+	aspect-ratio: 1;
+
+	overflow: hidden !important; /* Definitive clip for rogue markers */
+}
+
+img.radar-image {
+	width: 100%;
+}
+
+img.radar-image.--transparent-background {
+	filter: var(--filter-drop-shadow);
+}
+
+

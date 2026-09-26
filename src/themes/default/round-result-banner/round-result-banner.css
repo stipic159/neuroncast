@@ -1,0 +1,143 @@
+/* ── Broadcast Architecture: Layer 3 — Informational Overlay ── */
+/* Round Result Banner sits above gameplay HUD (Layer 2) and below */
+/* future Narrative Moments (Layer 4) and Scene transitions (Layer 5). */
+
+/* ── Layout ── */
+
+.rrb {
+	position: fixed;
+	z-index: 300;
+	pointer-events: none;
+}
+
+.rrb.--pos-top-center {
+	top: 25%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.rrb.--pos-center {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+/* ── Card ── */
+
+.rrb__card {
+	display: flex;
+	align-items: center;
+	gap: 3.0rem;
+	padding: 1.8rem 7.5rem 1.8rem 3.5rem;
+	background: rgba(6, 9, 16, 0.95);
+	border: 0.1rem solid rgba(255, 255, 255, 0.1);
+	border-left: 0.75rem solid var(--rrb-accent, rgba(255, 255, 255, 0.5));
+	border-radius: 1.5rem;
+	box-shadow: 0 2.25rem 6rem rgba(0, 0, 0, 0.55), 0 0 0 0.1rem rgba(255, 255, 255, 0.04);
+	white-space: nowrap;
+}
+
+/* ── Team color tokens ── */
+
+.rrb.--ct {
+	--rrb-accent:    rgb(var(--theme-colors-ct-border));
+	--rrb-fill:      rgb(var(--theme-colors-ct-fill));
+	--rrb-text:      rgb(var(--theme-colors-ct-text));
+}
+
+.rrb.--t {
+	--rrb-accent:    rgb(var(--theme-colors-t-border));
+	--rrb-fill:      rgb(var(--theme-colors-t-fill));
+	--rrb-text:      rgb(var(--theme-colors-t-text));
+}
+
+/* ── Logo / placeholder ── */
+
+.rrb__logo-wrap {
+	flex: 0 0 auto;
+	width: 9.0rem;
+	height: 9.0rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.rrb__logo {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	filter: drop-shadow(0 0.3rem 0.9rem rgba(0, 0, 0, 0.5));
+}
+
+.rrb__logo-placeholder {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(var(--rrb-fill, 255, 255, 255), 0.15);
+	border-radius: 0.9rem;
+	color: var(--rrb-text, rgba(255, 255, 255, 0.9));
+	font-size: 2.2rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* ── Text ── */
+
+.rrb__body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+
+.rrb__headline {
+	color: #fff;
+	font-size: 4.0rem;
+	font-weight: 800;
+	letter-spacing: 0.01em;
+	line-height: 1.1;
+	text-transform: uppercase;
+}
+
+.rrb__sub {
+	color: var(--rrb-text, rgba(255, 255, 255, 0.7));
+	font-size: 1.8rem;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	line-height: 1;
+}
+
+.rrb__reason {
+	margin-top: 0.6rem;
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 1.5rem;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	line-height: 1;
+}
+
+/* ── Animation ── */
+
+.rrb-enter-active {
+	transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rrb-leave-active {
+	transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+.rrb.--pos-top-center.rrb-enter-from,
+.rrb.--pos-top-center.rrb-leave-to {
+	opacity: 0;
+	transform: translate(-50%, calc(-50% - 0.6rem));
+}
+
+.rrb.--pos-center.rrb-enter-from,
+.rrb.--pos-center.rrb-leave-to {
+	opacity: 0;
+	transform: translate(-50%, calc(-50% - 0.4rem));
+}

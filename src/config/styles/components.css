@@ -1,0 +1,209 @@
+/*
+ * NeuronCast utility class catalog — Phase 24+
+ *
+ * Tokenized utility classes consumed by the new shell and (later) by
+ * redesigned page bodies. Each class is defined ONCE here.
+ *
+ * The .eon- prefix ensures legacy scoped classes (.panel, .card, .btn-*,
+ * .field-*, .switch, .segmented) continue to win specificity in
+ * untouched pages.
+ */
+
+/* ============================================================ */
+/*  Layout                                                       */
+/* ============================================================ */
+
+.eon-app-grid {
+	display: grid;
+	grid-template-columns: 210px 1fr;
+	grid-template-rows: 48px 32px 1fr;
+	height: 100vh;
+	overflow: hidden;
+	background: var(--eon-bg);
+	color: var(--eon-tx);
+	font-family: var(--eon-font-primary);
+	font-size: var(--eon-fs-base);
+}
+
+.eon-page {
+	padding: var(--eon-pg-pad-y) var(--eon-pg-pad-x);
+}
+
+/* ============================================================ */
+/*  Card                                                          */
+/* ============================================================ */
+
+.eon-card {
+	background: var(--eon-s2);
+	border: 1px solid var(--eon-bd);
+	border-radius: var(--eon-rad-card);
+	padding: var(--eon-card-pad-y) var(--eon-card-pad-x);
+}
+
+.eon-card[data-accent="acc"] { border-left: var(--eon-bw-card-accent) solid var(--eon-acc); }
+.eon-card[data-accent="red"] { border-left: var(--eon-bw-card-accent) solid var(--eon-red); }
+.eon-card[data-accent="amb"] { border-left: var(--eon-bw-card-accent) solid var(--eon-amb); }
+.eon-card[data-accent="grn"] { border-left: var(--eon-bw-card-accent) solid var(--eon-grn); }
+.eon-card[data-accent="blu"] { border-left: var(--eon-bw-card-accent) solid var(--eon-blu); }
+
+.eon-card-header {
+	background: var(--eon-s3);
+	padding: 8px 14px;
+	border-bottom: 1px solid var(--eon-bd);
+	margin: calc(var(--eon-card-pad-y) * -1) calc(var(--eon-card-pad-x) * -1) var(--eon-card-pad-y);
+	font-size: var(--eon-fs-title);
+	color: var(--eon-tx);
+}
+
+/* ============================================================ */
+/*  Button                                                        */
+/* ============================================================ */
+
+.eon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 6px 14px;
+	border-radius: var(--eon-rad-btn);
+	font-family: var(--eon-font-primary);
+	font-size: var(--eon-fs-body);
+	font-weight: 600;
+	cursor: pointer;
+	background: var(--eon-s3);
+	color: var(--eon-tx2);
+	border: 1px solid var(--eon-bd);
+	transition: background 0.12s, color 0.12s, border-color 0.12s;
+	user-select: none;
+	white-space: nowrap;
+}
+.eon-btn:hover { background: var(--eon-s4); color: var(--eon-tx); }
+.eon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.eon-btn[data-size="sm"] {
+	padding: 4px 10px;
+	font-size: var(--eon-fs-notes);
+	border-radius: var(--eon-rad-btn-sm);
+}
+
+.eon-btn[data-variant="primary"] {
+	background: var(--eon-acc);
+	color: #fff;
+	border-color: var(--eon-acc);
+}
+.eon-btn[data-variant="primary"]:hover { background: var(--eon-accl); border-color: var(--eon-accl); }
+
+.eon-btn[data-variant="ghost"] {
+	background: var(--eon-accd);
+	color: var(--eon-accl);
+	border-color: var(--eon-acc);
+}
+.eon-btn[data-variant="ghost"]:hover { background: rgba(99, 102, 241, 0.22); }
+
+.eon-btn[data-variant="secondary"] {
+	background: var(--eon-s3);
+	color: var(--eon-tx2);
+	border-color: var(--eon-bd);
+}
+
+.eon-btn[data-variant="danger"] {
+	background: var(--eon-redd);
+	color: var(--eon-red);
+	border-color: var(--eon-red);
+}
+
+.eon-btn[data-variant="success"] {
+	background: var(--eon-grnd);
+	color: var(--eon-grn);
+	border-color: var(--eon-grn);
+}
+
+/* ============================================================ */
+/*  Input / Select                                                */
+/* ============================================================ */
+
+.eon-input,
+.eon-select {
+	background: var(--eon-s3);
+	color: var(--eon-tx);
+	border: 1px solid var(--eon-bd);
+	border-radius: var(--eon-rad-input);
+	padding: 6px 10px;
+	font-family: var(--eon-font-primary);
+	font-size: var(--eon-fs-body);
+	transition: border-color 0.12s;
+	min-width: 0;
+}
+.eon-input:focus,
+.eon-select:focus {
+	outline: none;
+	border-color: var(--eon-acc);
+}
+.eon-input[data-mono="true"] {
+	font-family: var(--eon-font-mono);
+}
+
+/* ============================================================ */
+/*  Toggle (32x16 pill)                                           */
+/* ============================================================ */
+
+.eon-toggle {
+	position: relative;
+	display: inline-block;
+	width: 32px;
+	height: 16px;
+	background: var(--eon-s4);
+	border-radius: var(--eon-rad-toggle);
+	cursor: pointer;
+	transition: background 0.16s;
+	flex-shrink: 0;
+}
+.eon-toggle::after {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 12px;
+	height: 12px;
+	background: var(--eon-tx);
+	border-radius: 50%;
+	transition: left 0.16s, background 0.16s;
+}
+.eon-toggle[data-on="true"] { background: var(--eon-acc); }
+.eon-toggle[data-on="true"]::after { left: 18px; background: #fff; }
+
+/* ============================================================ */
+/*  Label                                                         */
+/* ============================================================ */
+
+.eon-label {
+	display: block;
+	font-size: var(--eon-fs-micro);
+	font-weight: 700;
+	color: var(--eon-tx3);
+	text-transform: uppercase;
+	letter-spacing: 1.2px;
+	margin-bottom: var(--eon-label-mb);
+}
+.eon-label-note {
+	display: block;
+	font-size: var(--eon-fs-notes);
+	font-weight: 400;
+	color: var(--eon-tx2);
+	text-transform: none;
+	letter-spacing: 0;
+	margin-top: 2px;
+}
+
+/* ============================================================ */
+/*  Separator (used in status bar)                                */
+/* ============================================================ */
+
+.eon-sep {
+	display: inline-block;
+	width: 1px;
+	height: 14px;
+	background: var(--eon-bd2);
+	margin: 0 4px;
+	vertical-align: middle;
+}

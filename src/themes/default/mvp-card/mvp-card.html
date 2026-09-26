@@ -1,0 +1,20 @@
+<transition name="slide-mvp">
+	<div v-if="visible && mvp" class="mvp-card">
+		<div class="mvp-card__eyebrow">{{ mvp.title }}</div>
+		<div class="mvp-card__content">
+			<div class="mvp-card__name">{{ mvp.name }}</div>
+			<div class="mvp-card__stats">
+				<div class="mvp-card__stat">
+					<span class="label">Swing</span>
+					<span class="value">{{ mvp.swingPct }}%</span>
+				</div>
+				<div class="mvp-card__stat">
+					<span class="label">Kills</span>
+					<span class="value">{{ mvp.kills }}</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</transition>
+
+

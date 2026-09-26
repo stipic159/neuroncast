@@ -1,0 +1,30 @@
+.waiting-idle {
+	position: absolute;
+	bottom: calc(var(--scale-factor) * -1);
+	width: calc(var(--scale-factor) * 42);
+	aspect-ratio: 1;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.waiting-idle.--right {
+	right: calc(var(--scale-factor) * -4);
+}
+
+.waiting-idle.--left {
+	left: calc(var(--scale-factor) * -4);
+}
+
+.wi-video {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	opacity: 0;
+	transition: opacity 160ms linear;
+}
+
+.wi-video.--active {
+	opacity: 1;
+}

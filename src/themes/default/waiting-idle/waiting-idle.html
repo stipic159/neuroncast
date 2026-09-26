@@ -1,0 +1,8 @@
+<div v-if="enabled && assetsOk" :class="['waiting-idle', '--' + side]">
+	<video ref="loop" class="wi-video" :class="{ '--active': phase === 'loop' }"
+		:src="loopSrc" autoplay muted playsinline
+		@ended="onLoopEnded" @error="assetsOk = false"></video>
+	<video ref="fidget" class="wi-video" :class="{ '--active': phase === 'fidget' }"
+		:src="fidgetSrc" muted playsinline preload="auto"
+		@ended="onFidgetEnded" @error="assetsOk = false"></video>
+</div>

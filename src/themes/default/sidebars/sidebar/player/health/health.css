@@ -1,0 +1,22 @@
+.health {
+	grid-area: health;
+	padding: 0.5rem 0.6rem;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	font-weight: 800;
+	white-space: nowrap;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.12)),
+		rgba(var(--black-rgb), 0.18);
+}
+
+.hud-viewport.--style-compact .health {
+	padding-left: 0.4rem;
+	padding-right: 0.4rem;
+	font-size: 1.5rem;
+}
+
+

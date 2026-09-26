@@ -1,0 +1,9 @@
+:root {
+	--theme-typography-primary-font: 'Quantico';
+	--theme-typography-custom-font-url: '';
+	--primary-font-family: var(--theme-typography-primary-font);
+	--fallback-font-family: 'Noto Sans';
+	--font-family: var(--primary-font-family), var(--fallback-font-family), sans-serif;
+}
+
+

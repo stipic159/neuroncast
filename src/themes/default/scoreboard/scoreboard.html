@@ -1,0 +1,52 @@
+<Transition name="scoreboard-fade">
+	<div v-if="visible" class="scoreboard-overlay">
+		<div class="scoreboard-band">
+			<section class="sb-side --t">
+				<header class="sb-side-head">
+					<span class="sb-side-name">{{ tTeam.name }}</span>
+					<span class="sb-side-score">{{ tTeam.score }}</span>
+				</header>
+				<table class="sb-table">
+					<thead>
+						<tr><th class="sb-name">Terrorists</th><th>K</th><th>A</th><th>D</th><th>ADR</th></tr>
+					</thead>
+					<tbody>
+						<tr v-for="player in tPlayers" :key="player.steam64Id" :class="{ '--dead': !player.isAlive }">
+							<td class="sb-name">{{ player.name }}</td>
+							<td>{{ player.kills }}</td>
+							<td>{{ player.assists }}</td>
+							<td>{{ player.deaths }}</td>
+							<td>{{ player.adr }}</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+
+			<div class="sb-center">
+				<div class="sb-center-map">{{ mapName }}</div>
+				<div class="sb-center-round" v-if="roundLabel">{{ roundLabel }}</div>
+			</div>
+
+			<section class="sb-side --ct">
+				<header class="sb-side-head">
+					<span class="sb-side-score">{{ ctTeam.score }}</span>
+					<span class="sb-side-name">{{ ctTeam.name }}</span>
+				</header>
+				<table class="sb-table">
+					<thead>
+						<tr><th class="sb-name">Counter-Terrorists</th><th>K</th><th>A</th><th>D</th><th>ADR</th></tr>
+					</thead>
+					<tbody>
+						<tr v-for="player in ctPlayers" :key="player.steam64Id" :class="{ '--dead': !player.isAlive }">
+							<td class="sb-name">{{ player.name }}</td>
+							<td>{{ player.kills }}</td>
+							<td>{{ player.assists }}</td>
+							<td>{{ player.deaths }}</td>
+							<td>{{ player.adr }}</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+		</div>
+	</div>
+</Transition>

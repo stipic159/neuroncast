@@ -1,0 +1,225 @@
+.player-wrapper {
+	display: grid;
+	--player-card-width: var(--sidebar-player-width);
+}
+
+.player-wrapper.--left {
+	grid-template-columns: var(--player-card-width) var(--sidebar-player-focused-player-highlight-width) 0px;
+	grid-template-areas: 'player focused-player-highlight additional-stats';
+	overflow: visible;
+}
+
+.player-wrapper.--right {
+	grid-template-columns: 0px var(--sidebar-player-focused-player-highlight-width) var(--player-card-width);
+	grid-template-areas: 'additional-stats focused-player-highlight player';
+	overflow: visible;
+}
+
+.player {
+	grid-area: player;
+	width: var(--player-card-width);
+	display: grid;
+	grid-template-rows: repeat(2, var(--sidebar-player-row-height));
+	position: relative;
+	background:
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.18), transparent 30%, transparent 70%, rgba(var(--terrorists-fill-rgb), 0.14)),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+		rgba(var(--black-rgb), 0.82);
+	border: 0.1rem solid rgba(255, 255, 255, 0.12);
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.06),
+		0 0.55rem 1.4rem rgba(0, 0, 0, 0.34);
+	filter: none;
+
+	font-size: 1.8rem;
+
+	isolation: isolate;
+	overflow: hidden;
+}
+
+.player.--left {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-start-and-end-width);
+
+	grid-template-areas:
+		'start health observer-slot name      name  name   name  name      round-kills  primary   end'
+		'start equipment equipment   money     kills deaths taser grenades  grenades    secondary end';
+}
+
+.player.--right {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		var(--sidebar-start-and-end-width);
+
+	grid-template-areas:
+		'start primary   round-kills name     name   name   name  name  observer-slot health end'
+		'start secondary grenades    grenades taser  kills  deaths money equipment    equipment end';
+}
+
+.player-wrapper:not(:last-child) {
+	margin-bottom: var(--sidebar-vertical-spacing);
+}
+
+.player::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: calc(var(--sidebar-player-row-height) - 0.05rem);
+	height: 0.1rem;
+	background: rgba(255, 255, 255, 0.08);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.hud-viewport.--style-classic,
+.hud-viewport.--style-compact {
+	--sidebar-kills-width: 5.1rem;
+	--sidebar-deaths-width: 5.1rem;
+	--sidebar-player-additional-stats-width: 16rem;
+	--sidebar-player-width: calc(
+		var(--sidebar-start-and-end-width) +
+		var(--sidebar-start-and-end-width) +
+		var(--sidebar-health-width) +
+		var(--sidebar-observer-slot-width) +
+		var(--sidebar-money-width) +
+		var(--sidebar-kills-width) +
+		var(--sidebar-deaths-width) +
+		var(--sidebar-taser-width) +
+		var(--sidebar-grenades-half-width) +
+		var(--sidebar-round-kills-width) +
+		var(--sidebar-primary-and-secondary-width)
+	);
+	--sidebar-width: calc(var(--sidebar-player-width) + var(--sidebar-player-focused-player-highlight-width));
+	--sidebar-team-grenades-width: var(--sidebar-player-width);
+	--sidebar-team-equipment-width: var(--sidebar-player-width);
+}
+
+.player.--left {
+	clip-path: polygon(0.7rem 0, 100% 0, calc(100% - 0.35rem) 100%, 0 100%);
+}
+
+.player.--right {
+	clip-path: polygon(0 0, calc(100% - 0.7rem) 0, 100% 100%, 0.35rem 100%);
+}
+
+.hud-viewport.--style-classic .player {
+	clip-path: none;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)),
+		rgba(6, 10, 20, 0.9);
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+.hud-viewport.--style-classic .player.--left {
+	grid-template-columns:
+		0.1rem
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-primary-and-secondary-width)
+		0.1rem;
+}
+
+.hud-viewport.--style-classic .player.--right {
+	grid-template-columns:
+		0.1rem
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		0.1rem;
+}
+
+.hud-viewport.--style-compact .player {
+	clip-path: none;
+	background:
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.12), rgba(8, 11, 19, 0.84) 24%, rgba(8, 11, 19, 0.84)),
+		rgba(var(--black-rgb), 0.78);
+	border-color: rgba(255, 255, 255, 0.08);
+	box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.28);
+}
+
+.hud-viewport.--style-compact .player.--left {
+	grid-template-columns:
+		0
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-primary-and-secondary-width)
+		0;
+}
+
+.hud-viewport.--style-compact .player.--right {
+	grid-template-columns:
+		0
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		0;
+}
+
+.hud-viewport.--style-diagonal .player.--left {
+	clip-path: polygon(1.2rem 0, 100% 0, calc(100% - 1rem) 100%, 0 100%);
+}
+
+.hud-viewport.--style-diagonal .player.--right {
+	clip-path: polygon(0 0, calc(100% - 1.2rem) 0, 100% 100%, 1rem 100%);
+}
+
+.hud-viewport.--style-diagonal .player {
+	background:
+		linear-gradient(110deg, rgba(var(--counter-terrorists-fill-rgb), 0.22), rgba(10, 12, 24, 0.82) 34%, rgba(var(--terrorists-fill-rgb), 0.14)),
+		rgba(var(--black-rgb), 0.78);
+	border-color: rgba(255, 255, 255, 0.16);
+}
+
+.hud-viewport.--style-rounded .player {
+	clip-path: none;
+	border-radius: 0.55rem;
+	background:
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.18), rgba(7, 10, 18, 0.86) 28%, rgba(7, 10, 18, 0.86)),
+		rgba(var(--black-rgb), 0.82);
+}
+
+

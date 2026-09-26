@@ -1,0 +1,7 @@
+<div :class="['name-and-stats', colorClass]">
+	<NameRow />
+	<DataRow />
+	<div v-if="player && player.subtitle" class="subtitle-box">{{ player.subtitle }}</div>
+</div>
+
+

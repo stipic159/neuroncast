@@ -1,0 +1,109 @@
+{
+  "provider": {
+    "name": "Eon Simulator",
+    "appid": 730,
+    "version": 1,
+    "steamid": "76561198000000001",
+    "timestamp": 1716382150
+  },
+  "auth": {
+    "token": "7ATvXUzTfBYyMLrA"
+  },
+  "map": {
+    "mode": "competitive",
+    "name": "de_mirage",
+    "phase": "live",
+    "round": 17,
+    "team_t": {
+      "name": "Ember",
+      "score": 8,
+      "consecutive_round_losses": 1,
+      "timeouts_remaining": 2,
+      "matches_won_this_series": 0
+    },
+    "team_ct": {
+      "name": "Nord",
+      "score": 10,
+      "consecutive_round_losses": 0,
+      "timeouts_remaining": 3,
+      "matches_won_this_series": 1
+    }
+  },
+  "round": {
+    "phase": "over",
+    "win_team": "CT"
+  },
+  "phase_countdowns": {
+    "phase": "over",
+    "phase_ends_in": "7.0"
+  },
+  "player": {
+    "steamid": "76561198000000008",
+    "name": "Haze",
+    "activity": "playing",
+    "observer_slot": 7
+  },
+  "bomb": {
+    "state": "defused"
+  },
+  "allplayers": {
+    "76561198000000001": {
+      "steamid": "76561198000000001",
+      "name": "Astra",
+      "team": "T",
+      "observer_slot": 0,
+      "state": {
+        "health": 0,
+        "armor": 0,
+        "helmet": false,
+        "defusekit": false,
+        "flashed": 0,
+        "burning": 0,
+        "money": 1850,
+        "equip_value": 0,
+        "round_kills": 1,
+        "round_killhs": 0,
+        "round_totaldmg": 145
+      },
+      "match_stats": {
+        "kills": 19,
+        "assists": 3,
+        "deaths": 12,
+        "mvps": 3,
+        "score": 41
+      },
+      "weapons": {
+        "weapon_0": { "name": "weapon_knife", "paintkit": "default", "state": "active", "type": "Knife" }
+      }
+    },
+    "76561198000000006": {
+      "steamid": "76561198000000006",
+      "name": "Frost",
+      "team": "CT",
+      "observer_slot": 5,
+      "state": {
+        "health": 48,
+        "armor": 85,
+        "helmet": true,
+        "defusekit": true,
+        "flashed": 0,
+        "burning": 0,
+        "money": 900,
+        "equip_value": 4300,
+        "round_kills": 1,
+        "round_killhs": 1,
+        "round_totaldmg": 130
+      },
+      "match_stats": {
+        "kills": 17,
+        "assists": 2,
+        "deaths": 11,
+        "mvps": 4,
+        "score": 37
+      },
+      "weapons": {
+        "weapon_0": { "name": "weapon_m4a1_silencer", "paintkit": "default", "state": "active", "type": "Rifle" }
+      }
+    }
+  }
+}

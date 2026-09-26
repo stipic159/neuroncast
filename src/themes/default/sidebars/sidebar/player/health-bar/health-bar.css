@@ -1,0 +1,55 @@
+.health-bar-background {
+	grid-area: 1/start/1/end;
+	align-self: end;
+
+	display: grid;
+	height: 0.42rem;
+	background: rgba(var(--black-rgb), 0.48);
+	z-index: 3;
+	overflow: hidden;
+}
+
+.damage-taken,
+.health {
+	grid-area: 1/1;
+	height: 100%;
+}
+
+.health {
+	z-index: 1;
+}
+
+.damage-taken.--left,
+.health.--left {
+	transform-origin: left;
+}
+
+.damage-taken.--right,
+.health.--right {
+	transform-origin: right;
+}
+
+.health.--ct {
+	background: var(--ct-health-fill, var(--ct-fill));
+	box-shadow: 0 0 0.65rem rgba(var(--counter-terrorists-fill-rgb), 0.32);
+}
+
+.health.--t {
+	background: var(--t-health-fill, var(--t-fill));
+	box-shadow: 0 0 0.65rem rgba(var(--terrorists-fill-rgb), 0.3);
+}
+
+.damage-taken {
+	background: var(--sidebar-damage-taken-fill);
+	transition: transform var(--fade-default-duration) ease;
+}
+
+.hud-viewport.--style-compact .health-bar-background {
+	height: 0.32rem;
+}
+
+.hud-viewport.--style-diagonal .health-bar-background {
+	height: 0.5rem;
+}
+
+

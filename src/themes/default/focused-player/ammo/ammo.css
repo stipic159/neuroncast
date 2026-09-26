@@ -1,0 +1,75 @@
+.wrapper {
+	display: flex;
+	align-items: flex-end;
+}
+
+.ammo {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	max-width: none;
+	font-size: 2.55rem;
+}
+
+.inner {
+	flex: 1;
+	padding: 0.75rem 0.8rem;
+
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	min-width: 0;
+	white-space: nowrap;
+
+	transition: background-color var(--fade-fast-duration) ease;
+}
+
+.reserve {
+	font-size: 1.75rem;
+	transform: translateY(-2px);
+	margin-left: 0.5rem;
+}
+
+.ammo::before,
+.ammo::after {
+	content: none;
+	width: 0;
+
+	transition: background-color var(--fade-fast-duration) ease;
+	z-index: -1;
+}
+
+.ammo::before {
+	transform: none;
+}
+
+.ammo::after {
+	transform: none;
+}
+
+.inner.--ct,
+.ammo.--ct::before,
+.ammo.--ct::after {
+	background: transparent;
+}
+
+.inner.--t,
+.ammo.--t::before,
+.ammo.--t::after {
+	background: transparent;
+}
+
+.hud-viewport.--style-compact .ammo {
+	font-size: 2rem;
+}
+
+.hud-viewport.--style-compact .ammo .inner {
+	padding-left: 0.55rem;
+	padding-right: 0.55rem;
+}
+
+.hud-viewport.--style-compact .reserve {
+	font-size: 1.35rem;
+}
+
+

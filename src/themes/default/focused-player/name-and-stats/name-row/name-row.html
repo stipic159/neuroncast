@@ -1,0 +1,8 @@
+<div :class="['name-row', colorClass]">
+	<span class="primary">
+		{{ player.name }}
+		<span v-if="player.overriddenName" class="real-name">({{ player.realName }})</span>
+	</span>
+</div>
+
+

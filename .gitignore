@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+GEMINI.md 
+
+node_modules
+dist
+dist-ssr
+*.local
+temp/
+live-hud-check*.png
+temp-hud-debug.png
+*.zip
+test-results/
+playwright-report/
+
+# Control-plane secret (auto-generated per install)
+src/themes/userspace/control-token.txt
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+tmp/
+maps256398_raw.json
+match256398_raw.json
+signups256398.json
+stats256398_raw.json
+implementation_plan.md
+
+# Agent working files (local only)
+.claude/
+.agent-session-notes/
+scratch/
+handoff.md
+report.md
+task.md

@@ -1,0 +1,79 @@
+.name-row {
+	grid-area: name-row;
+
+	margin: 0;
+	padding: 0 1.6rem;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+	background: transparent;
+	clip-path: none;
+	transition: background-color var(--fade-fast-duration) ease;
+}
+
+.name-row .primary,
+.name-row .subtitle {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.name-row .real-name {
+	display: inline;
+	margin-left: 0.6rem;
+	color: var(--white-60);
+	font-size: 1.4rem;
+	font-weight: 500;
+}
+
+.name-row .primary {
+	font-size: 2.35rem;
+	font-weight: 700;
+	line-height: 1.05;
+}
+
+.name-row .subtitle {
+	margin-top: 0.2rem;
+	color: var(--white-80);
+	font-size: 1.1rem;
+	font-weight: 600;
+	line-height: 1;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.name-row.--ct {
+	background: transparent;
+}
+
+.name-row.--t {
+	background: transparent;
+}
+
+.hud-viewport.--style-compact .name-row {
+	padding-left: 1rem;
+	padding-right: 1rem;
+}
+
+.hud-viewport.--style-compact .name-row .primary {
+	font-size: 1.9rem;
+}
+
+.hud-viewport.--style-classic .name-row .primary,
+.hud-viewport.--style-rounded .name-row .primary {
+	font-size: 2.1rem;
+}
+
+.hud-viewport.--style-diagonal .name-row {
+	background: transparent;
+}
+
+.hud-viewport.--style-diagonal .name-row.--t {
+	background: transparent;
+}
+
+

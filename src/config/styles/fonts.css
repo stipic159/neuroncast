@@ -1,0 +1,29 @@
+/*
+ * Self-hosted fonts for the NeuronCast operator SPA.
+ *
+ * Served locally from node_modules/@fontsource/<font>/ via the
+ * `serveFontsourceFont` route in src/server/dependencies.js.
+ *
+ * Upstream @fontsource CSS already declares font-display: swap and
+ * unicode-range per subset, so only the active text's subset is fetched.
+ * Latin-only operator text means non-Latin subsets are parsed but
+ * never trigger network requests.
+ *
+ * No external runtime requests — no fonts.googleapis.com / fonts.gstatic.com.
+ */
+
+/* Space Grotesk — 400, 500, 600, 700 */
+@import url('/dependencies/space-grotesk/400.css');
+@import url('/dependencies/space-grotesk/500.css');
+@import url('/dependencies/space-grotesk/600.css');
+@import url('/dependencies/space-grotesk/700.css');
+
+/* JetBrains Mono — 400, 500 */
+@import url('/dependencies/jetbrains-mono/400.css');
+@import url('/dependencies/jetbrains-mono/500.css');
+
+/* Cyrillic fallback for Space Grotesk, served offline. */
+@import url('/dependencies/noto-sans/400.css');
+@import url('/dependencies/noto-sans/500.css');
+@import url('/dependencies/noto-sans/600.css');
+@import url('/dependencies/noto-sans/700.css');

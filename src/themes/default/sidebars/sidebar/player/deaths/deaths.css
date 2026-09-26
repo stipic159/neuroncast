@@ -1,0 +1,52 @@
+.deaths {
+	grid-area: deaths;
+
+	display: flex;
+	align-items: center;
+
+	padding: 0.5rem 0.45rem;
+	min-width: 0;
+	font-size: 1.5rem;
+	font-weight: 750;
+	white-space: nowrap;
+	overflow: hidden;
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+}
+
+.label {
+	margin-right: 0.18em;
+}
+
+.label.--ct {
+	color: var(--counter-terrorists-text);
+}
+
+.label.--t {
+	color: var(--terrorists-text);
+}
+
+.value {
+	min-width: 2ch;
+	text-align: right;
+	overflow: hidden;
+	text-overflow: clip;
+}
+
+.v-enter-active {
+	transition-delay: var(--fade-fast-duration);
+}
+
+.hud-viewport.--style-classic .deaths {
+	padding-left: 0.2rem;
+	padding-right: 0.2rem;
+	font-size: 1.05rem;
+}
+
+.hud-viewport.--style-compact .deaths {
+	padding-left: 0.15rem;
+	padding-right: 0.15rem;
+	font-size: 0.95rem;
+}
+
+

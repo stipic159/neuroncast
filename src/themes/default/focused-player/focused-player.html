@@ -1,0 +1,62 @@
+<Transition mode="out-in">
+	<div v-if="isActive" :class="['focused-player', colorClass, { '--has-overlay-bottom': !! overlayBottomImageUrl }]">
+		<div class="focused-player-card">
+			<div class="fp-main">
+				<div class="fp-identity">
+					<img
+						v-if="teamLogoSrc"
+						:src="teamLogoSrc"
+						class="fp-team-logo"
+						alt=""
+						@error="logoFailed = true"
+						@load="logoFailed = false"
+						v-show="!logoFailed"
+					>
+					<div class="fp-identity-text">
+						<div class="fp-name">{{ player.name }}</div>
+						<div v-if="player.subtitle" class="fp-subtitle">{{ player.subtitle }}</div>
+					</div>
+				</div>
+
+				<div class="fp-health-strip">
+					<div :class="['fp-health-fill', colorClass, { '--low': isLowHealth }]" :style="{ width: `${Math.max(0, Math.min(100, player.health || 0))}%` }"></div>
+				</div>
+
+				<div class="fp-data">
+					<div class="fp-vitals">
+						<div :class="['fp-health-value', { '--low': isLowHealth }]">
+							<img src="/hud/img/icons/health.svg" alt="">
+							<span>{{ player.health }}</span>
+						</div>
+
+						<div v-if="armorIcon" class="fp-armor-value">
+							<img :src="armorIcon" alt="">
+							<span>{{ player.armor }}</span>
+						</div>
+					</div>
+
+					<div class="fp-metrics">
+						<div v-for="metric in metrics" :key="metric.key" class="fp-metric">
+							<span class="fp-metric__label">{{ metric.label }}</span>
+							<span class="fp-metric__value">{{ metric.value }}</span>
+						</div>
+					</div>
+
+					<div class="fp-utility">
+						<img v-if="player.hasTaser" src="/hud/img/weapons/taser.svg" alt="" :class="['fp-utility-icon', { '--active': player.taser?.isActive }]">
+						<img v-if="player.hasDefuser" src="/hud/img/weapons/defuser.svg" alt="" class="fp-utility-icon">
+						<img v-else-if="player.hasBomb" src="/hud/img/weapons/c4.svg" alt="" :class="['fp-utility-icon', { '--active': player.bomb?.isActive }]">
+						<img v-for="grenade in grenades" :key="grenade.key" :src="grenade.iconUrl" alt="" :class="['fp-utility-icon', { '--active': grenade.isActive }]">
+					</div>
+				</div>
+			</div>
+
+			<div class="fp-ammo">
+				<div class="fp-ammo__clip">{{ weapon?.ammoClip ?? 0 }}</div>
+				<div class="fp-ammo__reserve">/{{ weapon?.ammoReserve ?? 0 }}</div>
+			</div>
+		</div>
+
+		<img v-if="overlayBottomImageUrl" class="overlay-bottom" :src="overlayBottomImageUrl" alt="">
+	</div>
+</Transition>

@@ -1,0 +1,206 @@
+.top-bar {
+	position: fixed;
+	top: var(--lan66-top-bar-top, var(--viewport-margin-top));
+	left: calc((100% - var(--top-bar-width)) / 2);
+	right: calc((100% - var(--top-bar-width)) / 2);
+	display: grid;
+	grid-template-areas: 'card';
+	grid-template-columns: minmax(0, 1fr);
+	gap: 0;
+	filter: var(--filter-drop-shadow);
+	text-align: center;
+	isolation: isolate;
+}
+
+.top-bar-card {
+	grid-area: card;
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(3rem, 0.24fr) minmax(6rem, 0.42fr) minmax(3rem, 0.24fr) minmax(0, 1fr);
+	align-items: stretch;
+	min-height: var(--top-bar-row-height);
+	overflow: hidden;
+	background:
+		linear-gradient(110deg, rgba(var(--terrorists-fill-rgb), 0.16), transparent 24%, transparent 76%, rgba(var(--counter-terrorists-fill-rgb), 0.16)),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.24)),
+		rgba(var(--black-rgb), 0.88);
+	border: 0.1rem solid rgba(255, 255, 255, 0.16);
+	border-radius: var(--ui-radius, 0);
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.08),
+		0 1.2rem 2.6rem rgba(0, 0, 0, 0.42),
+		0 0 1.5rem rgba(var(--counter-terrorists-fill-rgb), 0.08),
+		0 0 1.5rem rgba(var(--terrorists-fill-rgb), 0.08);
+}
+
+.top-bar-card::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(90deg, rgba(var(--terrorists-fill-rgb), 0.34), transparent 1.1rem),
+		linear-gradient(270deg, rgba(var(--counter-terrorists-fill-rgb), 0.34), transparent 1.1rem);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.top-bar-card::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 0.22rem;
+	background: linear-gradient(90deg, rgb(var(--terrorists-fill-rgb)), rgba(255, 255, 255, 0.28), rgb(var(--counter-terrorists-fill-rgb)));
+	pointer-events: none;
+	z-index: 3;
+}
+
+.top-bar-team-name,
+.top-bar-score,
+.top-bar-round-stack,
+.top-bar-card .current-round {
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.top-bar-team-name {
+	position: relative;
+	padding: 0.25rem 1rem 0;
+	background:
+		linear-gradient(90deg, rgba(255, 255, 255, 0.06), transparent 42%),
+		rgba(6, 10, 19, 0.62);
+	color: var(--white);
+	font-size: 2.2rem;
+	font-weight: 800;
+	line-height: 1;
+	text-shadow: 0 0.15rem 0.45rem rgba(0, 0, 0, 0.36);
+}
+
+.top-bar-team-name span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.top-bar-team-logo {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	height: 2.8rem;
+	width: 2.8rem;
+	object-fit: contain;
+	filter: drop-shadow(0 0.15rem 0.3rem rgba(0, 0, 0, 0.45));
+}
+
+.top-bar-team-logo.--left {
+	left: 1.5rem;
+}
+
+.top-bar-team-logo.--right {
+	right: 1.5rem;
+}
+
+.top-bar-team-name.--right {
+	background:
+		linear-gradient(270deg, rgba(255, 255, 255, 0.06), transparent 42%),
+		rgba(6, 10, 19, 0.62);
+}
+
+.top-bar-score {
+	font-size: var(--top-bar-score-font-size);
+	font-weight: 900;
+	line-height: 1;
+	text-shadow: 0 0.15rem 0.45rem rgba(0, 0, 0, 0.36);
+}
+
+.top-bar-score.--ct {
+	background: var(--team-surface-gloss), var(--ct-background);
+}
+
+.top-bar-score.--t {
+	background: var(--team-surface-gloss), var(--t-background);
+}
+
+.top-bar-round-stack {
+	flex-direction: column;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02)),
+		rgba(var(--black-rgb), 0.72);
+	border-left: 0.1rem solid rgba(255, 255, 255, 0.12);
+	border-right: 0.1rem solid rgba(255, 255, 255, 0.12);
+}
+
+.top-bar-round-stack .current-round {
+	width: 100%;
+	flex: 1;
+	border: 0;
+	background: transparent;
+}
+
+.top-bar-round-stack .match-point-rounds-overflow-container {
+	width: 100%;
+}
+
+.top-bar-round-stack .match-point-rounds {
+	min-height: 1.15rem;
+	font-size: 0.78rem;
+}
+
+.hud-viewport.--style-classic .top-bar-card {
+	border-radius: 0.12rem;
+}
+
+.hud-viewport.--style-classic .top-bar-team-name {
+	font-size: 2.05rem;
+}
+
+.hud-viewport.--style-compact .top-bar {
+	gap: 0;
+}
+
+.hud-viewport.--style-compact .top-bar-card {
+	grid-template-columns: minmax(0, 1fr) minmax(2.7rem, 0.22fr) minmax(5.2rem, 0.38fr) minmax(2.7rem, 0.22fr) minmax(0, 1fr);
+	min-height: calc(var(--top-bar-row-height) * 0.88);
+	border-width: 0.08rem;
+	background:
+		linear-gradient(90deg, rgba(var(--terrorists-fill-rgb), 0.12), transparent 20%, transparent 80%, rgba(var(--counter-terrorists-fill-rgb), 0.12)),
+		rgba(var(--black-rgb), 0.92);
+}
+
+.hud-viewport.--style-compact .top-bar-team-name {
+	padding-left: 0.65rem;
+	padding-right: 0.65rem;
+	font-size: 1.75rem;
+}
+
+.hud-viewport.--style-diagonal .top-bar-card {
+	clip-path: polygon(1.1rem 0, 100% 0, calc(100% - 1.1rem) 100%, 0 100%);
+	background:
+		linear-gradient(110deg, rgba(var(--counter-terrorists-fill-rgb), 0.2), transparent 30%, transparent 70%, rgba(var(--terrorists-fill-rgb), 0.2)),
+		rgba(var(--black-rgb), 0.86);
+}
+
+.hud-viewport.--style-diagonal .top-bar-team-name.--left,
+.hud-viewport.--style-diagonal .top-bar-score.--left {
+	padding-left: 1.3rem;
+}
+
+.hud-viewport.--style-diagonal .top-bar-team-name.--right,
+.hud-viewport.--style-diagonal .top-bar-score.--right {
+	padding-right: 1.3rem;
+}
+
+.hud-viewport.--style-rounded .top-bar-card {
+	border-radius: 0.9rem;
+}
+
+.hud-viewport.--style-rounded .top-bar-team-name.--left {
+	border-radius: 0.8rem 0 0 0.8rem;
+}
+
+.hud-viewport.--style-rounded .top-bar-team-name.--right {
+	border-radius: 0 0.8rem 0.8rem 0;
+}

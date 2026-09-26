@@ -1,0 +1,26 @@
+.round-money-spent {
+	/*
+	 * Hidden because K/D + value (kills/, deaths/) now render at all
+	 * phases including freezetime, and this element overlaps their
+	 * grid cell. Restore by removing display:none if relocating
+	 * round-money-spent to a non-conflicting cell.
+	 */
+	display: none;
+
+	grid-area: kills/kills/deaths/deaths;
+
+	padding: 0.5rem;
+	align-self: center;
+	font-size: 1.5rem;
+	color: var(--sidebar-round-money-spent-text);
+}
+
+.round-money-spent.--right {
+	text-align: right;
+}
+
+.v-enter-active {
+	transition-delay: var(--fade-fast-duration);
+}
+
+

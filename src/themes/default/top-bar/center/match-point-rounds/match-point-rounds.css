@@ -1,0 +1,46 @@
+.match-point-rounds-overflow-container {
+	grid-area: auto;
+	overflow: hidden;
+}
+
+.match-point-rounds {
+	min-height: 1.55rem;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background:
+		linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent),
+		rgba(var(--black-rgb), 0.68);
+	border-top: 0.1rem solid rgba(255, 255, 255, 0.08);
+	clip-path: none;
+	color: rgba(var(--white-rgb), 0.86);
+	font-size: 1rem;
+	font-weight: 700;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	transition:
+		clip-path var(--fade-default-duration) ease,
+		transform var(--fade-default-duration) ease;
+}
+
+.match-point-rounds:not(.--active) {
+	transform: translateY(-100%);
+}
+
+.match-point-rounds.--is-multiple-map-series {
+	clip-path: none;
+}
+
+.match-point-rounds.--is-multiple-map-series:not(.--active) {
+	clip-path: none;
+}
+
+.hud-viewport.--style-compact .match-point-rounds {
+	min-height: 1.25rem;
+	font-size: 0.78rem;
+	letter-spacing: 0.16em;
+}
+
+

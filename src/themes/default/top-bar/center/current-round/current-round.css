@@ -1,0 +1,29 @@
+.current-round {
+	grid-area: auto;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 0.1rem;
+
+	padding: 0.28rem 0.42rem;
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+		rgba(var(--black-rgb), 0.58);
+	border-left: 0.1rem solid rgba(255, 255, 255, 0.1);
+	border-right: 0.1rem solid rgba(255, 255, 255, 0.1);
+}
+
+.current-round.--warmup {
+	font-size: 1.5rem;
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+
+.hud-viewport.--style-compact .current-round {
+	padding-left: 0.25rem;
+	padding-right: 0.25rem;
+}
+
+

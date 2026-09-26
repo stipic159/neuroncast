@@ -1,0 +1,7 @@
+<div :class="['series-graph-wrapper', { '--on-side': $opts['preferences.seriesGraph.sideMode'] }]">
+	<div :class="['series-graph', { '--active': $round.isFreezetime }]">
+		<Match v-for="match of matches" :match="match" />
+	</div>
+</div>
+
+

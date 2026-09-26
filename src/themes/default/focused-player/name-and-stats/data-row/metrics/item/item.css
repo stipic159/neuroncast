@@ -1,0 +1,35 @@
+.metric {
+	margin-right: 0.42rem;
+}
+
+.label,
+.value {
+	text-align: center;
+}
+
+.label {
+	font-size: 1.2rem;
+	transition: color var(--fade-fast-duration) ease;
+}
+
+.label.--ct {
+	color: var(--counter-terrorists-text);
+}
+
+.label.--t {
+	color: var(--terrorists-text);
+}
+
+.value {
+	min-width: 3ch;
+}
+
+.hud-viewport.--style-compact .metric {
+	margin-right: 0.18rem;
+}
+
+.hud-viewport.--style-compact .label {
+	font-size: 1rem;
+}
+
+

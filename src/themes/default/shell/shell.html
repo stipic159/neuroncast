@@ -1,0 +1,363 @@
+<div :class="['hud-viewport', '--scene-' + ($opts['match.activeScene'] || 'default'), '--style-' + ($opts['css.ui-style'] || 'slanted'), $additionalState.connectionState ? 'ws-' + $additionalState.connectionState : 'ws-connected']">
+	<div v-if="$map.name || ['intro', 'halftime', 'fulltime', 'over', 'analytics'].includes($opts['match.activeScene'])" class="hud-stage">
+		<Telestrator />
+		<MvpCard v-if="false" />
+		<PromotionPanel v-if="$map.name" />
+		<div class="hud-scene-background" ref="vantaContainer">
+		</div>
+
+		<!-- Scene: Match Intro -->
+		<div class="scene-board --intro">
+			<main v-if="komplettligaenMatch" class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-match-overlay">
+					<section class="kl-match-card">
+					<header class="kl-match-meta">
+						<span>{{ komplettligaenMatch.division || 'Komplettligaen' }}</span>
+						<strong>{{ komplettligaenMatch.round }}</strong>
+					</header>
+
+					<div class="kl-scoreboard">
+						<article :class="['kl-team', 'home', { featured: isFeaturedKomplettligaenTeam(komplettligaenMatch.home), 'match-winner': komplettligaenMatch.matchWinner === 'home' }]">
+							<img :src="komplettligaenMatch.home.logo" alt="">
+							<h2>{{ komplettligaenMatch.home.name }}</h2>
+						</article>
+
+						<div :class="['kl-score', { 'is-final': komplettligaenMatch.matchWinner }]">
+							<small>Series</small>
+							<div class="kl-series-score">
+								<span>{{ komplettligaenMatch.series?.home ?? komplettligaenMatch.home.score ?? 0 }}</span>
+								<b>-</b>
+								<span>{{ komplettligaenMatch.series?.away ?? komplettligaenMatch.away.score ?? 0 }}</span>
+							</div>
+							<strong>
+								<span v-if="komplettligaenMatchDetail.label">
+									<span>{{ komplettligaenMatchDetail.label }}</span>
+									<span v-if="komplettligaenMatchDetail.hasScore"> {{ komplettligaenMatchDetail.homeScore }} - {{ komplettligaenMatchDetail.awayScore }}</span>
+									|
+								</span>
+								BO{{ komplettligaenMatch.bestOf || 3 }}
+							</strong>
+							<em>{{ komplettligaenMatch.matchWinner ? komplettligaenMatchDetail.label : '' }}</em>
+						</div>
+
+						<article :class="['kl-team', 'away', { featured: isFeaturedKomplettligaenTeam(komplettligaenMatch.away), 'match-winner': komplettligaenMatch.matchWinner === 'away' }]">
+							<img :src="komplettligaenMatch.away.logo" alt="">
+							<h2>{{ komplettligaenMatch.away.name }}</h2>
+						</article>
+					</div>
+
+					<div class="kl-maps-exact">
+						<KlSeries :match="komplettligaenMatch" />
+					</div>
+					</section>
+					</section>
+				</div>
+			</main>
+			<div v-else-if="!komplettligaenMatch" class="kl-empty"><div class="kl-eyebrow">Komplettligaen</div><div class="intro-map">Set a GG Arena match ID in Live Control</div></div>
+		</div>
+
+		<!-- Scene: Halftime / Over Scoreboard -->
+		<div class="scene-board --halftime">
+			<main v-if="komplettligaenMatch && komplettligaenView === 'waiting'" class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-waiting-scene">
+					<section class="kl-waiting-match">
+					<header class="kl-match-meta">
+						<span>{{ komplettligaenMatch.division || 'Komplettligaen' }}</span>
+						<strong>{{ komplettligaenMatch.round }}</strong>
+					</header>
+					<div class="kl-waiting-scoreboard">
+						<article class="kl-waiting-team">
+							<img :src="komplettligaenMatch.home.logo" alt="">
+							<h1>{{ komplettligaenMatch.home.name }}</h1>
+						</article>
+						<div class="kl-waiting-score">
+							<small>BO{{ komplettligaenMatch.bestOf || 3 }}</small>
+							<div class="kl-waiting-series">
+								<span>{{ komplettligaenMatch.series?.home ?? komplettligaenMatch.home.score ?? 0 }}</span>
+								<b>-</b>
+								<span>{{ komplettligaenMatch.series?.away ?? komplettligaenMatch.away.score ?? 0 }}</span>
+							</div>
+							<strong>{{ komplettligaenMatchState }}</strong>
+						</div>
+						<article class="kl-waiting-team">
+							<img :src="komplettligaenMatch.away.logo" alt="">
+							<h1>{{ komplettligaenMatch.away.name }}</h1>
+						</article>
+					</div>
+					<div class="kl-maps-exact">
+						<KlSeries :match="komplettligaenMatch" />
+					</div>
+					</section>
+
+					<section class="kl-waiting-bottom">
+					<article class="kl-standings">
+						<header class="kl-panel-head"><h2>Table</h2><span>{{ komplettligaenMatch.division || 'Division' }}</span></header>
+						<table>
+							<thead><tr><th>#</th><th class="team-cell">Team</th><th>K</th><th>W</th><th>L</th><th>+/-</th><th>P</th></tr></thead>
+							<tbody>
+								<tr v-for="row in komplettligaenTableRows" :key="row.placement + row.team" :class="{ featured: isFeaturedTableRow(row) }">
+									<td class="rank">{{ row.placement }}</td>
+									<td class="team-cell"><span class="team-cell-content"><img v-if="row.logo" class="table-logo" :src="row.logo" alt=""><span>{{ row.team }}</span></span></td>
+									<td>{{ row.played }}</td><td>{{ row.wins }}</td><td>{{ row.losses }}</td><td>{{ row.diff }}</td><td class="points">{{ row.points }}</td>
+								</tr>
+							</tbody>
+						</table>
+					</article>
+					<article class="kl-form-panel">
+						<header class="kl-panel-head"><h2>Upcoming & Last 3</h2><span>Match teams</span></header>
+						<div :class="['kl-team-games', { single: komplettligaenTeamGames.length === 1 }]">
+							<section v-for="team in komplettligaenTeamGames" :key="team.team.id" class="kl-games-team">
+								<header class="kl-games-title"><img :src="team.team.logo" alt=""><h3>{{ team.team.name }}</h3></header>
+								<div class="kl-games-lists">
+									<section class="list upcoming"><h4>Upcoming</h4><article v-for="game in team.upcoming.slice(0, 3)" :key="game.id" class="game"><time>{{ formatKomplettligaenDate(game.startsAt) }}</time><span>{{ game.opponent.name }}</span><strong>BO{{ game.bestOf || 3 }}</strong></article><span v-if="!team.upcoming.length" class="empty">No games</span></section>
+									<section class="list last"><h4>Last 3</h4><article v-for="game in team.last.slice(0, 3)" :key="game.id" class="game"><time>{{ game.round || 'Match' }}</time><span>{{ game.opponent.name }}</span><strong><i :class="['result', { loss: game.result === 'L' }]">{{ game.result || '-' }}</i>{{ game.score || '-' }}</strong></article><span v-if="!team.last.length" class="empty">No games</span></section>
+								</div>
+							</section>
+						</div>
+					</article>
+					</section>
+					</div>
+			</main>
+			<WaitingIdle v-if="komplettligaenView === 'waiting'" />
+
+			<main v-if="komplettligaenMatch && komplettligaenView === 'result'" class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-waiting-scene">
+					<section class="kl-waiting-match">
+					<header class="kl-match-meta">
+						<span>{{ komplettligaenMatch.division || 'Komplettligaen' }}</span>
+						<strong>{{ komplettligaenMatch.round }}</strong>
+					</header>
+					<div class="kl-waiting-scoreboard">
+						<article :class="['kl-waiting-team', { 'kl-winner': komplettligaenMatch.matchWinner === 'home' }]">
+							<img :src="komplettligaenMatch.home.logo" alt="">
+							<h1>{{ komplettligaenMatch.home.name }}</h1>
+						</article>
+						<div class="kl-waiting-score">
+							<small>BO{{ komplettligaenMatch.bestOf || 3 }}</small>
+							<div class="kl-waiting-series">
+								<span :class="{ 'kl-winner-score': komplettligaenMatch.matchWinner === 'home' }">{{ komplettligaenMatch.series?.home ?? 0 }}</span>
+								<b>-</b>
+								<span :class="{ 'kl-winner-score': komplettligaenMatch.matchWinner === 'away' }">{{ komplettligaenMatch.series?.away ?? 0 }}</span>
+							</div>
+							<strong v-if="komplettligaenMatch.matchWinner" class="kl-winner-label">🏆 {{ komplettligaenMatch.matchWinner === 'home' ? komplettligaenMatch.home.name : komplettligaenMatch.away.name }} wins</strong>
+							<strong v-else>Match result</strong>
+						</div>
+						<article :class="['kl-waiting-team', { 'kl-winner': komplettligaenMatch.matchWinner === 'away' }]">
+							<img :src="komplettligaenMatch.away.logo" alt="">
+							<h1>{{ komplettligaenMatch.away.name }}</h1>
+						</article>
+					</div>
+					<div class="kl-maps-exact">
+						<article v-for="map in komplettligaenMatch.maps" :key="map.number" :class="['kl-map-exact', { finished: map.finished }]" :style="mapBackgroundStyle(map)">
+							<span class="map-number">Map {{ map.number }}</span>
+							<b>{{ map.name || 'TBD' }}</b>
+							<strong>{{ map.homeScore ?? '-' }} : {{ map.awayScore ?? '-' }}</strong>
+							<img v-if="map.winner === 'home' || map.winner === 'away'" class="map-winner" :src="map.winner === 'home' ? komplettligaenMatch.home.logo : komplettligaenMatch.away.logo" alt="">
+							<span v-else class="map-placeholder">TBD</span>
+						</article>
+					</div>
+					</section>
+
+					<section class="kl-waiting-bottom kl-result-bottom">
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ komplettligaenMatch.home.name }}</h2><span>Player stats</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">Rating</th></tr></thead>
+								<tbody>
+									<tr v-for="p in komplettligaenMatch.home.stats" :key="p.userId">
+										<td class="player-cell">{{ getPlayerName(p) }}</td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ calculateKD(p.kills, p.deaths) }}</td><td class="rating">{{ p.rating }}</td>
+									</tr>
+									<tr v-if="!komplettligaenMatch.home.stats?.length"><td colspan="6" class="empty">No stats available</td></tr>
+								</tbody>
+							</table>
+						</article>
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ komplettligaenMatch.away.name }}</h2><span>Player stats</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">Rating</th></tr></thead>
+								<tbody>
+									<tr v-for="p in komplettligaenMatch.away.stats" :key="p.userId">
+										<td class="player-cell">{{ getPlayerName(p) }}</td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ calculateKD(p.kills, p.deaths) }}</td><td class="rating">{{ p.rating }}</td>
+									</tr>
+									<tr v-if="!komplettligaenMatch.away.stats?.length"><td colspan="6" class="empty">No stats available</td></tr>
+								</tbody>
+							</table>
+						</article>
+					</section>
+					</section>
+				</div>
+			</main>
+
+			<main v-if="komplettligaenView === 'table'" class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-games-overlay">
+					<section class="kl-games-shell">
+						<header class="kl-games-header">
+							<div><p class="eyebrow">Komplettligaen</p><h1>{{ komplettligaenMatch?.division || 'Team fixtures' }}</h1></div>
+							<span class="badge">Upcoming & form</span>
+					</header>
+					<div :class="['kl-fixture-teams', { single: komplettligaenTeamGames.length === 1 }]">
+						<article v-for="team in komplettligaenTeamGames" :key="team.team.id" class="kl-team-panel">
+							<header class="kl-team-head"><img class="team-logo" :src="team.team.logo" alt=""><h2>{{ team.team.name }}</h2></header>
+							<div class="kl-team-blocks">
+								<section class="block"><h3>Upcoming</h3><div class="list"><article v-for="game in team.upcoming" :key="game.id" class="fixture-game"><span class="meta">{{ formatKomplettligaenDate(game.startsAt) }}</span><img class="opponent-logo" :src="game.opponent.logo" alt=""><span class="opponent">{{ game.opponent.name }}</span><strong class="score">BO{{ game.bestOf || 3 }}</strong></article><span v-if="!team.upcoming.length" class="empty">No games found</span></div></section>
+								<section class="block"><h3>Last 5</h3><div class="list"><article v-for="game in team.last" :key="game.id" class="fixture-game"><span class="meta">{{ game.round || 'Match' }}</span><img class="opponent-logo" :src="game.opponent.logo" alt=""><span class="opponent">{{ game.opponent.name }}</span><strong class="score"><span :class="['result', { loss: game.result === 'L' }]">{{ game.result || '-' }}</span> {{ game.score }}</strong></article><span v-if="!team.last.length" class="empty">No games found</span></div></section>
+							</div>
+						</article>
+						</div>
+						<section class="kl-tableform-bottom">
+							<article class="kl-standings">
+								<header class="kl-panel-head"><h2>Table</h2><span>{{ komplettligaenMatch?.division || 'Division' }}</span></header>
+								<table>
+									<thead><tr><th>#</th><th class="team-cell">Team</th><th>K</th><th>W</th><th>L</th><th>+/-</th><th>P</th></tr></thead>
+									<tbody>
+										<tr v-for="row in komplettligaenTableRows" :key="row.placement + row.team" :class="{ featured: isFeaturedTableRow(row) }">
+											<td class="rank">{{ row.placement }}</td>
+											<td class="team-cell"><span class="team-cell-content"><img v-if="row.logo" class="table-logo" :src="row.logo" alt=""><span>{{ row.team }}</span></span></td>
+											<td>{{ row.played }}</td><td>{{ row.wins }}</td><td>{{ row.losses }}</td><td>{{ row.diff }}</td><td class="points">{{ row.points }}</td>
+										</tr>
+									</tbody>
+								</table>
+							</article>
+
+						</section>
+					</section>
+					</section>
+					</section>
+				</div>
+			</main>
+
+			<div v-if="isLoadingKomplettligaen && !komplettligaenMatch" class="kl-loading">
+				<div class="kl-spinner"></div>
+				<div class="kl-loading-text">Fetching live data...</div>
+			</div>
+			<div v-if="isLoadingKomplettligaen && komplettligaenMatch" class="kl-subtle-loader">
+				<div class="kl-spinner --subtle"></div>
+				<span>Refreshing...</span>
+			</div>
+			<div v-else-if="!komplettligaenMatch && komplettligaenView !== 'table'" class="kl-empty">
+				<div class="scoreboard-meta">KOMPLETTLIGAEN</div>
+				<div class="intro-map">No match loaded</div>
+			</div>
+		</div>
+
+		<!-- Win Probability Graph Overlay (Temporarily hidden) -->
+		<div v-if="false" class="analysis-overlay">
+			<WinProbGraph />
+		</div>
+		
+		<!-- Round Won Poster Overlay (legacy — suppressed when RoundResultBanner is enabled) -->
+		<Transition name="kl-fade">
+			<div v-if="$round.phase === 'over' && $round.winningSide && !$opts['preferences.roundResultBanner.enabled']" class="round-won-poster-overlay">
+				<div :class="['round-won-poster-card', $round.winningSide === 'CT' ? '--ct' : '--t']">
+					<div class="glow-effect"></div>
+					<div class="poster-content">
+						<img
+							v-if="winningTeamLogo"
+							:src="winningTeamLogo"
+							class="poster-team-logo"
+							alt=""
+							@error="posterLogoFailed = true"
+							@load="posterLogoFailed = false"
+							v-show="!posterLogoFailed"
+						>
+						<div class="poster-text">
+							<h1 class="poster-title">{{ winningTeamName }}</h1>
+							<p class="poster-subtitle">Wins the Round</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</Transition>
+		
+		<!-- Round Result Banner — Layer 3: Informational Overlay -->
+		<RoundResultBanner v-if="$map.name" :match="komplettligaenMatch" />
+
+		<SvgFilters />
+		<Sponsors />
+
+		<Radar v-if="$map.name" />
+		<MapWinner v-if="$map.name" />
+		<!-- Custom scoreboard: hidden until eon-director sends draw:scoreboard -->
+		<Scoreboard v-if="$map.name" />
+		<!-- Player spotlight: hidden until eon-director sends draw:highlight -->
+		<PlayerHighlight v-if="$map.name" />
+		<BombCallout v-if="$map.name" />
+		<!-- MVP Card Temporarily hidden: <MvpCard v-if="$map.name" /> -->
+		<TopBar v-if="$map.name" :match="komplettligaenMatch" />
+		<PlayersAlive v-if="$map.name" />
+
+		<div v-if="showObserverDataWarning" class="observer-warning">
+			<div class="observer-warning__title">Observer data unavailable</div>
+			<div class="observer-warning__copy">CS2 is connected, but full spectator `allplayers` data is not being sent yet.</div>
+		</div>
+
+		<Sidebars v-if="$map.name" />
+		<FocusedPlayer v-if="$map.name" />
+
+		<div
+			v-if="$map.name && ($opts['series.name.center'] || $opts['series.name.left'] || $opts['series.name.right'])"
+			class="event-badge"
+		>
+			<img class="event-badge__logo" :src="$opts['series.logoUrl'] || '/hud/img/branding/logo-ubg.png'" alt="Event logo">
+
+			<div class="event-badge__copy">
+				<div class="event-badge__title">
+					{{ $opts['series.name.center'] || 'NeuronCast' }}
+				</div>
+
+				<div class="event-badge__meta">
+					<span v-if="$opts['series.name.left']">{{ $opts['series.name.left'] }}</span>
+					<span v-if="$opts['series.name.left'] && $opts['series.name.right']" class="event-badge__separator">|</span>
+					<span v-if="$opts['series.name.right']">{{ $opts['series.name.right'] }}</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- the in-game series strips stay out of the KL waiting / result panels,
+		     which carry their own full-size series row (kl-series) -->
+		<div class="maps" v-if="$map.name && !$opts['preferences.maps.sleek'] && !klPanelVisible">
+			<Maps />
+		</div>
+
+		<div class="maps-sleek-container" v-if="$map.name && komplettligaenMatch && $opts['preferences.maps.sleek'] && !klPanelVisible">
+			<MapsSleek :match="komplettligaenMatch" />
+		</div>
+
+		<SeriesGraph v-if="$map.name" />
+
+		<div v-if="$map.name" class="current-map">
+			<div class="current-map__label">NOW PLAYING</div>
+			<div class="current-map__name">{{ $map.formattedName }}</div>
+		</div>
+	</div>
+
+	<template v-else>
+		<Corners />
+
+		<div class="standby">
+			<div class="standby-card">
+				<div class="standby-brand">
+					<img class="standby-logo" :src="$opts['series.logoUrl'] || '/hud/img/branding/logo-ubg.png'" alt="Event logo">
+					<div>
+						<div class="standby-eyebrow">6614Gamers presents</div>
+						<div class="standby-title">NeuronCast</div>
+					</div>
+				</div>
+
+				<div class="standby-copy">The HUD server is running, but no live spectator map data has been received yet.</div>
+				<div class="standby-copy">Open CS2, load the GSI config, then spectate a match, GOTV, or demo.</div>
+			</div>
+		</div>
+		<div class="maps">
+			<Maps />
+		</div>
+	</template>
+</div>
+
+

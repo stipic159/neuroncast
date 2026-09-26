@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>cs-hud</title>
+	<link rel="stylesheet" href="/hud/index.css?v=1776541500447">
+</head>
+<body>
+	<div id="app"></div>
+	<script src="/hud/lib/three.min.js"></script>
+	<script src="/hud/lib/GLTFLoader.js"></script>
+	<script src="/hud/lib/vanta.net.min.js"></script>
+	<script src="/hud/lib/vanta.cells.min.js"></script>
+	<script src="/hud/lib/vanta.waves.min.js"></script>
+	<script src="/hud/lib/vanta.birds.min.js"></script>
+	<script src="/hud/lib/vanta.clouds.min.js"></script>
+	<script src="/hud/lib/p5.min.js"></script>
+	<script src="/hud/lib/vanta.topology.min.js"></script>
+	<script src="/hud/lib/vanta.dots.min.js"></script>
+	<script src="/hud/lib/vanta.halo.min.js"></script>
+	<script type="module" src="/hud/core/app.js?v=1776541500447"></script>
+
+	<script>
+		if (new URL(window.location).searchParams.has('transparent')) {
+			document.documentElement.style.background = 'none'
+			document.body.style.background = 'none'
+		}
+	</script>
+</body>
+</html>

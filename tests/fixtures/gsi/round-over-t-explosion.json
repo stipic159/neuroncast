@@ -1,0 +1,109 @@
+{
+  "provider": {
+    "name": "Eon Simulator",
+    "appid": 730,
+    "version": 1,
+    "steamid": "76561198000000001",
+    "timestamp": 1716382200
+  },
+  "auth": {
+    "token": "7ATvXUzTfBYyMLrA"
+  },
+  "map": {
+    "mode": "competitive",
+    "name": "de_inferno",
+    "phase": "live",
+    "round": 8,
+    "team_t": {
+      "name": "Ember",
+      "score": 5,
+      "consecutive_round_losses": 0,
+      "timeouts_remaining": 3,
+      "matches_won_this_series": 0
+    },
+    "team_ct": {
+      "name": "Nord",
+      "score": 3,
+      "consecutive_round_losses": 1,
+      "timeouts_remaining": 3,
+      "matches_won_this_series": 0
+    }
+  },
+  "round": {
+    "phase": "over",
+    "win_team": "T"
+  },
+  "phase_countdowns": {
+    "phase": "over",
+    "phase_ends_in": "7.0"
+  },
+  "player": {
+    "steamid": "76561198000000002",
+    "name": "Vex",
+    "activity": "playing",
+    "observer_slot": 1
+  },
+  "bomb": {
+    "state": "exploded"
+  },
+  "allplayers": {
+    "76561198000000002": {
+      "steamid": "76561198000000002",
+      "name": "Vex",
+      "team": "T",
+      "observer_slot": 0,
+      "state": {
+        "health": 72,
+        "armor": 100,
+        "helmet": true,
+        "defusekit": false,
+        "flashed": 0,
+        "burning": 0,
+        "money": 1200,
+        "equip_value": 4750,
+        "round_kills": 2,
+        "round_killhs": 1,
+        "round_totaldmg": 210
+      },
+      "match_stats": {
+        "kills": 12,
+        "assists": 2,
+        "deaths": 6,
+        "mvps": 2,
+        "score": 26
+      },
+      "weapons": {
+        "weapon_0": { "name": "weapon_ak47", "paintkit": "default", "state": "active", "type": "Rifle" }
+      }
+    },
+    "76561198000000007": {
+      "steamid": "76561198000000007",
+      "name": "Cloak",
+      "team": "CT",
+      "observer_slot": 6,
+      "state": {
+        "health": 0,
+        "armor": 0,
+        "helmet": false,
+        "defusekit": false,
+        "flashed": 0,
+        "burning": 0,
+        "money": 2400,
+        "equip_value": 0,
+        "round_kills": 0,
+        "round_killhs": 0,
+        "round_totaldmg": 0
+      },
+      "match_stats": {
+        "kills": 8,
+        "assists": 4,
+        "deaths": 9,
+        "mvps": 1,
+        "score": 18
+      },
+      "weapons": {
+        "weapon_0": { "name": "weapon_knife", "paintkit": "default", "state": "active", "type": "Knife" }
+      }
+    }
+  }
+}

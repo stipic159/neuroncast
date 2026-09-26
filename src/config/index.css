@@ -1,0 +1,107 @@
+@import url('/config/styles/fonts.css');
+@import url('/config/styles/tokens.css');
+@import url('/config/styles/components.css');
+
+*,
+*::after,
+*::before {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+:root {
+	color-scheme: dark;
+	--page-background:
+		radial-gradient(circle at top, rgba(77, 115, 255, 0.18), transparent 38%),
+		radial-gradient(circle at right, rgba(36, 160, 122, 0.14), transparent 32%),
+		linear-gradient(180deg, #111826 0%, #0b1018 100%);
+	--panel-background: rgba(15, 23, 35, 0.84);
+	--panel-border: rgba(151, 164, 186, 0.18);
+	--panel-highlight: rgba(255, 255, 255, 0.05);
+	--text-primary: #f3f6fb;
+	--text-secondary: #b4c0d2;
+	--text-muted: #8792a6;
+	--accent: #6da6ff;
+	--accent-strong: #3f7cff;
+	--success: #25c07a;
+	--warning: #ffd24d;
+}
+
+html {
+	background: #0b1018;
+	color: var(--text-secondary);
+	font-family: 'Source Sans Pro', 'Ubuntu', 'Segoe UI Variable', 'Segoe UI', system-ui, ui-sans-serif, 'Calibri', sans-serif;
+	line-height: 1.45;
+	scroll-behavior: smooth;
+}
+
+body {
+	min-height: 100vh;
+	background: var(--page-background);
+}
+
+a {
+	color: inherit;
+}
+
+button,
+input,
+textarea {
+	font: inherit;
+}
+
+code {
+	font-family: 'Cascadia Code', 'Consolas', 'SFMono-Regular', ui-monospace, monospace;
+}
+
+/* ── Mocks: lan66 aesthetic (slants) ── */
+.mock-topbar-team {
+	transform: skewX(-20deg);
+	padding: 0 1rem;
+	background: rgba(255, 255, 255, 0.05);
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.mock-topbar-team.--right {
+	transform: skewX(20deg);
+}
+
+.mock-topbar-team>* {
+	transform: skewX(20deg);
+	/* Counter-skew text/logos */
+}
+
+.mock-topbar-team.--right>* {
+	transform: skewX(-20deg);
+}
+
+.mock-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.mock-player-row {
+	transform: skewX(-15deg);
+	background: rgba(15, 23, 35, 0.9);
+	padding: 2px 10px;
+	border-left: 3px solid var(--accent);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.mock-player-row>* {
+	transform: skewX(15deg);
+}
+
+.mock-hp-bar {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--success);
+}

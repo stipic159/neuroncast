@@ -1,0 +1,58 @@
+{
+  "name": "neuroncast",
+  "version": "0.1.0",
+  "description": "NeuronCast - CS2 Realtime Broadcast HUD & Production Overlay Suite",
+  "author": "Stepan (stipic159) <https://github.com/stipic159>",
+  "private": false,
+  "license": "ISC",
+  "type": "module",
+  "main": "src/server/index.js",
+  "scripts": {
+    "start": "node .",
+    "dev": "nodemon .",
+    "start:ui-dev": "node . --ui-dev-mode",
+    "dev:ui": "nodemon . --ui-dev-mode",
+    "overlay": "electron src/electron/hud.js",
+    "config": "electron src/electron/config.js",
+    "radar": "electron src/electron/radar.js",
+    "start:all": "concurrently -k -n SERVER,OVERLAY \"npm run start\" \"npm run overlay\"",
+    "start:broadcast": "concurrently -k -n SERVER,OVERLAY,RADAR \"npm run start\" \"npm run overlay\" \"npm run radar\"",
+    "theme:validate": "node scripts/theme-validate.js",
+    "broadcast:start": "node scripts/broadcast-start.js",
+    "test:smoke": "playwright test",
+    "gsi:simulate": "node scripts/gsi-simulator.js",
+    "test:unit": "node --test tests/unit/*.test.mjs"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/noto-sans": "^5.2.10",
+    "@fontsource/quantico": "^5.2.7",
+    "@fontsource/space-grotesk": "^5.2.10",
+    "@koa/router": "^14.0.0",
+    "koa": "^3.0.1",
+    "koa-bodyparser": "^4.4.1",
+    "koa-compress": "^5.1.1",
+    "koa-send": "^5.0.1",
+    "lodash-es": "^4.17.21",
+    "normalize.css": "^8.0.1",
+    "resolve-path": "^1.4.0",
+    "tiny-emitter": "^2.1.0",
+    "vue": "^3.5.22",
+    "vue3-sfc-loader": "^0.9.5",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "concurrently": "^9.2.1",
+    "electron": "43.0.0",
+    "nodemon": "^3.1.10"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "src/themes/userspace/**"
+    ],
+    "events": {
+      "start": "cls || clear"
+    }
+  }
+}

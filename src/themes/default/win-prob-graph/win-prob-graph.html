@@ -1,0 +1,28 @@
+<div class="win-prob-graph">
+	<div class="win-prob-graph__header">
+		<div class="win-prob-graph__title">Win Probability</div>
+		<div class="win-prob-graph__value" :class="{ '--ct': currentProbPct >= 50, '--t': currentProbPct < 50 }">
+			{{ currentProbPct }}% {{ currentProbPct >= 50 ? 'CT' : 'T' }}
+		</div>
+	</div>
+	
+	<div class="win-prob-graph__svg-wrap">
+		<svg viewBox="0 0 1000 400" preserveAspectRatio="none">
+			<!-- Center line -->
+			<line x1="0" y1="200" x2="1000" y2="200" class="guide-line" />
+			
+			<!-- Probability line -->
+			<polyline :points="points" fill="none" class="prob-line" />
+			
+			<!-- Glow effect mask/duplicate -->
+			<polyline :points="points" fill="none" class="prob-line --glow" />
+		</svg>
+	</div>
+
+	<div class="win-prob-graph__footer">
+		<span>COUNTER-TERRORIST</span>
+		<span>TERRORIST</span>
+	</div>
+</div>
+
+

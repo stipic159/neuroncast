@@ -1,0 +1,9 @@
+<div
+	v-if="isPositionValid"
+	:class="['dead-player', { '--default-level': level === 'default' }]"
+	:style="{ left: `${coordinates.x}%`, top: `${coordinates.y}%` }"
+>
+	<img src="/hud/img/icons/radar-dead-player.svg" alt="" :class="colorClass">
+</div>
+
+

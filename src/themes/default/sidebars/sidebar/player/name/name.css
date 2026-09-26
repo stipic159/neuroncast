@@ -1,0 +1,69 @@
+.name {
+	grid-area: name;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+	padding: 0 0.7rem;
+
+	overflow: hidden;
+	background:
+		linear-gradient(90deg, rgba(255, 255, 255, 0.04), transparent),
+		rgba(var(--black-rgb), 0.12);
+}
+
+.name .primary,
+.name .subtitle {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.name .primary {
+	font-weight: 700;
+	line-height: 1.05;
+	letter-spacing: 0;
+}
+
+.name .subtitle {
+	margin-top: 0.15rem;
+	color: var(--white-70);
+	font-size: 0.68em;
+	font-weight: 600;
+	line-height: 1;
+	text-transform: none;
+}
+
+.name.--right {
+	text-align: right;
+	align-items: flex-end;
+	background:
+		linear-gradient(270deg, rgba(255, 255, 255, 0.04), transparent),
+		rgba(var(--black-rgb), 0.12);
+}
+
+.hud-viewport.--style-compact .name {
+	padding-left: 0.45rem;
+	padding-right: 0.45rem;
+}
+
+.hud-viewport.--style-compact .name .primary {
+	font-size: 0.82em;
+}
+
+.hud-viewport.--style-diagonal .name {
+	background:
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.12), transparent 55%),
+		rgba(var(--black-rgb), 0.14);
+}
+
+.hud-viewport.--style-diagonal .name.--right {
+	background:
+		linear-gradient(270deg, rgba(var(--terrorists-fill-rgb), 0.12), transparent 55%),
+		rgba(var(--black-rgb), 0.14);
+}
+
+

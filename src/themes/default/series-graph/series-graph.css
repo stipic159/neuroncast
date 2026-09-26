@@ -1,0 +1,41 @@
+.series-graph-wrapper {
+	position: absolute;
+	left: var(--viewport-margin-left);
+	right: var(--viewport-margin-right);
+	bottom: var(--viewport-margin-bottom);
+
+	filter: var(--filter-drop-shadow);
+	overflow: hidden;
+}
+
+.series-graph-wrapper.--on-side {
+	left: 0;
+	bottom: auto;
+	top: 50%;
+	transform: translateY(-50%);
+	width: auto;
+	height: auto;
+	overflow: visible;
+}
+
+.series-graph {
+	display: flex;
+	align-items: flex-end;
+
+	transition: transform var(--fade-slow-duration) ease;
+}
+
+.series-graph-wrapper.--on-side .series-graph {
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.series-graph:not(.--active) {
+	transform: translateY(105%);
+}
+
+.series-graph-wrapper.--on-side .series-graph:not(.--active) {
+	transform: translateX(-105%);
+}
+
+

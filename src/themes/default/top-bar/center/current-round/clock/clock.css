@@ -1,0 +1,53 @@
+img.paused-icon,
+img.planted-bomb-icon {
+	height: 2rem;
+	margin: 0.125rem 0;
+}
+
+.clock {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 2.05rem;
+	font-weight: 800;
+	line-height: 1;
+}
+
+.clock.--red {
+	color: var(--top-bar-clock-red-text);
+}
+
+img.bombsite-icon {
+	height: 1.75rem;
+	margin-left: 0.75rem;
+}
+
+.bomb {
+	height: 2.25rem;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.hud-viewport.--style-compact .clock {
+	font-size: 1.75rem;
+}
+
+.bomb-countdown {
+	font-size: 1.8rem;
+	font-weight: 900;
+	color: #ff4a4a;
+	margin-left: 0.5rem;
+	margin-right: 0.2rem;
+	letter-spacing: -0.02em;
+	text-shadow: 0 0 1rem rgba(255, 74, 74, 0.45);
+	animation: bomb-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes bomb-pulse {
+	0% { opacity: 0.85; transform: scale(0.96); }
+	100% { opacity: 1; transform: scale(1.04); }
+}
+
+

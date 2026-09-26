@@ -1,0 +1,89 @@
+.sponsors {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 6;
+}
+
+.sponsor-slot {
+	position: absolute;
+	width: var(--sponsor-panel-width);
+	min-height: var(--sponsor-panel-height);
+	padding: 0.5rem 0.8rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	background: rgba(8, 10, 14, 0.72);
+	border: 0.1rem solid rgba(255, 255, 255, 0.16);
+	box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.28);
+	backdrop-filter: blur(0.55rem);
+	pointer-events: auto;
+	text-decoration: none;
+}
+
+.sponsor-slot.--left {
+	display: var(--layout-sponsor-left-display, var(--lan66-sponsor-left-display, flex));
+	top: var(--layout-sponsor-left-top, var(--lan66-sponsor-left-top, var(--viewport-margin-top)));
+	left: var(--layout-sponsor-left-left, var(--lan66-sponsor-left-left, var(--viewport-margin-left)));
+}
+
+.sponsor-slot.--right {
+	display: var(--layout-sponsor-right-display, var(--lan66-sponsor-right-display, flex));
+	top: var(--layout-sponsor-right-top, var(--lan66-sponsor-right-top, var(--viewport-margin-top)));
+	right: var(--layout-sponsor-right-right, var(--lan66-sponsor-right-right, var(--viewport-margin-right)));
+}
+
+.sponsor-slot img {
+	display: block;
+	max-width: 100%;
+	max-height: calc(var(--sponsor-panel-height) - 1rem);
+	object-fit: contain;
+}
+
+.sponsor-title {
+	max-width: 100%;
+	overflow: hidden;
+	color: var(--white-90);
+	font-size: 0.8rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-align: center;
+	text-overflow: ellipsis;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+/* ── Carousel Transitions ── */
+.fade-enter-active,
+.fade-leave-active {
+	transition: opacity 0.4s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+	opacity: 0;
+}
+
+.sponsor-slot {
+	width: var(--style-sponsors-width, var(--lan66-sponsor-width, var(--sponsor-panel-width)));
+	height: var(--style-sponsors-height, var(--lan66-sponsor-height, var(--sponsor-panel-height)));
+	min-height: 0;
+}
+
+.sponsor-slot.--left {
+	top: var(--layout-sponsor-left-top, var(--lan66-sponsor-left-top, var(--viewport-margin-top)));
+	left: var(--layout-sponsor-left-left, var(--lan66-sponsor-left-left, var(--viewport-margin-left)));
+}
+
+.sponsor-slot.--right {
+	top: var(--layout-sponsor-right-top, var(--lan66-sponsor-right-top, var(--viewport-margin-top)));
+	right: var(--layout-sponsor-right-right, var(--lan66-sponsor-right-right, var(--viewport-margin-right)));
+}
+
+.sponsor-slot img {
+	max-height: calc(var(--style-sponsors-height, var(--lan66-sponsor-height, var(--sponsor-panel-height))) - 1rem);
+}
+
+

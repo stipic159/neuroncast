@@ -1,0 +1,21 @@
+<div v-if="isActive" :class="['map-winner-overlay', colorClass]">
+	<div v-if="winningTeam && winningTeam.name" class="winner-content-wrapper">
+		<div class="explosion-container">
+			<div v-for="i in 24" :key="i" class="shard"></div>
+		</div>
+
+		<div class="winner-content">
+			<div class="winner-label">Map Winner</div>
+			<div class="team-name">{{ winningTeam.name }}</div>
+			
+			<div class="scores" v-if="losingTeam && losingTeam.name">
+				<div class="round-score">{{ winningTeam.score }} - {{ losingTeam.score }}</div>
+				<div v-if="hasSeriesScore" class="series-score">
+					Series: {{ winningTeam.matchesWonThisSeries }} - {{ losingTeam.matchesWonThisSeries }}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+

@@ -1,0 +1,736 @@
+@import '/dependencies/normalize.css';
+
+@import '/hud/css/base.css';
+@import '/hud/css/font.css';
+@import '/hud/css/transitions/default.css';
+@import '/hud/css/transitions/fast.css';
+@import '/hud/css/vars.css';
+
+:root {
+	--black-rgb: 8, 9, 12;
+	--white-rgb: 248, 248, 246;
+	--theme-colors-red: 240, 49, 37;
+	--theme-colors-green: 56, 148, 107;
+	--theme-colors-ct-fill: 25, 106, 232;
+	--theme-colors-ct-border: 91, 166, 255;
+	--theme-colors-ct-text: 156, 204, 255;
+	--theme-colors-t-fill: 232, 137, 22;
+	--theme-colors-t-border: 255, 181, 71;
+	--theme-colors-t-text: 255, 214, 138;
+
+	--red-rgb: var(--theme-colors-red);
+	--green-rgb: var(--theme-colors-green);
+	--counter-terrorists-fill-rgb: var(--theme-colors-ct-fill);
+	--counter-terrorists-border-rgb: var(--theme-colors-ct-border);
+	--counter-terrorists-text-rgb: var(--theme-colors-ct-text);
+	--terrorists-fill-rgb: var(--theme-colors-t-fill);
+	--terrorists-border-rgb: var(--theme-colors-t-border);
+	--terrorists-text-rgb: var(--theme-colors-t-text);
+	--ct-background:
+		linear-gradient(135deg, rgba(53, 154, 255, 0.96) 0%, rgba(24, 91, 214, 0.96) 48%, rgba(10, 42, 118, 0.98) 100%);
+	--t-background:
+		linear-gradient(135deg, rgba(255, 187, 77, 0.96) 0%, rgba(231, 122, 18, 0.96) 48%, rgba(122, 59, 0, 0.98) 100%);
+	--ct-health-fill:
+		linear-gradient(90deg, #78d7ff 0%, #1f82ff 46%, #0742b8 100%);
+	--t-health-fill:
+		linear-gradient(90deg, rgb(var(--terrorists-fill-rgb)) 0%, #c9690c 48%, #743200 100%);
+	--ct-soft-surface:
+		linear-gradient(135deg, rgba(42, 135, 255, 0.48), rgba(5, 18, 54, 0.72));
+	--t-soft-surface:
+		linear-gradient(135deg, rgba(255, 169, 48, 0.46), rgba(59, 25, 0, 0.72));
+	--team-surface-gloss:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.04) 42%, rgba(0, 0, 0, 0.2));
+	--player-panel-fill:
+		linear-gradient(90deg, rgba(6, 9, 18, 0.92), rgba(14, 19, 32, 0.78));
+	--player-panel-border: rgba(255, 255, 255, 0.12);
+
+	--viewport-margin-top: 1.15rem;
+	--viewport-margin-bottom: 1.5rem;
+	--base-scale-factor: 0.925925926vh;
+	--theme-shapes-radius: 0;
+	--theme-shapes-skew-angle: 20deg;
+	--theme-shapes-skew-complement: 160deg;
+
+	--ui-radius: var(--theme-shapes-radius);
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+
+	/* Refine margins specifically for the 16:9 Stage centering */
+	--lan66-event-badge-left: 2%;
+	--lan66-event-badge-width: clamp(14rem, calc(var(--radar-width) - 2rem), 22rem);
+	--lan66-event-badge-logo-height: 2.1rem;
+	--lan66-event-badge-title-size: 0.98rem;
+	--lan66-event-badge-meta-size: 0.72rem;
+
+	--lan66-current-map-bottom: var(--viewport-margin-bottom);
+	--lan66-current-map-right: var(--viewport-margin-right);
+	--lan66-current-map-width: 16rem;
+
+	--theme-materials-panel-fill: rgba(10, 12, 18, 0.88);
+	--theme-materials-panel-border: rgba(255, 255, 255, 0.18);
+	--lan66-panel-fill: var(--theme-materials-panel-fill);
+	--lan66-panel-border: var(--theme-materials-panel-border);
+	--lan66-accent: rgba(var(--red-rgb), 0.92);
+	--lan66-accent-soft: rgba(var(--red-rgb), 0.2);
+	--lan66-green-soft: rgba(var(--green-rgb), 0.22);
+}
+
+/* Sidebar overrides removed to restore base default layout */
+
+
+.hud-stage .top-bar {
+	width: 62% !important;
+	left: 19% !important;
+	top: var(--lan66-top-bar-top, 1.5%) !important;
+	position: absolute !important;
+}
+
+
+.top-bar {
+	filter: drop-shadow(0 1rem 2.5rem rgba(0, 0, 0, 0.36));
+}
+
+.current-round {
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+		var(--lan66-panel-fill);
+	border: 0.1rem solid var(--lan66-panel-border);
+	box-shadow:
+		0 0 0 0.1rem rgba(var(--red-rgb), 0.16),
+		inset 0 0.1rem 0 rgba(255, 255, 255, 0.06);
+}
+
+/* 
+   Fix Sidebar vertical stacking while maintaining reference proportions.
+   By normalizing the grid areas, we prevent implicit rows that cause vertical gaps.
+*/
+/* Player wrapping overrides removed to restore base default layout */
+
+
+.name-and-stats::before,
+.name-and-stats::after {
+	box-shadow: 0 0 1.4rem rgba(var(--red-rgb), 0.18);
+}
+
+.standby-card {
+	border-color: rgba(var(--red-rgb), 0.34);
+	background:
+		linear-gradient(135deg, rgba(var(--red-rgb), 0.18), transparent 42%),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+		rgba(11, 13, 18, 0.9);
+	box-shadow:
+		0 1.8rem 5rem rgba(0, 0, 0, 0.48),
+		0 0 0 0.1rem rgba(var(--green-rgb), 0.12);
+}
+
+.standby-eyebrow {
+	color: rgba(var(--green-rgb), 0.9);
+}
+
+.sponsor-slot {
+	background:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+		var(--lan66-panel-fill);
+	border-color: rgba(var(--red-rgb), 0.24);
+}
+
+.series-graph-wrapper {
+	display: none !important;
+}
+
+/* Team surface depth */
+.hud-viewport .score.--ct.--left::before,
+.hud-viewport .score.--ct.--right::after,
+.hud-viewport .score.--ct .inner,
+.hud-viewport .top-bar-team-panel-wrapper.--ct::before,
+.hud-viewport .team.--ct,
+.hud-viewport .total.--ct,
+.hud-viewport .inner.--ct,
+.hud-viewport .health-and-armor.--ct::before,
+.hud-viewport .health-and-armor.--ct::after,
+.hud-viewport .ammo.--ct::before,
+.hud-viewport .ammo.--ct::after,
+.hud-viewport .name-and-stats.--ct::before,
+.hud-viewport .name-and-stats.--ct::after {
+	background: var(--team-surface-gloss), var(--ct-fill) !important;
+}
+
+.hud-viewport .score.--t.--left::before,
+.hud-viewport .score.--t.--right::after,
+.hud-viewport .score.--t .inner,
+.hud-viewport .top-bar-team-panel-wrapper.--t::before,
+.hud-viewport .team.--t,
+.hud-viewport .total.--t,
+.hud-viewport .inner.--t,
+.hud-viewport .health-and-armor.--t::before,
+.hud-viewport .health-and-armor.--t::after,
+.hud-viewport .ammo.--t::before,
+.hud-viewport .ammo.--t::after,
+.hud-viewport .name-and-stats.--t::before,
+.hud-viewport .name-and-stats.--t::after {
+	background: var(--team-surface-gloss), var(--t-fill) !important;
+}
+
+.hud-viewport .health.--ct {
+	background: var(--team-surface-gloss), var(--ct-health-fill) !important;
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.26),
+		0 0 0.9rem rgba(var(--counter-terrorists-fill-rgb), 0.28);
+}
+
+.hud-viewport .health.--t {
+	background: var(--team-surface-gloss), var(--t-health-fill) !important;
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.24),
+		0 0 0.9rem rgba(var(--terrorists-fill-rgb), 0.26);
+}
+
+.hud-viewport .health-bar-background {
+	background:
+		linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+		rgba(var(--black-rgb), 0.48);
+}
+
+.hud-viewport .player {
+	background: var(--player-panel-fill);
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.06),
+		0 0 0 0.1rem var(--player-panel-border),
+		0 0.8rem 1.8rem rgba(0, 0, 0, 0.28);
+}
+
+.name.--ct {
+	background:
+		var(--ct-soft-surface),
+		rgba(var(--black-rgb), 0.34);
+}
+
+.name.--t {
+	background:
+		var(--t-soft-surface),
+		rgba(var(--black-rgb), 0.34);
+}
+
+.score .inner,
+.top-bar-team-panel-wrapper::before,
+.team,
+.health,
+.total,
+.health-and-armor .inner,
+.ammo .inner {
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.18),
+		inset 0 -0.16rem 0 rgba(0, 0, 0, 0.22);
+}
+
+.score.--ct .inner,
+.top-bar-team-panel-wrapper.--ct::before,
+.team.--ct,
+.health.--ct,
+.total.--ct {
+	border-color: rgba(var(--counter-terrorists-border-rgb), 0.42);
+}
+
+.score.--t .inner,
+.top-bar-team-panel-wrapper.--t::before,
+.team.--t,
+.health.--t,
+.total.--t {
+	border-color: rgba(var(--terrorists-border-rgb), 0.42);
+}
+
+
+
+/* UI Style Presets */
+.hud-viewport.--style-slanted {
+	--theme-shapes-skew-angle: 20deg;
+	--theme-shapes-skew-complement: 160deg;
+	--theme-shapes-radius: 0;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+	--radar-width: 21%;
+}
+
+.hud-viewport.--style-slanted .hud-stage .top-bar {
+	width: 52% !important;
+	left: 24% !important;
+}
+
+
+.hud-viewport.--style-classic {
+	--theme-shapes-skew-angle: 0deg;
+	--theme-shapes-skew-complement: 0deg;
+	--theme-shapes-radius: 0.12rem;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+	--theme-colors-ct-fill: 18, 83, 185;
+	--theme-colors-t-fill: 206, 129, 20;
+	--counter-terrorists-fill-rgb: var(--theme-colors-ct-fill);
+	--terrorists-fill-rgb: var(--theme-colors-t-fill);
+	--ct-background:
+		linear-gradient(180deg, #2c86ff 0%, #1356bf 52%, #08265f 100%);
+	--t-background:
+		linear-gradient(180deg, #ffc65c 0%, #d88719 52%, #6d3600 100%);
+	--ct-health-fill:
+		linear-gradient(90deg, #87ddff 0%, #2e83ff 42%, #0c318f 100%);
+	--t-health-fill:
+		linear-gradient(90deg, rgb(var(--terrorists-fill-rgb)) 0%, #c46a10 46%, #6f3300 100%);
+	--ct-soft-surface:
+		linear-gradient(90deg, rgba(31, 94, 205, 0.64), rgba(6, 13, 32, 0.84));
+	--t-soft-surface:
+		linear-gradient(90deg, rgba(207, 126, 16, 0.6), rgba(43, 21, 2, 0.84));
+	--team-surface-gloss:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05) 46%, rgba(0, 0, 0, 0.22));
+	--player-panel-fill:
+		linear-gradient(90deg, rgba(3, 8, 20, 0.94), rgba(11, 17, 31, 0.86));
+	--player-panel-border: rgba(255, 255, 255, 0.16);
+	--theme-materials-panel-fill: rgba(6, 10, 20, 0.86);
+	--theme-materials-panel-border: rgba(255, 255, 255, 0.24);
+	--lan66-panel-fill: var(--theme-materials-panel-fill);
+	--lan66-panel-border: var(--theme-materials-panel-border);
+	--radar-width: 21%;
+	--focused-player-width: 38%;
+	--top-bar-score-font-size: 2.45rem;
+	--sidebar-player-row-height: 2.65rem;
+	--sidebar-vertical-spacing: 0.28rem;
+	--sidebar-health-width: 4.2rem;
+	--sidebar-money-width: 5.8rem;
+	--sidebar-start-and-end-width: 0.1rem;
+	--sidebar-observer-slot-width: 1.2rem;
+	--sidebar-kills-width: 3.0rem;
+	--sidebar-deaths-width: 3.0rem;
+	--sidebar-taser-width: 1.2rem;
+	--sidebar-grenades-half-width: 4.0rem;
+	--sidebar-round-kills-width: 1.2rem;
+	--sidebar-primary-and-secondary-width: 6.0rem;
+	--sidebar-player-width: calc(
+		var(--sidebar-deaths-width) +
+		var(--sidebar-grenades-half-width) +
+		var(--sidebar-health-width) +
+		var(--sidebar-kills-width) +
+		var(--sidebar-money-width) +
+		var(--sidebar-observer-slot-width) +
+		var(--sidebar-primary-and-secondary-width) +
+		var(--sidebar-round-kills-width) +
+		var(--sidebar-start-and-end-width) * 2 +
+		var(--sidebar-taser-width)
+	);
+	--sidebar-width: calc(var(--sidebar-player-width) + var(--sidebar-player-focused-player-highlight-width));
+	--sidebar-team-grenades-width: var(--sidebar-player-width);
+	--sidebar-team-equipment-width: var(--sidebar-player-width);
+}
+
+.hud-viewport.--style-compact {
+	--theme-shapes-skew-angle: 0deg;
+	--theme-shapes-skew-complement: 0deg;
+	--theme-shapes-radius: 0;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+	--theme-colors-ct-fill: 0, 117, 255;
+	--theme-colors-t-fill: 255, 124, 24;
+	--counter-terrorists-fill-rgb: var(--theme-colors-ct-fill);
+	--terrorists-fill-rgb: var(--theme-colors-t-fill);
+	--ct-background:
+		linear-gradient(90deg, rgba(0, 147, 255, 0.92), rgba(8, 44, 137, 0.9));
+	--t-background:
+		linear-gradient(90deg, rgba(255, 176, 37, 0.92), rgba(155, 58, 0, 0.9));
+	--ct-health-fill:
+		linear-gradient(90deg, #62e8ff 0%, #008fff 54%, #044ac7 100%);
+	--t-health-fill:
+		linear-gradient(90deg, rgb(var(--terrorists-fill-rgb)) 0%, #d75c0d 56%, #8f2800 100%);
+	--ct-soft-surface:
+		linear-gradient(90deg, rgba(0, 117, 255, 0.38), rgba(4, 8, 18, 0.5));
+	--t-soft-surface:
+		linear-gradient(90deg, rgba(255, 124, 24, 0.36), rgba(18, 8, 2, 0.5));
+	--team-surface-gloss:
+		linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.02) 48%, rgba(0, 0, 0, 0.18));
+	--player-panel-fill:
+		linear-gradient(90deg, rgba(3, 5, 10, 0.76), rgba(9, 12, 18, 0.58));
+	--player-panel-border: rgba(255, 255, 255, 0.08);
+	--theme-materials-panel-fill: rgba(4, 6, 10, 0.76);
+	--theme-materials-panel-border: rgba(255, 255, 255, 0.14);
+	--lan66-panel-fill: var(--theme-materials-panel-fill);
+	--lan66-panel-border: var(--theme-materials-panel-border);
+	--viewport-margin-top: 0.9rem;
+	--viewport-margin-bottom: 1rem;
+	--radar-width: 18%;
+	--focused-player-width: 32%;
+	--top-bar-score-font-size: 2.25rem;
+	--sidebar-player-row-height: 2.35rem;
+	--sidebar-vertical-spacing: 0.18rem;
+	--sidebar-health-width: 3.6rem;
+	--sidebar-money-width: 5.2rem;
+	--sidebar-kills-width: 2.8rem;
+	--sidebar-deaths-width: 2.8rem;
+	--sidebar-start-and-end-width: 0rem;
+	--sidebar-observer-slot-width: 1.1rem;
+	--sidebar-taser-width: 0.8rem;
+	--sidebar-grenades-half-width: 3.0rem;
+	--sidebar-round-kills-width: 0.9rem;
+	--sidebar-primary-and-secondary-width: 4.5rem;
+	--sidebar-player-width: calc(
+		var(--sidebar-deaths-width) +
+		var(--sidebar-grenades-half-width) +
+		var(--sidebar-health-width) +
+		var(--sidebar-kills-width) +
+		var(--sidebar-money-width) +
+		var(--sidebar-observer-slot-width) +
+		var(--sidebar-primary-and-secondary-width) +
+		var(--sidebar-round-kills-width) +
+		var(--sidebar-start-and-end-width) * 2 +
+		var(--sidebar-taser-width)
+	);
+	--sidebar-width: calc(var(--sidebar-player-width) + var(--sidebar-player-focused-player-highlight-width));
+	--sidebar-team-grenades-width: var(--sidebar-player-width);
+	--sidebar-team-equipment-width: var(--sidebar-player-width);
+}
+
+.hud-viewport.--style-diagonal {
+	--theme-shapes-skew-angle: 14deg;
+	--theme-shapes-skew-complement: 166deg;
+	--theme-shapes-radius: 0.2rem 0 0.2rem 0;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+	--theme-colors-ct-fill: 0, 190, 255;
+	--theme-colors-ct-border: 0, 236, 255;
+	--theme-colors-t-fill: 255, 214, 43;
+	--theme-colors-t-border: 255, 245, 91;
+	--counter-terrorists-fill-rgb: var(--theme-colors-ct-fill);
+	--counter-terrorists-border-rgb: var(--theme-colors-ct-border);
+	--terrorists-fill-rgb: var(--theme-colors-t-fill);
+	--terrorists-border-rgb: var(--theme-colors-t-border);
+	--ct-background:
+		linear-gradient(135deg, #00e4ff 0%, #006aff 44%, #121252 100%);
+	--t-background:
+		linear-gradient(135deg, #fff35c 0%, #ff9a1f 44%, #751e00 100%);
+	--ct-health-fill:
+		linear-gradient(100deg, #b7fff8 0%, #00c8ff 38%, #214cff 78%, #121252 100%);
+	--t-health-fill:
+		linear-gradient(100deg, rgb(var(--terrorists-fill-rgb)) 0%, #ff9a1f 38%, #d9480b 78%, #6b1400 100%);
+	--ct-soft-surface:
+		linear-gradient(120deg, rgba(0, 228, 255, 0.58), rgba(20, 18, 82, 0.78));
+	--t-soft-surface:
+		linear-gradient(120deg, rgba(255, 214, 43, 0.58), rgba(76, 19, 0, 0.78));
+	--team-surface-gloss:
+		linear-gradient(120deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04) 38%, rgba(0, 0, 0, 0.24));
+	--player-panel-fill:
+		linear-gradient(105deg, rgba(6, 8, 20, 0.88), rgba(18, 14, 36, 0.74));
+	--player-panel-border: rgba(255, 255, 255, 0.18);
+	--theme-materials-panel-fill: rgba(8, 10, 16, 0.84);
+	--theme-materials-panel-border: rgba(255, 255, 255, 0.22);
+	--lan66-panel-fill: var(--theme-materials-panel-fill);
+	--lan66-panel-border: var(--theme-materials-panel-border);
+	--lan66-accent-soft: rgba(var(--green-rgb), 0.24);
+	--radar-width: 22%;
+	--focused-player-width: 33.6%;
+	--top-bar-score-font-size: 2.7rem;
+	--sidebar-player-row-height: 2.85rem;
+	--sidebar-vertical-spacing: 0.34rem;
+}
+
+.hud-viewport.--style-classic .hud-stage .top-bar {
+	width: 48% !important;
+	left: 26% !important;
+	top: 1.05% !important;
+}
+
+.hud-viewport.--style-compact .hud-stage .top-bar {
+	width: 42% !important;
+	left: 29% !important;
+	top: 0.9% !important;
+}
+
+.hud-viewport.--style-diagonal .hud-stage .top-bar {
+	width: 58% !important;
+	left: 21% !important;
+	top: 1.25% !important;
+}
+
+.hud-viewport.--style-rounded .hud-stage .top-bar {
+	width: 54% !important;
+	left: 23% !important;
+	top: 1.2% !important;
+}
+
+.hud-viewport.--style-classic .player,
+.hud-viewport.--style-compact .player {
+	background: var(--player-panel-fill);
+}
+
+.hud-viewport.--style-classic .sidebar,
+.hud-viewport.--style-compact .sidebar {
+	width: var(--sidebar-width);
+	max-width: var(--sidebar-width);
+}
+
+.hud-viewport.--style-classic .player-wrapper,
+.hud-viewport.--style-compact .player-wrapper {
+	width: calc(var(--player-card-width) + var(--sidebar-player-focused-player-highlight-width));
+	max-width: calc(var(--player-card-width) + var(--sidebar-player-focused-player-highlight-width));
+}
+
+.hud-viewport.--style-classic .player,
+.hud-viewport.--style-compact .player {
+	width: var(--player-card-width);
+}
+
+.hud-viewport.--style-classic .player.--left {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-classic .player.--right {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-compact .player.--left {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-compact .player.--right {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-primary-and-secondary-width)
+		var(--sidebar-round-kills-width)
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		var(--sidebar-start-and-end-width);
+}
+
+/* Dead player card shrinkage styles */
+.hud-viewport.--style-classic .player-wrapper.is-dead {
+	--player-card-width: calc(
+		var(--sidebar-start-and-end-width) * 2 +
+		var(--sidebar-health-width) +
+		var(--sidebar-observer-slot-width) +
+		var(--sidebar-money-width) +
+		var(--sidebar-kills-width) +
+		var(--sidebar-deaths-width) +
+		var(--sidebar-taser-width) +
+		var(--sidebar-grenades-half-width)
+	);
+}
+
+.hud-viewport.--style-classic .player.is-dead.--left {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		0
+		0
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-classic .player.is-dead.--right {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		0
+		0
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-compact .player-wrapper.is-dead {
+	--player-card-width: calc(
+		var(--sidebar-start-and-end-width) * 2 +
+		var(--sidebar-health-width) +
+		var(--sidebar-observer-slot-width) +
+		var(--sidebar-money-width) +
+		var(--sidebar-kills-width) +
+		var(--sidebar-deaths-width) +
+		var(--sidebar-taser-width) +
+		var(--sidebar-grenades-half-width)
+	);
+}
+
+.hud-viewport.--style-compact .player.is-dead.--left {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		var(--sidebar-health-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-money-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-grenades-half-width)
+		0
+		0
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-compact .player.is-dead.--right {
+	grid-template-columns:
+		var(--sidebar-start-and-end-width)
+		0
+		0
+		var(--sidebar-grenades-half-width)
+		var(--sidebar-taser-width)
+		var(--sidebar-kills-width)
+		var(--sidebar-deaths-width)
+		var(--sidebar-money-width)
+		var(--sidebar-observer-slot-width)
+		var(--sidebar-health-width)
+		var(--sidebar-start-and-end-width);
+}
+
+.hud-viewport.--style-classic .current-round,
+.hud-viewport.--style-compact .current-round {
+	box-shadow:
+		0 0 0 0.08rem rgba(255, 255, 255, 0.08),
+		0 0.6rem 1.4rem rgba(0, 0, 0, 0.26);
+}
+
+.hud-viewport.--style-classic .player {
+	border-left: 0.14rem solid rgba(var(--counter-terrorists-border-rgb), 0.22);
+	border-right: 0.14rem solid rgba(var(--terrorists-border-rgb), 0.22);
+}
+
+.hud-viewport.--style-compact .player {
+	backdrop-filter: blur(0.18rem);
+}
+
+.hud-viewport.--style-compact .sidebar.--left {
+	left: var(--lan66-sidebar-left, 0);
+}
+
+.hud-viewport.--style-compact .sidebar.--right {
+	right: var(--lan66-sidebar-right, 0);
+}
+
+.hud-viewport.--style-compact .score .inner,
+.hud-viewport.--style-compact .team,
+.hud-viewport.--style-compact .total,
+.hud-viewport.--style-compact .health {
+	box-shadow:
+		inset 0 0.06rem 0 rgba(255, 255, 255, 0.2),
+		0 0 0.55rem rgba(255, 255, 255, 0.04);
+}
+
+.hud-viewport.--style-diagonal .player,
+.hud-viewport.--style-diagonal .current-round,
+.hud-viewport.--style-diagonal .event-badge,
+.hud-viewport.--style-diagonal .current-map,
+.hud-viewport.--style-diagonal .sponsor-slot {
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.08),
+		0 0.9rem 2rem rgba(0, 0, 0, 0.34),
+		0 0 0 0.1rem rgba(var(--green-rgb), 0.08);
+}
+
+.hud-viewport.--style-diagonal .name-and-stats::before,
+.hud-viewport.--style-diagonal .name-and-stats::after {
+	box-shadow: 0 0 1.8rem rgba(var(--green-rgb), 0.2);
+}
+
+.hud-viewport.--style-diagonal .player {
+	position: relative;
+	overflow: hidden;
+}
+
+.hud-viewport.--style-diagonal .player::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background:
+		linear-gradient(110deg, transparent 0 42%, rgba(255, 255, 255, 0.09) 43% 47%, transparent 48%),
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb), 0.08), rgba(var(--terrorists-fill-rgb), 0.08));
+	pointer-events: none;
+	z-index: -1;
+}
+
+.hud-viewport.--style-diagonal .health.--ct,
+.hud-viewport.--style-diagonal .health.--t {
+	box-shadow:
+		inset 0 0.08rem 0 rgba(255, 255, 255, 0.34),
+		0 0 1.2rem rgba(255, 255, 255, 0.1),
+		0 0 1.6rem currentColor;
+}
+
+.hud-viewport.--style-diagonal .health.--ct {
+	color: rgba(var(--counter-terrorists-fill-rgb), 0.38);
+}
+
+.hud-viewport.--style-diagonal .health.--t {
+	color: rgba(var(--terrorists-fill-rgb), 0.34);
+}
+
+.hud-viewport.--style-squared {
+	--theme-shapes-skew-angle: 0deg;
+	--theme-shapes-skew-complement: 0deg;
+	--theme-shapes-radius: 0;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+}
+.hud-viewport.--style-rounded {
+	--theme-shapes-skew-angle: 0deg;
+	--theme-shapes-skew-complement: 0deg;
+	--theme-shapes-radius: 0.5rem;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+}
+.hud-viewport.--style-abstract {
+	--theme-shapes-skew-angle: 10deg;
+	--theme-shapes-skew-complement: 170deg;
+	--theme-shapes-radius: 1rem 0 1rem 0;
+	--skew-20: var(--theme-shapes-skew-angle);
+	--skew-160: var(--theme-shapes-skew-complement);
+	--ui-radius: var(--theme-shapes-radius);
+}
+
+.layout-hidden, .--layout-hidden {
+	display: none !important;
+}

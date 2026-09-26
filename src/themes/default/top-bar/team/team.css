@@ -1,0 +1,21 @@
+.team {
+	transform-origin: top;
+	min-width: 0;
+}
+
+.team.--left {
+	grid-area: team-left;
+	transform: skewX(var(--skew-20, 20deg)) translateX(-0.55rem);
+}
+
+.team.--right {
+	grid-area: team-right;
+	transform: skewX(calc(var(--skew-20, 20deg) * -1)) translateX(0.55rem);
+}
+
+.hud-viewport.--style-classic .team,
+.hud-viewport.--style-compact .team {
+	transform: none;
+}
+
+

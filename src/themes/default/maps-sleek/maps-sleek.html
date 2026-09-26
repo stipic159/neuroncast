@@ -1,0 +1,27 @@
+<div v-if="match && maps.length" class="maps-sleek">
+
+	<div v-for="(map, index) in maps" :key="index"
+		:class="['maps-sleek__row', {
+			'--current': isCurrent(map),
+			'--finished': map.finished,
+			'--home-won': map.winner === 'home',
+			'--away-won': map.winner === 'away'
+		}]">
+
+		<div class="maps-sleek__side --left">
+			<span v-if="map.homeScore !== null" class="maps-sleek__score">{{ map.homeScore }}</span>
+			<span v-else class="maps-sleek__status">{{ map.status === 'live' ? 'LIVE' : 'TBD' }}</span>
+		</div>
+
+		<div class="maps-sleek__center">
+			<span class="maps-sleek__name">{{ map.name }}</span>
+		</div>
+
+		<div class="maps-sleek__side --right">
+			<span v-if="map.awayScore !== null" class="maps-sleek__score">{{ map.awayScore }}</span>
+			<span v-else class="maps-sleek__status">{{ map.status === 'live' ? 'LIVE' : 'TBD' }}</span>
+		</div>
+
+		<div class="maps-sleek__border"></div>
+	</div>
+</div>

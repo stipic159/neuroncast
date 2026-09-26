@@ -1,0 +1,25 @@
+<div v-if="match" class="kl-series">
+	<article v-for="card in cards" :key="card.number"
+		:class="['kl-series__card', card.stateClass, { '--current': card.current, '--placeholder': card.placeholder }]"
+		:style="card.image ? { backgroundImage: 'url(' + card.image + ')' } : null">
+		<div class="kl-series__shade"></div>
+
+		<div class="kl-series__side --left" :class="{ '--winner': card.winner === 'home', '--loser': card.winner === 'away' }">
+			<img v-if="match.home?.logo" class="kl-series__logo" :src="match.home.logo" alt="">
+			<span v-if="card.homeStartSide" :class="['kl-series__badge', card.homeStartSide === 'CT' ? '--ct' : '--t']">{{ card.homeStartSide }}</span>
+			<span class="kl-series__score">{{ card.homeScore ?? '' }}</span>
+		</div>
+
+		<div class="kl-series__mid">
+			<span class="kl-series__eyebrow">Map {{ card.number }}</span>
+			<span class="kl-series__name">{{ card.name }}</span>
+			<span class="kl-series__status">{{ card.statusLabel }}</span>
+		</div>
+
+		<div class="kl-series__side --right" :class="{ '--winner': card.winner === 'away', '--loser': card.winner === 'home' }">
+			<img v-if="match.away?.logo" class="kl-series__logo" :src="match.away.logo" alt="">
+			<span v-if="card.awayStartSide" :class="['kl-series__badge', card.awayStartSide === 'CT' ? '--ct' : '--t']">{{ card.awayStartSide }}</span>
+			<span class="kl-series__score">{{ card.awayScore ?? '' }}</span>
+		</div>
+	</article>
+</div>

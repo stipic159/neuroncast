@@ -1,0 +1,81 @@
+/*
+ * NeuronCast design tokens — Phase 24+
+ *
+ * Parallel to legacy :root variables in src/config/index.css.
+ * Legacy variables (--accent, --panel-background, --text-*) remain
+ * intact so existing scoped page styles render unchanged.
+ *
+ * Phase 24+ surfaces consume these --eon-* variables exclusively.
+ */
+
+:root {
+	/* Surfaces */
+	--eon-bg:   #09090c;
+	--eon-s1:   #101013;
+	--eon-s2:   #17171b;
+	--eon-s3:   #1e1e24;
+	--eon-s4:   #252530;
+
+	/* Borders */
+	--eon-bd:   #28282f;
+	--eon-bd2:  #373744;
+
+	/* Text */
+	--eon-tx:   #dddde8;
+	--eon-tx2:  #888898;
+	--eon-tx3:  #484858;
+	--eon-tx4:  #303040;
+
+	/* Accent (indigo) */
+	--eon-acc:  #6366f1;
+	--eon-accl: #818cf8;
+	--eon-accd: rgba(99, 102, 241, 0.14);
+
+	/* Semantic */
+	--eon-red:  #f87171;
+	--eon-redd: rgba(248, 113, 113, 0.12);
+	--eon-amb:  #f59e0b;
+	--eon-ambd: rgba(245, 158, 11, 0.12);
+	--eon-grn:  #4ade80;
+	--eon-grnd: rgba(74, 222, 128, 0.12);
+	--eon-blu:  #60a5fa;
+	--eon-blud: rgba(96, 165, 250, 0.12);
+
+	/* Typography */
+	--eon-font-primary: 'Space Grotesk', 'Noto Sans', system-ui, sans-serif;
+	--eon-font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+	/* Type scale */
+	--eon-fs-micro:  9px;
+	--eon-fs-status: 10px;
+	--eon-fs-notes:  11px;
+	--eon-fs-body:   12px;
+	--eon-fs-body2:  12.5px;
+	--eon-fs-title:  13px;
+	--eon-fs-base:   14px;
+	--eon-fs-h1:     20px;
+
+	/* Spacing */
+	--eon-pg-pad-y:   24px;
+	--eon-pg-pad-x:   28px;
+	--eon-card-pad-y: 16px;
+	--eon-card-pad-x: 18px;
+	--eon-card-gap:   16px;
+	--eon-row-gap:    10px;
+	--eon-label-mb:   10px;
+
+	/* Radii */
+	--eon-rad-card:   6px;
+	--eon-rad-input:  3px;
+	--eon-rad-btn-sm: 3px;
+	--eon-rad-btn:    4px;
+	--eon-rad-chip:   2px;
+	--eon-rad-toggle: 8px;
+
+	/* Borders */
+	--eon-bw-card-accent: 3px;
+
+	/* Shadows */
+	--eon-shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4);
+	--eon-shadow-selected: 0 0 0 2px rgba(99, 102, 241, 0.4);
+}

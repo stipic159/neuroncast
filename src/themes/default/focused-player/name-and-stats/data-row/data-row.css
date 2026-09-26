@@ -1,0 +1,33 @@
+.data-row {
+	grid-area: data-row;
+
+	display: grid;
+	grid-template-columns: minmax(13rem, max-content) minmax(5.4rem, 7.6rem) 2rem 2rem minmax(4rem, 1fr);
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.48rem 1.6rem;
+
+	background: transparent;
+	clip-path: none;
+	overflow: hidden;
+}
+
+.active-weapon-icon {
+	max-width: 7.5rem;
+	max-height: 2.2rem;
+	justify-self: center;
+	object-fit: contain;
+}
+
+.hud-viewport.--style-compact .data-row {
+	grid-template-columns: minmax(10.8rem, max-content) minmax(4.4rem, 5.6rem) 1.5rem 1.5rem minmax(2.8rem, 1fr);
+	gap: 0.24rem;
+	padding: 0.36rem 1rem;
+}
+
+.hud-viewport.--style-compact .active-weapon-icon {
+	max-width: 5.3rem;
+	max-height: 1.7rem;
+}
+
+

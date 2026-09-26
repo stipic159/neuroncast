@@ -1,0 +1,10 @@
+<div :class="['bomb-callout', kind ? '--' + kind : '', { '--shown': shown, '--leaving': leaving }]" aria-live="polite">
+	<div class="bc-bar">
+		<img class="bc-icon" src="/hud/img/icons/planted-bomb.svg" alt="">
+		<div class="bc-text">
+			<div class="bc-title">{{ title }}</div>
+			<div v-if="site" class="bc-site">Site {{ site }}</div>
+		</div>
+		<div v-if="kind === 'planted' && countdown != null" class="bc-count">{{ countdown }}</div>
+	</div>
+</div>

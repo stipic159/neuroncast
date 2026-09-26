@@ -1,0 +1,142 @@
+.map-winner-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.85);
+	backdrop-filter: blur(0.5rem);
+	pointer-events: all;
+	animation: fade-overlay 0.5s ease forwards;
+}
+
+.winner-content {
+	position: relative;
+	z-index: 10;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	text-align: center;
+	text-transform: uppercase;
+	color: #fff;
+	animation: content-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.winner-label {
+	font-size: 1.5rem;
+	font-weight: 700;
+	letter-spacing: 0.4em;
+	color: rgba(255, 255, 255, 0.6);
+	margin-bottom: 0.5rem;
+}
+
+.team-name {
+	font-size: 6rem;
+	font-weight: 900;
+	line-height: 1;
+	letter-spacing: -0.02em;
+	margin-bottom: 1.5rem;
+	filter: drop-shadow(0 0 2rem rgba(255, 255, 255, 0.2));
+}
+
+.scores {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.round-score {
+	font-size: 3rem;
+	font-weight: 700;
+	color: var(--white-90);
+}
+
+.series-score {
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.5);
+	letter-spacing: 0.1em;
+}
+
+/* Explosion Effects */
+.explosion-container {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.shard {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 2rem;
+	height: 0.1rem;
+	background: #fff;
+	opacity: 0;
+}
+
+/* Specificity for shards to randomize them without JS */
+.shard:nth-child(4n) { width: 4rem; height: 0.2rem; }
+.shard:nth-child(4n+1) { width: 1.5rem; height: 1.5rem; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+.shard:nth-child(4n+2) { width: 3rem; height: 3rem; clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%); }
+
+.map-winner-overlay.--ct .shard { background: rgba(56, 148, 107, 0.8); }
+.map-winner-overlay.--t .shard { background: rgba(240, 49, 37, 0.8); }
+
+.map-winner-overlay .shard {
+	animation: shard-explode 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Staggered Shard Animations */
+.shard:nth-child(1) { transform: rotate(0deg); animation-delay: 0.1s; }
+.shard:nth-child(2) { transform: rotate(15deg); animation-delay: 0.12s; }
+.shard:nth-child(3) { transform: rotate(30deg); animation-delay: 0.08s; }
+.shard:nth-child(4) { transform: rotate(45deg); animation-delay: 0.15s; }
+.shard:nth-child(5) { transform: rotate(60deg); animation-delay: 0.1s; }
+.shard:nth-child(6) { transform: rotate(75deg); animation-delay: 0.2s; }
+.shard:nth-child(7) { transform: rotate(90deg); animation-delay: 0.05s; }
+.shard:nth-child(8) { transform: rotate(105deg); animation-delay: 0.18s; }
+.shard:nth-child(9) { transform: rotate(120deg); animation-delay: 0.12s; }
+.shard:nth-child(10) { transform: rotate(135deg); animation-delay: 0.22s; }
+.shard:nth-child(11) { transform: rotate(150deg); animation-delay: 0.07s; }
+.shard:nth-child(12) { transform: rotate(165deg); animation-delay: 0.14s; }
+.shard:nth-child(13) { transform: rotate(180deg); animation-delay: 0.1s; }
+.shard:nth-child(14) { transform: rotate(195deg); animation-delay: 0.16s; }
+.shard:nth-child(15) { transform: rotate(210deg); animation-delay: 0.09s; }
+.shard:nth-child(16) { transform: rotate(225deg); animation-delay: 0.21s; }
+.shard:nth-child(17) { transform: rotate(240deg); animation-delay: 0.06s; }
+.shard:nth-child(18) { transform: rotate(255deg); animation-delay: 0.19s; }
+.shard:nth-child(19) { transform: rotate(270deg); animation-delay: 0.11s; }
+.shard:nth-child(20) { transform: rotate(285deg); animation-delay: 0.23s; }
+.shard:nth-child(21) { transform: rotate(300deg); animation-delay: 0.08s; }
+.shard:nth-child(22) { transform: rotate(315deg); animation-delay: 0.15s; }
+.shard:nth-child(23) { transform: rotate(330deg); animation-delay: 0.12s; }
+.shard:nth-child(24) { transform: rotate(345deg); animation-delay: 0.17s; }
+
+@keyframes fade-overlay {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes content-pop {
+	0% { opacity: 0; transform: scale(0.8) translateY(2rem); }
+	100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes shard-explode {
+	0% {
+		opacity: 0;
+		transform: rotate(inherit) translateX(0) scale(0.5);
+	}
+	20% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: rotate(inherit) translateX(120rem) scale(2);
+	}
+}
+
+

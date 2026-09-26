@@ -1,0 +1,70 @@
+{
+	"name": "raw",
+	"options": {
+		"preferences.isCsgo": {
+			"type": "boolean",
+			"section": "Preferences",
+			"label": "Set this to true if you're using CS:GO instead of CS2"
+		},
+
+		"preferences.minimumGoodKdRatio": {
+			"type": "number",
+			"section": "Preferences",
+			"label": "Lowest K/D ratio that counts as \"good\" and can be highlighted in green",
+			"fallback": "1.001"
+		},
+
+		"preferences.maximumBadKdRatio": {
+			"type": "number",
+			"section": "Preferences",
+			"label": "Highest K/D ratio that counts as \"bad\" and can be highlighted in red",
+			"fallback": "0.999"
+		},
+
+		"cvars.mp_maxrounds": {
+			"type": "number",
+			"fallback": 24,
+			"section": "Cvars",
+			"advanced": true,
+			"label": "Value of mp_maxrounds, i.e. the maximum number of rounds played in regulation"
+		},
+
+		"cvars.mp_overtime_maxrounds": {
+			"type": "number",
+			"fallback": 6,
+			"section": "Cvars",
+			"advanced": true,
+			"label": "Value of mp_overtime_maxrounds, i.e. the maximum number of rounds played per overtime"
+		},
+
+		"teams.teamNameOverrides": {
+			"type": "textarea",
+			"section": "Teams",
+			"label": "Team name overrides"
+		},
+ 
+		"teams.playerNameOverrides": {
+			"type": "textarea",
+			"section": "Teams",
+			"label": "Player name overrides"
+		},
+ 
+		"teams.playerSubtitleOverrides": {
+			"type": "textarea",
+			"section": "Teams",
+			"label": "Player subtitle overrides"
+		},
+ 
+		"teams.hiddenPlayers": {
+			"type": "textarea",
+			"section": "Teams",
+			"label": "Hidden players"
+		},
+
+		"teams.hideCoachesByName": {
+			"type": "boolean",
+			"section": "Teams",
+			"label": "Hide players with \"coach\" in their name"
+		}
+	}
+}

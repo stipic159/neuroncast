@@ -1,0 +1,18 @@
+.grenades {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	min-width: 0;
+	overflow: hidden;
+	padding-right: 0;
+}
+
+.grenades .grenade {
+	margin: 0 0.32rem;
+}
+
+.hud-viewport.--style-compact .grenades .grenade {
+	margin: 0 0.18rem;
+}
+
+

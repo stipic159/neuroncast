@@ -1,0 +1,4 @@
+<AlivePlayer v-if="player.isAlive && hasRadarPosition && hasRadarForward" :player="player" :key="player.steam64Id" />
+<DeadPlayer v-else-if="hasRadarPosition" :player="player" :key="player.steam64Id" />
+
+

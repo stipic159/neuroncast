@@ -1,0 +1,27 @@
+<div class="top-bar">
+	<SeriesName />
+
+	<div class="top-bar-card">
+		<div :class="['top-bar-team-name', '--left', teamColorClass($teams[0])]">
+			<img v-if="$opts['preferences.topBar.teamLogos'] && getTeamLogo(0)" :src="getTeamLogo(0)" class="top-bar-team-logo --left" />
+			<span>{{ getTeamName(0) }}</span>
+		</div>
+		<div :class="['top-bar-score', '--left', teamColorClass($teams[0])]">
+			{{ $teams[0]?.score }}
+		</div>
+		<div class="top-bar-round-stack">
+			<CurrentRound />
+			<MatchPointRounds />
+		</div>
+		<div :class="['top-bar-score', '--right', teamColorClass($teams[1])]">
+			{{ $teams[1]?.score }}
+		</div>
+		<div :class="['top-bar-team-name', '--right', teamColorClass($teams[1])]">
+			<span>{{ getTeamName(1) }}</span>
+			<img v-if="$opts['preferences.topBar.teamLogos'] && getTeamLogo(1)" :src="getTeamLogo(1)" class="top-bar-team-logo --right" />
+		</div>
+	</div>
+
+</div>
+
+

@@ -1,0 +1,65 @@
+/* bomb-callout: centred, upper third of the screen (clear of the top bar and
+   of the action in the middle), big enough to read from across the room. */
+.bomb-callout {
+	position: absolute;
+	inset: 0;
+	z-index: 60;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding-top: 19vh;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.45s ease;
+	font-family: var(--font-primary, 'Quantico', sans-serif);
+	--bc-accent: #ff4a4a;
+	--bc-glow: rgba(255, 74, 74, 0.45);
+}
+.bomb-callout.--defused { --bc-accent: #46f28a; --bc-glow: rgba(70, 242, 138, 0.4); }
+.bomb-callout.--shown { opacity: 1; }
+.bomb-callout.--leaving { opacity: 0; }
+
+.bc-bar {
+	display: flex;
+	align-items: center;
+	gap: 2.2vh;
+	padding: 1.6vh 3.4vh 1.6vh 2.6vh;
+	border-radius: 1vh;
+	border: 0.18vh solid var(--bc-accent);
+	background: linear-gradient(180deg, rgba(10, 14, 22, 0.94), rgba(6, 9, 16, 0.96));
+	box-shadow: 0 0 4vh var(--bc-glow), 0 1.2vh 3vh rgba(0, 0, 0, 0.6);
+	transform: translateY(1.6vh) scale(0.94);
+	transition: transform 0.35s cubic-bezier(0.16, 1.05, 0.3, 1);
+}
+.bomb-callout.--shown .bc-bar { transform: none; }
+.bomb-callout.--leaving .bc-bar { transform: translateY(-1vh) scale(0.97); }
+
+.bc-icon { height: 6.2vh; filter: drop-shadow(0 0 1.2vh var(--bc-glow)); }
+.bc-text { display: grid; gap: 0.4vh; }
+.bc-title {
+	font-size: 5.4vh;
+	font-weight: 900;
+	line-height: 1;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #fff;
+	text-shadow: 0 0 1.6vh var(--bc-glow), 0 0.3vh 1vh rgba(0, 0, 0, 0.9);
+}
+.bc-site {
+	font-size: 2.2vh;
+	font-weight: 800;
+	letter-spacing: 0.28em;
+	text-transform: uppercase;
+	color: var(--bc-accent);
+}
+.bc-count {
+	margin-left: 1.4vh;
+	padding-left: 2.4vh;
+	border-left: 0.14vh solid rgba(255, 255, 255, 0.18);
+	font-size: 6vh;
+	font-weight: 900;
+	line-height: 1;
+	color: var(--bc-accent);
+	font-variant-numeric: tabular-nums;
+	text-shadow: 0 0 1.6vh var(--bc-glow);
+}

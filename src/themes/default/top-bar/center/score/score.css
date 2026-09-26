@@ -1,0 +1,86 @@
+.score {
+	display: flex;
+
+	font-size: var(--top-bar-score-font-size);
+	font-weight: 700;
+	line-height: 1;
+	text-shadow: 0 0.14rem 0.4rem rgba(0, 0, 0, 0.34);
+}
+
+.score.--left::before,
+.score.--right::after {
+	content: '';
+	display: block;
+	width: 0.7rem;
+	height: 100%;
+}
+
+.score .inner {
+	padding: var(--top-bar-padding-x) 0;
+	min-width: 2ch;
+	width: 100%;
+
+	isolation: isolate;
+	text-align: center;
+	z-index: 1;
+}
+
+.score.--ct.--left::before,
+.score.--ct.--right::after,
+.score.--ct .inner {
+	background: var(--counter-terrorists-fill);
+}
+
+.score.--t.--left::before,
+.score.--t.--right::after,
+.score.--t .inner {
+	background: var(--terrorists-fill);
+}
+
+.score.--left {
+	grid-area: score-left;
+}
+
+.score.--left::before {
+	transform: skewX(var(--skew-20, 20deg)) scaleX(1.2) translateX(-0.05rem);
+}
+
+.score.--left .inner {
+	padding-left: 0.2rem;
+	padding-right: 0.45rem;
+	margin-left: -0.42rem;
+}
+
+.score.--right {
+	grid-area: score-right;
+}
+
+.score.--right::after {
+	transform: skewX(calc(var(--skew-20, 20deg) * -1)) scaleX(1.2) translateX(0.05rem);
+}
+
+.score.--right .inner {
+	padding-right: 0.2rem;
+	padding-left: 0.45rem;
+	margin-right: -0.42rem;
+}
+
+.hud-viewport.--style-classic .score.--left::before,
+.hud-viewport.--style-compact .score.--left::before,
+.hud-viewport.--style-classic .score.--right::after,
+.hud-viewport.--style-compact .score.--right::after {
+	display: none;
+}
+
+.hud-viewport.--style-classic .score .inner,
+.hud-viewport.--style-compact .score .inner {
+	margin: 0;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.hud-viewport.--style-compact .score {
+	font-size: 2rem;
+}
+
+

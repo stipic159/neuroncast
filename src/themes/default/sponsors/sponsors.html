@@ -1,0 +1,18 @@
+<div v-if="hasSponsors" class="sponsors">
+	<component
+		v-for="slot of sponsorSlots"
+		:key="slot.position"
+		:is="slot.href ? 'a' : 'div'"
+		:href="slot.href || undefined"
+		:target="slot.href ? '_blank' : undefined"
+		:rel="slot.href ? 'noreferrer noopener' : undefined"
+		:class="['sponsor-slot', `--${slot.position}`]"
+	>
+		<transition name="fade" mode="out-in">
+			<img :key="slot.imageUrl" v-if="slot.imageUrl" :src="slot.imageUrl" :alt="slot.title || `${slot.position} sponsor`">
+		</transition>
+		<span v-if="slot.title" class="sponsor-title">{{ slot.title }}</span>
+	</component>
+</div>
+
+

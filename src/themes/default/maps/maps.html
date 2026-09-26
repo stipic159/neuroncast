@@ -1,0 +1,19 @@
+<div v-if="match" class="maps-wrapper">
+	<div v-for="(map, index) in maps" :key="index" :class="['map-card', { '--current': isCurrent(map), '--finished': map.finished, '--placeholder': map.placeholder }]">
+		<div class="map-thumb" :style="{ backgroundImage: 'url(' + (map.image || '/hud/img/maps/default.png') + ')' }">
+			<div class="map-overlay"></div>
+			<div v-if="map.finished" class="map-winner-tag">{{ map.winner === 'home' ? match.home.name : match.away.name }} Wins</div>
+		</div>
+		<div class="map-info">
+			<div class="map-name">{{ map.name }}</div>
+			<div v-if="map.homeScore !== null" class="map-score">
+				<span :class="{ '--winner': map.winner === 'home' }">{{ map.homeScore }}</span>
+				<span class="score-sep">:</span>
+				<span :class="{ '--winner': map.winner === 'away' }">{{ map.awayScore }}</span>
+			</div>
+			<div v-else class="map-status">
+				{{ map.status === 'live' ? 'LIVE' : 'UPCOMING' }}
+			</div>
+		</div>
+	</div>
+</div>

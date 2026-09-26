@@ -1,0 +1,33 @@
+<div :class="['player-highlight', sideClass, '--fx-' + fxKind, { '--shown': visible && !!player, '--leaving': leaving }]">
+	<div class="ph-stage" ref="stage">
+		<!-- rear FX layer: god rays / heartbeat glow behind the hero -->
+		<canvas ref="fxback" class="ph-fx-back"></canvas>
+		<!-- entrance flash overlay (per-achievement) -->
+		<div class="ph-flash"></div>
+		<!-- front FX layer: smoke / sparks / embers / lightning -->
+		<canvas ref="smoke" class="ph-smoke"></canvas>
+		<!-- native CS2 performance keyed to the achievement kind; plays once and
+		     holds its final stance. Falls back to the turntable, still, then WebGL -->
+		<video v-if="usePerf" class="ph-render --performance" :src="perfSrc"
+			autoplay muted playsinline @error="perfOk = false"></video>
+		<!-- Cycles turntable loop (slow rotation); falls back to the still, then WebGL -->
+		<video v-if="!threeMode && videoOk && !usePerf" class="ph-render" :src="videoSrc" :poster="renderSrc"
+			autoplay muted loop playsinline @error="videoOk = false"></video>
+		<img v-if="!threeMode && !videoOk && !usePerf" class="ph-render" :src="renderSrc" @error="onRenderError" alt="">
+		<canvas v-show="threeMode" ref="canvas" class="ph-canvas"></canvas>
+	</div>
+
+	<div class="ph-card" v-if="player">
+		<div class="ph-accent"></div>
+		<div class="ph-body">
+			<div class="ph-tag">{{ tag }}</div>
+			<div class="ph-name">{{ player.name }}</div>
+			<div class="ph-stats">
+				<div class="ph-stat --kills"><span>{{ player.kills }}</span><label>K</label></div>
+				<div class="ph-stat"><span>{{ player.assists }}</span><label>A</label></div>
+				<div class="ph-stat"><span>{{ player.deaths }}</span><label>D</label></div>
+				<div class="ph-stat"><span>{{ player.adr }}</span><label>ADR</label></div>
+			</div>
+		</div>
+	</div>
+</div>

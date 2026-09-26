@@ -1,0 +1,50 @@
+.sidebar {
+	position: absolute;
+	bottom: var(--lan66-sidebar-bottom, var(--viewport-margin-bottom));
+	width: var(--sidebar-width);
+
+	transition: transform var(--fade-slow-duration) ease;
+
+	contain: layout style;
+	will-change: transform;
+}
+
+.sidebar.--left {
+	left: var(--lan66-sidebar-left, var(--viewport-margin-left));
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.sidebar.--right {
+	right: var(--lan66-sidebar-right, var(--viewport-margin-right));
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+}
+
+.sidebar.--moved-upwards-by-series-graph {
+	transform: translateY(calc(-1 * var(--series-graph-height) - var(--series-graph-margin-to-sidebars)));
+}
+
+.sidebar.--moved-upwards-by-round-graph {
+	transform: translateY(calc(-1 * var(--round-graph-height) - var(--round-graph-margin-to-sidebars)));
+}
+
+img.overlay {
+	display: block;
+	width: var(--sidebar-player-width);
+}
+
+img.overlay.--left {
+	margin-bottom: var(--sidebar-left-overlay-vertical-spacing);
+}
+
+img.overlay.--right {
+	margin-left: auto;
+	margin-bottom: var(--sidebar-right-overlay-vertical-spacing);
+}
+
+/* Lan66Nord Sidebar Overrides Removed */
+
+

@@ -1,0 +1,148 @@
+.maps-sleek {
+	display: flex;
+	flex-direction: row;
+	gap: 0.4rem;
+	width: auto;
+}
+
+.maps-sleek__row {
+	position: relative;
+	width: 7.5rem;
+	height: 2.8rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: rgba(12, 16, 24, 0.82);
+	backdrop-filter: blur(0.6rem);
+	border-radius: 0.3rem;
+	overflow: hidden;
+	box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.45);
+	transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+	border: 0.1rem solid rgba(255, 255, 255, 0.1);
+}
+
+.maps-sleek__row.--current {
+	box-shadow:
+		0 0 1.5rem rgba(var(--counter-terrorists-fill-rgb), 0.25),
+		0 0.5rem 2rem rgba(0, 0, 0, 0.6);
+	z-index: 2;
+	border-color: rgba(var(--counter-terrorists-fill-rgb), 0.5);
+}
+
+.maps-sleek__row.--finished {
+	opacity: 0.88;
+}
+
+/* Side score panels */
+.maps-sleek__side {
+	width: 2.2rem;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	z-index: 1;
+	font-family: 'Quantico', sans-serif;
+	font-weight: 800;
+	transition: background 0.3s ease;
+}
+
+/* Scores: readable default size */
+.maps-sleek__score {
+	font-size: 1.05rem;
+	color: rgba(255, 255, 255, 0.9);
+	text-shadow: 0 0.1rem 0.5rem rgba(0, 0, 0, 0.9);
+	transition: font-size 0.25s ease, color 0.25s ease, opacity 0.25s ease;
+	line-height: 1;
+}
+
+/* ── Winner side: gold score + background accent with bottom bar ── */
+.maps-sleek__row.--home-won .maps-sleek__side.--left,
+.maps-sleek__row.--away-won .maps-sleek__side.--right {
+	background: linear-gradient(
+		to bottom,
+		rgba(246, 200, 95, 0.10) 0%,
+		rgba(246, 200, 95, 0.14) 74%,
+		rgba(246, 200, 95, 0.85) 74%
+	);
+	border-right: none;
+}
+
+.maps-sleek__row.--home-won .maps-sleek__side.--left .maps-sleek__score,
+.maps-sleek__row.--away-won .maps-sleek__side.--right .maps-sleek__score {
+	font-size: 1.2rem;
+	color: #f6c85f;
+	text-shadow:
+		0 0 0.7rem rgba(246, 200, 95, 0.55),
+		0 0.1rem 0.4rem rgba(0, 0, 0, 0.9);
+}
+
+/* ── Loser side: dimmed and smaller ── */
+.maps-sleek__row.--home-won .maps-sleek__side.--right .maps-sleek__score,
+.maps-sleek__row.--away-won .maps-sleek__side.--left .maps-sleek__score {
+	opacity: 0.32;
+	font-size: 0.85rem;
+}
+
+/* Subtle golden separator on winner side edge toward center */
+.maps-sleek__row.--home-won .maps-sleek__side.--left {
+	border-right: 0.05rem solid rgba(246, 200, 95, 0.25);
+}
+
+.maps-sleek__row.--away-won .maps-sleek__side.--right {
+	border-left: 0.05rem solid rgba(246, 200, 95, 0.25);
+}
+
+/* Status text (LIVE / TBD) */
+.maps-sleek__status {
+	font-size: 0.5rem;
+	letter-spacing: 0.12em;
+	opacity: 0.7;
+	font-weight: 800;
+	text-transform: uppercase;
+}
+
+/* Map name center area */
+.maps-sleek__center {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 0.35rem;
+	z-index: 1;
+}
+
+.maps-sleek__name {
+	font-size: 0.65rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	color: rgba(255, 255, 255, 0.85);
+	text-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.95);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.maps-sleek__row.--current .maps-sleek__name {
+	font-size: 0.7rem;
+	color: var(--white);
+}
+
+/* Current map glow overlay */
+.maps-sleek__border {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+	background: linear-gradient(to right,
+		rgba(var(--counter-terrorists-fill-rgb), 0.1),
+		transparent 50%,
+		rgba(var(--counter-terrorists-fill-rgb), 0.1)
+	);
+}
+
+.maps-sleek__row.--current .maps-sleek__border {
+	opacity: 1;
+}
