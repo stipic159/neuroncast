@@ -5,6 +5,10 @@ title NeuronCast
 REM %~dp0 = the folder this .bat lives in, so the repo can sit anywhere
 cd /d "%~dp0"
 chcp 65001 >nul
+
+REM Expose control plane to local Wi-Fi for mobile phone remote access
+set "HOST=0.0.0.0"
+
 REM pwsh (PS7) is preferred but is NOT installed everywhere - fall back to the
 REM Windows-bundled powershell (5.1) so this runs on any machine.
 set "PSEXE=pwsh"
@@ -15,7 +19,7 @@ REM Hand-rolled tee, deliberately not Tee-Object: ToString() each record before
 REM it renders (5.1 dresses native stderr up as a NativeCommandError block, 7
 REM prints plain text) and Out-File -Encoding utf8 keeps the log readable - 5.1's
 REM Tee-Object writes UTF-16 and has no -Encoding switch.
-%PSEXE% -NoProfile -Command "node . 2>&1 | ForEach-Object { $s=$_.ToString(); Write-Host $s; $s | Out-File -FilePath 'tmp\neuroncast-%TS%.log' -Append -Encoding utf8 }"
+%PSEXE% -NoProfile -Command "$env:HOST='0.0.0.0'; node . 2>&1 | ForEach-Object { $s=$_.ToString(); Write-Host $s; $s | Out-File -FilePath 'tmp\neuroncast-%TS%.log' -Append -Encoding utf8 }"
 echo.
 echo [launcher] NeuronCast exited - log kept at tmp\neuroncast-%TS%.log
 pause
