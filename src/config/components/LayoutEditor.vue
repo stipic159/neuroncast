@@ -484,6 +484,15 @@ const DEFS = [
 		resizable: true, sizeKey: 'style.mapsSleek.scale', sizeUnit: ''
 	},
 	{
+		id: 'promotion-panel', label: 'Mobile Text / Lower Third',
+		color: 'rgba(31,111,235,0.22)', border: 'rgba(88,166,255,0.65)',
+		baseW: 420, baseH: 80,
+		anchor: { v: 'bottom', h: 'left' },
+		props: [ { key: 'layout.promotion.bottom', edge: 'bottom' }, { key: 'layout.promotion.left', edge: 'left' } ],
+		resizable: true, sizeKey: 'layout.promotion.width', sizeUnit: 'px',
+		visibleKey: 'promotion.visible'
+	},
+	{
 		id: 'event-badge', label: 'Event Badge',
 		color: 'rgba(231,76,60,0.22)', border: 'rgba(231,76,60,0.55)',
 		baseW: 240, baseH: 45,
