@@ -9,6 +9,7 @@ import { CURRENT_MAP_OPTION_DEFINITIONS } from '/hud/core/option-slices/current-
 import { EVENT_BADGE_OPTION_DEFINITIONS } from '/hud/core/option-slices/event-badge.js'
 import { SPONSOR_OPTION_DEFINITIONS } from '/hud/core/option-slices/sponsors.js'
 import { MAPS_OPTION_DEFINITIONS } from '/hud/core/option-slices/maps.js'
+import { PROMOTION_OPTION_DEFINITIONS } from '/hud/core/option-slices/promotion.js'
 import { THEME_MATERIALS_OPTION_DEFINITIONS } from '/hud/core/option-slices/theme-materials.js'
 import { THEME_COLORS_OPTION_DEFINITIONS } from '/hud/core/option-slices/theme-colors.js'
 import { THEME_SHAPES_OPTION_DEFINITIONS } from '/hud/core/option-slices/theme-shapes.js'
@@ -26,6 +27,7 @@ export {
 	EVENT_BADGE_OPTION_DEFINITIONS,
 	SPONSOR_OPTION_DEFINITIONS,
 	MAPS_OPTION_DEFINITIONS,
+	PROMOTION_OPTION_DEFINITIONS,
 	THEME_MATERIALS_OPTION_DEFINITIONS,
 	THEME_COLORS_OPTION_DEFINITIONS,
 	THEME_SHAPES_OPTION_DEFINITIONS,
@@ -46,6 +48,7 @@ const allDefinitionsLists = [
 	EVENT_BADGE_OPTION_DEFINITIONS,
 	SPONSOR_OPTION_DEFINITIONS,
 	MAPS_OPTION_DEFINITIONS,
+	PROMOTION_OPTION_DEFINITIONS,
 	THEME_MATERIALS_OPTION_DEFINITIONS,
 	THEME_COLORS_OPTION_DEFINITIONS,
 	THEME_SHAPES_OPTION_DEFINITIONS,
@@ -134,11 +137,6 @@ export function applyResolvedCssVariables(definitions) {
 	definitions.forEach(def => {
 		const val = resolveCssOption(def.canonical, def.fallback)
 		if (val === undefined || val === null) return
-
-		// TEMP DIAG: confirm resolve-option sees the correct options object identity and values
-		if (def.canonical && def.canonical.startsWith('layout.radar')) {
-			console.log('[resolve-option] applyResolved', def.canonical, '=', val, '| options ref id:', options.__diagId ?? (options.__diagId = Math.random().toString(36).slice(2, 7)))
-		}
 
 		if (def.cssVars) {
 			def.cssVars.forEach(v => {

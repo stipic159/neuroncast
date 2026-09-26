@@ -22,7 +22,7 @@ import BombCallout from '/hud/bomb-callout/bomb-callout.vue'
 import WaitingIdle from '/hud/waiting-idle/waiting-idle.vue'
 import { getPlayerDisplayName, getTeamLogoPath } from '/hud/helpers/player-resolver.js'
 import { buildHudTeamIdentityContext, resolveTeamIdentities } from '/hud/helpers/team-identity-resolver.js'
-import { applyResolvedCssVariables, getMigratedOptionKeys, resolveOption, RADAR_OPTION_DEFINITIONS, TOPBAR_OPTION_DEFINITIONS, SIDEBAR_POSITION_OPTION_DEFINITIONS, SIDEBAR_VISIBILITY_OPTION_DEFINITIONS, PLAYERS_ALIVE_OPTION_DEFINITIONS, FOCUSED_PLAYER_OPTION_DEFINITIONS, CURRENT_MAP_OPTION_DEFINITIONS, EVENT_BADGE_OPTION_DEFINITIONS, SPONSOR_OPTION_DEFINITIONS, MAPS_OPTION_DEFINITIONS, THEME_MATERIALS_OPTION_DEFINITIONS, THEME_COLORS_OPTION_DEFINITIONS, THEME_SHAPES_OPTION_DEFINITIONS, THEME_TYPOGRAPHY_OPTION_DEFINITIONS } from '/hud/core/resolve-option.js'
+import { applyResolvedCssVariables, getMigratedOptionKeys, resolveOption, RADAR_OPTION_DEFINITIONS, TOPBAR_OPTION_DEFINITIONS, SIDEBAR_POSITION_OPTION_DEFINITIONS, SIDEBAR_VISIBILITY_OPTION_DEFINITIONS, PLAYERS_ALIVE_OPTION_DEFINITIONS, FOCUSED_PLAYER_OPTION_DEFINITIONS, CURRENT_MAP_OPTION_DEFINITIONS, EVENT_BADGE_OPTION_DEFINITIONS, SPONSOR_OPTION_DEFINITIONS, MAPS_OPTION_DEFINITIONS, THEME_MATERIALS_OPTION_DEFINITIONS, THEME_COLORS_OPTION_DEFINITIONS, THEME_SHAPES_OPTION_DEFINITIONS, THEME_TYPOGRAPHY_OPTION_DEFINITIONS, PROMOTION_OPTION_DEFINITIONS } from '/hud/core/resolve-option.js'
 import { options } from '/hud/core/state.js'
 
 export default {
@@ -300,6 +300,7 @@ export default {
 			applyResolvedCssVariables(THEME_COLORS_OPTION_DEFINITIONS)
 			applyResolvedCssVariables(THEME_SHAPES_OPTION_DEFINITIONS)
 			applyResolvedCssVariables(THEME_TYPOGRAPHY_OPTION_DEFINITIONS)
+			applyResolvedCssVariables(PROMOTION_OPTION_DEFINITIONS)
 
 			// Dynamically retrieve the keys and legacy aliases to bypass in the loop
 			const migratedKeys = [
@@ -316,7 +317,8 @@ export default {
 				...getMigratedOptionKeys(THEME_MATERIALS_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(THEME_COLORS_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(THEME_SHAPES_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(THEME_TYPOGRAPHY_OPTION_DEFINITIONS)
+				...getMigratedOptionKeys(THEME_TYPOGRAPHY_OPTION_DEFINITIONS),
+				...getMigratedOptionKeys(PROMOTION_OPTION_DEFINITIONS)
 			]
 
 			// 2. Generic loop for all other options

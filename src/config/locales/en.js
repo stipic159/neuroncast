@@ -897,4 +897,6 @@ export default {
   "Live Phone Text Stream": "Live Phone Text Stream",
   "Type text or send from mobile...": "Type text or send from mobile...",
   "🚀 Send to Stream": "🚀 Send to Stream",
+  "PHONE TEXT": "PHONE TEXT",
+  "Mobile Text / Lower Third": "Mobile Text / Lower Third",
 };

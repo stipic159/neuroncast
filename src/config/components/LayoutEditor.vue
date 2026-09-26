@@ -209,6 +209,13 @@
 									</div>
 								</div>
 
+								<!-- 11. MOBILE TEXT / LOWER THIRD -->
+								<div v-else-if="el.def.id === 'promotion-panel'" class="mock-promotion-panel">
+									<div class="mock-promo-badge">⚡ {{ $t("PHONE TEXT") }}</div>
+									<div class="mock-promo-title">{{ promotionTitle }}</div>
+									<div class="mock-promo-subtitle">{{ mobileTickerText }}</div>
+								</div>
+
 								<!-- 10. SPONSORS LEFT/RIGHT -->
 								<div v-else-if="el.def.id.startsWith('sponsor-')" class="mock-sponsor-panel" style="justify-content: center; align-items: center;">
 									<span class="title">{{ $t("SPONSOR SLOT") }}</span>
@@ -527,6 +534,12 @@ export default {
 			const p = this.presets.find(x => x.id === this.activePreset)
 			return p ? p.isCustom !== false : false
 		},
+		mobileTickerText() {
+			return state.options['branding.ticker'] || '🔥 MATCH POINT / РЕШАЮЩИЙ РАУНД'
+		},
+		promotionTitle() {
+			return state.options['promotion.title'] || '📢 ПРЯМОЙ ЭФИР'
+		},
 		viewportStyles() {
 			const ct = state.options['theme.colors.ctFill'] || '25, 106, 232'
 			const ctBorder = state.options['theme.colors.ctBorder'] || '91, 166, 255'
@@ -557,7 +570,19 @@ export default {
 			}
 		}
 	},
+	watch: {
+		'state.isSynced': function isSyncedWatcher(synced) {
+			if (synced && !this.activePreset) {
+				this.computeRemPx()
+				this.initElements()
+			}
+		}
+	},
 	mounted() {
+		if (state.isSynced) {
+			this.computeRemPx()
+			this.initElements()
+		}
 		this.computeRemPx()
 		this.initElements()
 		this.resize()
@@ -2171,4 +2196,46 @@ export default {
 	left: 12px;
 	top: 6px;
 }
+
+/* 11. Mock Promotion / Mobile Text Panel */
+.mock-promotion-panel {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 8px 14px;
+	gap: 3px;
+	background: var(--panel-bg);
+	border: 1px solid var(--panel-border);
+	border-left: 3px solid #58a6ff;
+	border-radius: var(--panel-radius);
+	overflow: hidden;
+	box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.mock-promotion-panel .mock-promo-badge {
+	font-size: 0.65rem;
+	font-weight: 800;
+	color: #58a6ff;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.mock-promotion-panel .mock-promo-title {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #adbac7;
+	text-transform: uppercase;
+}
+
+.mock-promotion-panel .mock-promo-subtitle {
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: #fff;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 </style>

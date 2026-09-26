@@ -5,6 +5,26 @@ import { state as language, setLocale, readUiPreference, writeUiPreference } fro
 const rawStoredCategory = readUiPreference('eon-config-category')
 const initialCategory = migrateLegacyCategory(rawStoredCategory)
 
+// Extract and persist authentication token from query string if present
+const urlParams = new URLSearchParams(window.location.search)
+const urlToken = urlParams.get('token')
+if (urlToken) {
+	try { localStorage.setItem('neuron_control_token', urlToken) } catch (_) {}
+}
+
+export const getStoredToken = () => {
+	try { return localStorage.getItem('neuron_control_token') || urlToken || '' } catch (_) { return urlToken || '' }
+}
+
+export function getAuthHeaders() {
+	const token = getStoredToken()
+	const headers = { 'Content-Type': 'application/json' }
+	if (token) {
+		headers['X-Neuron-Token'] = token
+	}
+	return headers
+}
+
 export const state = reactive({
 	// Configuration Data
 	options: {},
@@ -70,7 +90,7 @@ export const actions = {
 
 	async loadOptions() {
 		try {
-			const res = await fetch('/config/options')
+			const res = await fetch('/config/options', { headers: getAuthHeaders() })
 			const json = await res.json()
 
 			const options = {}
@@ -87,7 +107,9 @@ export const actions = {
 
 	initWebsocket() {
 		const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-		state.socket = new WebSocket(`${protocol}//${window.location.host}`)
+		const token = getStoredToken()
+		const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : ''
+		state.socket = new WebSocket(`${protocol}//${window.location.host}${tokenQuery}`)
 
 		state.socket.onmessage = (msg) => {
 			try {
@@ -129,11 +151,16 @@ export const actions = {
 		}
 
 		try {
-			await fetch('/config/options', {
+			const res = await fetch('/config/options', {
 				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
+				headers: getAuthHeaders(),
 				body: JSON.stringify(payload),
 			})
+			if (!res.ok) {
+				state.saveState = 'error'
+				console.error('Save failed with status:', res.status)
+				return
+			}
 			state.saveState = 'saved'
 			state.lastSavedAt = Date.now()
 			setTimeout(() => { if (state.saveState === 'saved') state.saveState = 'idle' }, 2000)
@@ -145,7 +172,7 @@ export const actions = {
 
 	async forceRefresh() {
 		try {
-			await fetch('/config/force-hud-refresh', { method: 'POST' })
+			await fetch('/config/force-hud-refresh', { method: 'POST', headers: getAuthHeaders() })
 			this.addAlert('HUD Refresh Triggered', 'success')
 		} catch (err) {
 			this.addAlert('Refresh failed', 'error')

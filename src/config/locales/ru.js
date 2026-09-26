@@ -255,4 +255,6 @@ export default {
   "Live Phone Text Stream": "Трансляция текста с телефона",
   "Type text or send from mobile...": "Введите текст или отправьте с телефона...",
   "🚀 Send to Stream": "🚀 Отправить в эфир",
+  "PHONE TEXT": "ТЕКСТ С ТЕЛЕФОНА",
+  "Mobile Text / Lower Third": "Текст с телефона / Плашка",
 };
