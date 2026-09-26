@@ -9,7 +9,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 - [ ] **Decouple Komplettligaen from Dashboard Home**:
   - Remove the hardcoded `Komplettligaen Match` widget from the main Dashboard view (`src/config/components/Dashboard.vue`).
   - Make Dashboard home platform-agnostic, showing only core match telemetry, active scoreline, and universal broadcast controls.
-- [ ] **Unified Tournament Platform Hub & Selector**:
+- [x] **Unified Tournament Platform Hub & Selector**:
   - Design a dedicated "Match Platform" section/menu in the Config SPA where operators can select the active tournament provider (e.g., None/Manual, Komplettligaen, Fastcup, FACEIT).
   - Structure the platform provider architecture modularly so new platforms can be added dynamically with their own scrapers, rosters, and bracket resolvers.
 - [ ] **Fastcup Integration (`fastcup.net`)**:
@@ -27,11 +27,11 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ## 2. Mobile Control Interface & Blind Ergonomics (`/remote`)
 
-- [ ] **Responsive Mobile Operator Remote (`/remote`)**:
+- [x] **Responsive Mobile Operator Remote (`/remote`)**:
   - Build a lightweight, touch-optimized mobile web interface accessible over local Wi-Fi (e.g., `http://<LAN-IP>:31982/remote`).
   - Tailored specifically for single-monitor casters where the primary screen is dedicated to CS2 fullscreen observation or OBS, enabling complete broadcast direction from a smartphone or tablet.
   - QR code pairing display on desktop Config SPA and terminal startup logs.
-- [ ] **Mobile Ergonomics & "Blind Operation" Features**:
+- [x] **Mobile Ergonomics & "Blind Operation" Features**:
   - **Screen Wake Lock API**: Keep phone screens awake indefinitely while the remote tab is active to eliminate unlock delays during critical clutch moments.
   - **Haptic Feedback (Web Vibration API)**: Fire subtle vibration pulses on touch presses so operators get tactile confirmation of scene switches, radar toggles, or card triggers without taking their eyes off the monitor.
   - **Low-Bandwidth Delta Socket Mode**: Instead of streaming heavy raw GSI trees every 100ms, deliver lightweight, compressed operational diffs (scores, round numbers, active flags, OBS states) to maintain instant phone responsiveness and save battery.
@@ -40,10 +40,10 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ## 3. OBS Studio WebSocket v5 Bridge
 
-- [ ] **Bi-Directional OBS WebSocket Integration**:
+- [x] **Bi-Directional OBS WebSocket Integration**:
   - Integrate `obs-websocket-js` on the Node server to connect directly to OBS Studio (WebSocket v5 protocol).
   - Auto-reconnect and monitor OBS connection state from both desktop and `/remote`.
-- [ ] **Direct OBS Controls on Mobile Remote**:
+- [x] **Direct OBS Controls on Mobile Remote**:
   - **Scene Switching**: Single-tap transitions between key OBS scenes (Match / In-Game / Break / Analysis / Caster Cam).
   - **Caster Cough / Mic Mute**: Instant toggle for observer microphone muting with clear on-screen visual mute state.
   - **Instant Replay Buffer Trigger**: One-tap trigger to save the OBS Replay Buffer on massive ACE or clutch highlights.
@@ -54,7 +54,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ## 4. Caster Notes, Tickers & Lower Third Overlays
 
-- [ ] **Quick Lower-Third Broadcast Ticker**:
+- [x] **Quick Lower-Third Broadcast Ticker**:
   - Provide a dedicated "Lower Third / Factoid" input field on the mobile remote and Config SPA.
   - Type or paste quick analyst facts (e.g., *"s1mple 14-2 on de_mirage"*, *"Round 11 eco buy"*), hit send, and smoothly animate an unobtrusive lower-third broadcast card onto the HUD.
 - [ ] **One-Tap Quick Presets**:
@@ -94,7 +94,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 - [ ] **In-App Token Rotation UI**:
   - Add a dedicated "Security & Tokens" tab or modal in the Config SPA to regenerate the GSI secret token and Control-Plane authentication token with one click.
   - Automatically rewrite `gamestate_integration_neuroncast.cfg` on token regeneration without breaking CS2 bindings.
-- [ ] **Non-Localhost Endpoint Armor**:
+- [x] **Non-Localhost Endpoint Armor**:
   - Enforce mandatory token verification in `src/server/auth.js` for destructive write operations (cache purge, theme switching, match reset) when accessed from remote network addresses (non-loopback IPs).
 
 ---
