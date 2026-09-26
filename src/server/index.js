@@ -19,6 +19,8 @@ import { registerLicensesRoutes } from './licenses.js'
 import { registerRadarRoutes } from './radar.js'
 import { registerVersionRoutes } from './version.js'
 import { registerSessionRoutes } from './sessions/session-routes.js'
+import { registerObsRoutes } from './obs-routes.js'
+import { obsManager } from './integrations/obs-manager.js'
 import { Websocket } from './websocket.js'
 import send from 'koa-send'
 import { builtinRootDirectory } from './helpers/paths.js'
@@ -50,11 +52,12 @@ const run = async () => {
 
 	const websocket = new Websocket(server)
 	await websocket.init()
+	await obsManager.init().catch((err) => console.warn('[OBS] Init warning:', err.message))
 
 	// 1. Mandatory Trailing Slash Redirects
 	app.use(async (context, next) => {
 		const path = context.path
-		if ((path === '/config' || path === '/hud' || path === '/radar') && !path.endsWith('/')) {
+		if ((path === '/config' || path === '/hud' || path === '/radar' || path === '/remote') && !path.endsWith('/')) {
 			context.status = 301
 			context.redirect(`${path}/`)
 			return
@@ -101,6 +104,7 @@ const run = async () => {
 	registerRadarRoutes(router)
 	registerVersionRoutes(router)
 	registerSessionRoutes(router)
+	registerObsRoutes(router, websocket)
 
 	app.use(router.routes())
 	app.use(router.allowedMethods())
@@ -129,6 +133,17 @@ const run = async () => {
 				await send(context, file, { root })
 				if (context.body) context.status = 200
 			} 
+			else if (urlPath.startsWith('/remote/')) {
+				const file = urlPath.slice(8).trim() || 'index.html'
+				const root = join(builtinRootDirectory, 'src/remote')
+				await send(context, file, { root })
+				if (context.body) {
+					context.status = 200
+					if (file.endsWith('.vue')) context.type = 'text/plain'
+					else if (file.endsWith('.js')) context.type = 'application/javascript'
+					else if (file.endsWith('.css')) context.type = 'text/css'
+				}
+			}
 			else if (urlPath.startsWith('/hud/')) {
 				const themeTree = await getThemeTree(context.query.theme)
 				const hudPath = decodeURIComponent(urlPath.slice(5) || 'index.html').replace(/^\//, '')
@@ -185,38 +200,39 @@ const run = async () => {
 
 	// 4. Graceful Shutdown & Unhandled Exception Logging
 	process.on('uncaughtException', (error) => {
-		console.error('[NON-FATAL] Uncaught Exception (server kept alive):', error);
-	});
+		console.error('[NON-FATAL] Uncaught Exception (server kept alive):', error)
+	})
 
 	process.on('unhandledRejection', (reason, promise) => {
-		console.error('[NON-FATAL] Unhandled Rejection (server kept alive) at:', promise, 'reason:', reason);
-	});
+		console.error('[NON-FATAL] Unhandled Rejection (server kept alive) at:', promise, 'reason:', reason)
+	})
 
 	const shutdown = (code = 0) => {
-		console.info('Shutting down NeuronCast server cleanly...');
+		console.info('Shutting down NeuronCast server cleanly...')
 		
 		try {
+			obsManager.disconnect().catch(() => {})
 			websocket.websocket.close(() => {
-				console.info('Websocket server closed.');
+				console.info('Websocket server closed.')
 				server.close(() => {
-					console.info('HTTP server closed.');
-					process.exit(code);
-				});
-			});
+					console.info('HTTP server closed.')
+					process.exit(code)
+				})
+			})
 		} catch (err) {
-			console.error('Error during graceful shutdown:', err);
-			process.exit(code);
+			console.error('Error during graceful shutdown:', err)
+			process.exit(code)
 		}
 
 		// Force exit after timeout if closing hangs
 		setTimeout(() => {
-			console.warn('Shutdown timed out, forcing exit.');
-			process.exit(code);
-		}, 3000);
-	};
+			console.warn('Shutdown timed out, forcing exit.')
+			process.exit(code)
+		}, 3000)
+	}
 
-	process.on('SIGINT', () => shutdown(0));
-	process.on('SIGTERM', () => shutdown(0));
+	process.on('SIGINT', () => shutdown(0))
+	process.on('SIGTERM', () => shutdown(0))
 }
 
 run().then(() => {}).catch(console.error)

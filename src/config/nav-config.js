@@ -24,6 +24,7 @@ export const NAV_GROUPS = [
 		labelKey: 'Setup',
 		items: [
 			{ id: 'platforms',     labelKey: 'Match Platforms', icon: 'platforms', componentKey: 'PlatformsPage' },
+			{ id: 'obs',           labelKey: 'OBS Studio',      icon: 'obs',       componentKey: 'ObsSettingsPage' },
 			{ id: 'series-maps',   labelKey: 'Series & Maps',   icon: 'series',   componentKey: 'SeriesEditor' },
 			{ id: 'match-rules',   labelKey: 'Match Rules',     icon: 'rules',    componentKey: 'MatchRulesEditor' },
 			{ id: 'teams-players', labelKey: 'Teams & Players', icon: 'teams',    componentKey: 'TeamsEditor' },
@@ -84,7 +85,7 @@ export const migrateLegacyCategory = (raw) => {
 /*
  * SVG path data per icon name. Stroke-based; renders inside the standard
  * 24x24 viewBox at 2px stroke. Existing icon vocabulary preserved; new
- * icons added for the new pages (telestrator, theme, diagnostics, platforms).
+ * icons added for the new pages (telestrator, theme, diagnostics, platforms, obs).
  */
 export const ICON_PATHS = {
 	live:        ['M6 12h12', 'M12 6v12', 'M8.5 8.5h7v7h-7z'],
@@ -92,6 +93,7 @@ export const ICON_PATHS = {
 	telestrator: ['M4 4h16v12H4z', 'M4 20h16', 'M9 9l4 4', 'M13 9l-4 4'],
 	layout:      ['M4 5h16v14H4z', 'M4 10h16', 'M10 10v9'],
 	platforms:   ['M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z', 'M9 12h6', 'M12 9v6'],
+	obs:         ['M12 3a9 9 0 1 0 9 9A9 9 0 0 0 12 3zm0 4a5 5 0 0 1 5 5c0 1.5-.7 2.8-1.8 3.7l-1.4-1.4a3 3 0 0 0 1.2-2.3 3 3 0 0 0-3-3V7z'],
 	series:      ['M7 5h10', 'M7 12h10', 'M7 19h10', 'M4 5h.01', 'M4 12h.01', 'M4 19h.01'],
 	rules:       ['M7 4h10l3 3v13H7z', 'M17 4v4h4', 'M10 12h7', 'M10 16h5'],
 	teams:       ['M8 11a4 4 0 1 1 8 0', 'M3 20a7 7 0 0 1 14 0', 'M18 14a5 5 0 0 1 3 5'],

@@ -1,0 +1,247 @@
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	-webkit-tap-highlight-color: transparent;
+	touch-action: manipulation;
+	user-select: none;
+}
+
+body {
+	background: #0d1117;
+	color: #c9d1d9;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+	min-height: 100vh;
+	min-height: -webkit-fill-available;
+	overflow-x: hidden;
+	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.remote-app {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	padding: 12px;
+	gap: 14px;
+	max-width: 600px;
+	margin: 0 auto;
+}
+
+/* Header bar */
+.remote-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 12px;
+	background: #161b22;
+	border: 1px solid #30363d;
+	border-radius: 10px;
+}
+
+.remote-logo {
+	font-weight: 800;
+	font-size: 1rem;
+	letter-spacing: 0.05em;
+	color: #58a6ff;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.status-pills {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 0.7rem;
+	font-weight: 700;
+	padding: 4px 8px;
+	border-radius: 999px;
+	text-transform: uppercase;
+}
+
+.pill-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+}
+
+.pill.--green {
+	background: rgba(46, 204, 113, 0.15);
+	color: #2ecc71;
+}
+.pill.--green .pill-dot {
+	background: #2ecc71;
+}
+
+.pill.--red {
+	background: rgba(231, 76, 60, 0.15);
+	color: #e74c3c;
+}
+.pill.--red .pill-dot {
+	background: #e74c3c;
+}
+
+/* Big Action Hero Grid */
+.hero-controls {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.btn-hero {
+	background: #161b22;
+	border: 2px solid #30363d;
+	border-radius: 12px;
+	padding: 18px 12px;
+	color: #fff;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font-size: 0.85rem;
+	font-weight: 700;
+	cursor: pointer;
+	min-height: 90px;
+	transition: all 0.1s ease-in-out;
+}
+
+.btn-hero:active {
+	transform: scale(0.96);
+}
+
+.btn-hero .icon {
+	font-size: 1.8rem;
+}
+
+.btn-hero.--mic-muted {
+	background: rgba(231, 76, 60, 0.2);
+	border-color: #e74c3c;
+	color: #ff7b72;
+}
+
+.btn-hero.--mic-live {
+	background: rgba(46, 204, 113, 0.1);
+	border-color: #2ecc71;
+	color: #56d364;
+}
+
+.btn-hero.--replay {
+	background: rgba(241, 196, 15, 0.1);
+	border-color: #f1c40f;
+	color: #f1c40f;
+}
+
+/* Sections */
+.remote-section {
+	background: #161b22;
+	border: 1px solid #30363d;
+	border-radius: 12px;
+	padding: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.section-title {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #8b949e;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+/* Grid of buttons */
+.button-grid-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.btn-tap {
+	background: #0d1117;
+	border: 1.5px solid #30363d;
+	border-radius: 10px;
+	padding: 14px 10px;
+	color: #c9d1d9;
+	font-size: 0.85rem;
+	font-weight: 600;
+	text-align: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	cursor: pointer;
+	min-height: 52px;
+	transition: all 0.1s ease;
+}
+
+.btn-tap:active {
+	background: #21262d;
+	transform: scale(0.97);
+}
+
+.btn-tap.--active {
+	background: #1f6feb;
+	border-color: #58a6ff;
+	color: #fff;
+	box-shadow: 0 0 12px rgba(31, 111, 235, 0.4);
+}
+
+/* Team Win overrides */
+.btn-tap.--team-ct {
+	color: #58a6ff;
+}
+.btn-tap.--team-ct.--active {
+	background: #1f6feb;
+	color: #fff;
+}
+
+.btn-tap.--team-t {
+	color: #e3b341;
+}
+.btn-tap.--team-t.--active {
+	background: #b08800;
+	color: #fff;
+}
+
+/* Lower third composer */
+.ticker-box {
+	display: flex;
+	gap: 8px;
+}
+
+.ticker-input {
+	flex: 1;
+	background: #0d1117;
+	border: 1px solid #30363d;
+	border-radius: 8px;
+	color: #fff;
+	padding: 10px 12px;
+	font-size: 0.9rem;
+	outline: none;
+}
+
+.ticker-input:focus {
+	border-color: #58a6ff;
+}
+
+.btn-send {
+	background: #1f6feb;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	padding: 0 16px;
+	font-weight: 700;
+	font-size: 0.85rem;
+	cursor: pointer;
+}

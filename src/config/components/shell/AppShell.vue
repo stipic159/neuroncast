@@ -32,6 +32,7 @@ import BroadcastStatusBar from '/config/components/shell/BroadcastStatusBar.vue'
 
 import Dashboard from '/config/components/Dashboard.vue'
 import PlatformsPage from '/config/components/PlatformsPage.vue'
+import ObsSettingsPage from '/config/components/ObsSettingsPage.vue'
 import LayoutEditor from '/config/components/LayoutEditor.vue'
 import SeriesEditor from '/config/components/SeriesEditor.vue'
 import MatchRulesEditor from '/config/components/MatchRulesEditor.vue'
@@ -48,6 +49,7 @@ import DirectorPage from '/config/components/DirectorPage.vue'
 const COMPONENT_MAP = {
 	Dashboard,
 	PlatformsPage,
+	ObsSettingsPage,
 	DirectorPage,
 	LayoutEditor,
 	SeriesEditor,
@@ -142,23 +144,5 @@ export default {
 	font-size: var(--eon-fs-body);
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 	pointer-events: auto;
-}
-
-.eon-alert.--info {
-	background: var(--eon-s3);
-	border: 1px solid var(--eon-bd);
-	color: var(--eon-tx);
-}
-
-.eon-alert.--warn {
-	background: var(--eon-ambd);
-	border: 1px solid var(--eon-amb);
-	color: var(--eon-amb);
-}
-
-.eon-alert.--error {
-	background: var(--eon-redd);
-	border: 1px solid var(--eon-red);
-	color: var(--eon-red);
 }
 </style>
