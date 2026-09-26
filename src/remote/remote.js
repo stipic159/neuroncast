@@ -288,7 +288,7 @@ const RemoteApp = {
 					</div>
 				</div>
 
-				<!-- Integrated Mini Radar Card -->
+				<!-- Integrated Centered Mini Radar Card -->
 				<div v-if="observerShowRadar" class="observer-radar-box">
 					<iframe src="/radar/?embedded=1" class="observer-radar-frame"></iframe>
 				</div>
@@ -316,11 +316,15 @@ const RemoteApp = {
 							</div>
 							<div class="player-info-col">
 								<div class="player-top-row">
-									<span class="player-name-text">{{ p.name }}</span>
-									<span v-if="p.isSpectated" class="spectated-pill">🎥</span>
-									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)" title="В эфир">⭐ В ЭФИР</button>
-									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
-									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
+									<div class="player-identity-col">
+										<span class="player-name-text">{{ p.name }}</span>
+										<span v-if="p.isSpectated" class="spectated-pill">🎥</span>
+									</div>
+									<div class="player-status-col">
+										<button class="btn-spotlight" @click.stop="triggerSpotlight(p)" title="Вывести игрока в эфир">⭐</button>
+										<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
+										<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }}</span>
+									</div>
 								</div>
 								<!-- HP bar -->
 								<div class="hp-bar-track">
@@ -331,8 +335,10 @@ const RemoteApp = {
 									></div>
 								</div>
 								<div class="player-bottom-row">
-									<span class="weapon-text">{{ p.activeWeapon || '—' }} <span v-if="p.ammoClip !== null" class="ammo">({{ p.ammoClip }})</span></span>
-									<span v-if="p.defusekit" class="kit-icon" title="Defuse Kit">🛡️ KIT</span>
+									<div class="player-weapon-col">
+										<span class="weapon-text">{{ p.activeWeapon || '—' }} <span v-if="p.ammoClip !== null" class="ammo">({{ p.ammoClip }})</span></span>
+										<span v-if="p.defusekit" class="kit-icon" title="Defuse Kit">🛡️</span>
+									</div>
 									<span class="kda-text">{{ p.kills }}/{{ p.deaths }}/{{ p.assists }}</span>
 								</div>
 							</div>
@@ -361,11 +367,15 @@ const RemoteApp = {
 							</div>
 							<div class="player-info-col">
 								<div class="player-top-row">
-									<span class="player-name-text">{{ p.name }}</span>
-									<span v-if="p.isSpectated" class="spectated-pill">🎥</span>
-									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)" title="В эфир">⭐ В ЭФИР</button>
-									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
-									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
+									<div class="player-identity-col">
+										<span class="player-name-text">{{ p.name }}</span>
+										<span v-if="p.isSpectated" class="spectated-pill">🎥</span>
+									</div>
+									<div class="player-status-col">
+										<button class="btn-spotlight" @click.stop="triggerSpotlight(p)" title="Вывести игрока в эфир">⭐</button>
+										<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
+										<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }}</span>
+									</div>
 								</div>
 								<!-- HP bar -->
 								<div class="hp-bar-track">
@@ -376,8 +386,10 @@ const RemoteApp = {
 									></div>
 								</div>
 								<div class="player-bottom-row">
-									<span class="weapon-text">{{ p.activeWeapon || '—' }} <span v-if="p.ammoClip !== null" class="ammo">({{ p.ammoClip }})</span></span>
-									<span v-if="p.hasBomb" class="bomb-icon" title="C4 Bomb">💣 C4</span>
+									<div class="player-weapon-col">
+										<span class="weapon-text">{{ p.activeWeapon || '—' }} <span v-if="p.ammoClip !== null" class="ammo">({{ p.ammoClip }})</span></span>
+										<span v-if="p.hasBomb" class="bomb-icon" title="C4 Bomb">💣</span>
+									</div>
 									<span class="kda-text">{{ p.kills }}/{{ p.deaths }}/{{ p.assists }}</span>
 								</div>
 							</div>
@@ -469,13 +481,17 @@ const RemoteApp = {
 			const lastSlots = this.additionalState?.lastKnownPlayerObserverSlot || {}
 
 			const parsed = Object.entries(all).map(([steamid, p], idx) => {
-				let slot = p.observer_slot
-				if (slot === null || slot === undefined) {
-					slot = lastSlots[steamid]
+				let rawSlot = p.observer_slot
+				if (rawSlot === null || rawSlot === undefined) {
+					rawSlot = lastSlots[steamid]
 				}
-				if (slot === undefined || slot === null) {
-					slot = idx + 1
+				if (rawSlot === undefined || rawSlot === null) {
+					rawSlot = idx
 				}
+				rawSlot = Number(rawSlot)
+				// CS2 physical spectator keys: 1..5 for CT, 6..9,0 for T
+				// slot 0 -> key '1', slot 1 -> key '2', ..., slot 8 -> key '9', slot 9 -> key '0'
+				const slot = String((rawSlot + 1) % 10)
 
 				// Active weapon resolving
 				let activeWeapon = ''
@@ -502,7 +518,8 @@ const RemoteApp = {
 					steamid,
 					name: p.name || 'Player',
 					team: (p.team || 'CT').toUpperCase(),
-					slot: String(slot),
+					rawSlot,
+					slot,
 					health: p.state?.health ?? 0,
 					isDead: (p.state?.health ?? 0) === 0,
 					armor: p.state?.armor ?? 0,
