@@ -4,7 +4,39 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ---
 
-## 1. CI/CD & Release Infrastructure
+## 1. Match Platform Integrations & Modular Dashboard Architecture
+
+- [ ] **Decouple Komplettligaen from Dashboard Home**:
+  - Remove the hardcoded `Komplettligaen Match` widget from the main Dashboard view (`src/config/components/Dashboard.vue`).
+  - Make Dashboard home platform-agnostic, showing only core match telemetry, active scoreline, and universal broadcast controls.
+- [ ] **Unified Tournament Platform Hub & Selector**:
+  - Design a dedicated "Match Platform" section/menu in the Config SPA where operators can select the active tournament provider (e.g., None/Manual, Komplettligaen, Fastcup, FACEIT).
+  - Structure the platform provider architecture modularly so new platforms can be added dynamically with their own scrapers, rosters, and bracket resolvers.
+- [ ] **Fastcup Integration (`fastcup.net`)**:
+  - Implement a Fastcup API/scraper service (`src/server/fastcup.js` or `src/server/integrations/fastcup.js`).
+  - Allow operators to enter a Fastcup Match ID to automatically fetch:
+    - Team names, rosters, avatars, and country flags.
+    - Match map veto/pick sequence and series format (BO1, BO3).
+  - Populate HUD team identities and player metadata directly from Fastcup game records.
+  - Store offline fallback match snapshots in `userspace/cache/` to survive network disconnects during live games.
+
+---
+
+## 2. Mobile Control Interface (Single-Monitor Broadcast Operation)
+
+- [ ] **Responsive Mobile Operator Remote (`/remote` or responsive `/config`)**:
+  - Build a lightweight, touch-optimized mobile web interface accessible over local Wi-Fi (e.g., `http://<LAN-IP>:31982/remote`).
+  - Perfect for single-monitor setups where the main display is occupied by CS2 fullscreen observation or OBS, allowing full tournament direction from a smartphone or tablet.
+  - **Core Mobile Controls**:
+    - Quick Score & Team Switch (swap sides, adjust round score, trigger timeouts).
+    - Map Veto & Pick Status toggles.
+    - AI Director arm/disarm toggle and manual spotlight card triggers (MVP, ACE, clutch).
+    - Emergency HUD Standby & Overlay reload buttons.
+  - Add QR code display on the desktop Config SPA and terminal startup banner for instant phone pairing.
+
+---
+
+## 3. CI/CD & Release Infrastructure
 
 - [ ] **GitHub Actions Automated Pipeline (`.github/workflows/ci.yml`)**:
   - Run `npm run test:unit` on every push and pull request.
@@ -18,7 +50,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ---
 
-## 2. Testing, Reliability & Observability (QA & E2E)
+## 4. Testing, Reliability & Observability (QA & E2E)
 
 - [ ] **Playwright Test Suite Stabilization**:
   - Verify and harden end-to-end scenarios under `tests/playwright/` (`config-smoke.spec.js`, `hud-smoke.spec.js`, `overlay-preview.spec.js`).
@@ -31,7 +63,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ---
 
-## 3. Security & Token Governance
+## 5. Security & Token Governance
 
 - [ ] **In-App Token Rotation UI**:
   - Add a dedicated "Security & Tokens" tab or modal in the Config SPA to regenerate the GSI secret token and Control-Plane authentication token with one click.
@@ -41,7 +73,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ---
 
-## 4. Broadcast & Production Features
+## 6. Broadcast & Production Features
 
 - [ ] **AI Director Runtime Integration (`neuron-director`)**:
   - Align `src/config/components/DirectorPage.vue` with the native director daemon.
@@ -56,7 +88,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
 
 ---
 
-## 5. Developer Experience & Operator Usability
+## 7. Developer Experience & Operator Usability
 
 - [ ] **One-Click Windows Operator Launcher**:
   - Refine `start-neuroncast.bat` to verify Node.js runtime presence, execute preflight validation, launch the background server, and open `http://localhost:31982/config` in the default browser.
@@ -64,7 +96,7 @@ This document outlines upcoming improvements, technical debt, and feature roadma
   - Update `README.md` with:
     - New NeuronCast branding and UI screenshots.
     - Quickstart installation guide and CS2 GSI configuration instructions.
-    - Full list of routes (`/hud`, `/config`, `/radar`, `/operator/readiness`, `/operator/status`).
+    - Full list of routes (`/hud`, `/config`, `/radar`, `/operator/readiness`, `/operator/status`, `/remote`).
     - Development workflow and architecture overview.
 - [ ] **Interactive Onboarding Wizard**:
   - Implement a first-run wizard in Config SPA that guides new tournament operators through CS2 GSI setup, theme selection, and OBS Browser Source configuration.
