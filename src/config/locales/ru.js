@@ -239,4 +239,13 @@ export default {
   "Single-Monitor Stream Control": "Управление трансляцией с одного монитора",
   "Open the touch-optimized remote on your phone to switch OBS scenes, toggle mic mute, and trigger replays blind.": "Откройте сенсорный пульт на телефоне для переключения сцен OBS, мьюта микрофона и сохранения повторов вслепую.",
   "Open Local Remote": "Открыть локальный пульт",
+  "HUD Automation Info:": "Автоматизация HUD:",
+  "NeuronCast renders all match overlays, scoreboards, radar, overtime screens and match results inside a single Browser Source layer. You only need to assign your Main Broadcast Scene.": "NeuronCast отображает все элементы матча, табло, радар, овертаймы и результаты внутри одного источника Browser Source. Вам нужно лишь указать вашу Главную сцену.",
+  "OBS Broadcast Scenes": "Сцены трансляции OBS",
+  "Main Broadcast Scene (CS2 + HUD)": "Главная сцена трансляции (CS2 + HUD)",
+  "The primary OBS scene where CS2 capture and NeuronCast HUD Browser Source live.": "Основная сцена OBS с захватом CS2 и слоем Browser Source с оверлеем NeuronCast.",
+  "Intermission / Caster Scene (Optional)": "Сцена перерыва / кастера (опционально)",
+  "— None / Optional —": "— Не требуется / Опционально —",
+  "— Select OBS Scene —": "— Выберите сцену OBS —",
+  "Optional camera or break scene to switch to during commercial or analyst breaks.": "Опциональная сцена для переключения на камеру кастера во время пауз или аналитики.",
 };

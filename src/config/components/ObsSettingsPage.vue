@@ -54,6 +54,12 @@
 			<strong>{{ $t("Connection Warning:") }}</strong> {{ obsState.lastError }}
 		</div>
 
+		<!-- How HUD Automation Works Info Callout -->
+		<div class="hud-auto-info">
+			<strong>💡 {{ $t("HUD Automation Info:") }}</strong>
+			<span>{{ $t("NeuronCast renders all match overlays, scoreboards, radar, overtime screens and match results inside a single Browser Source layer. You only need to assign your Main Broadcast Scene.") }}</span>
+		</div>
+
 		<!-- Connection Settings Form -->
 		<div class="obs-section">
 			<h3>{{ $t("WebSocket Settings") }}</h3>
@@ -112,27 +118,41 @@
 			</div>
 		</div>
 
-		<!-- Scene Mapping Section -->
+		<!-- OBS Scene Setup Section -->
 		<div class="obs-section">
-			<h3>{{ $t("Scene Mapping") }}</h3>
-			<p class="field-hint" style="margin-bottom: 16px;">
-				{{ $t("Map NeuronCast broadcast roles to OBS scenes for fast 1-tap switching from mobile remote.") }}
-			</p>
-
+			<h3>{{ $t("OBS Broadcast Scenes") }}</h3>
+			
 			<div class="scene-mapping-grid">
-				<div class="field-group" v-for="role in roles" :key="role.key">
-					<label class="field-label">{{ role.label }}</label>
-					<select v-if="obsState.scenes && obsState.scenes.length > 0" class="text-input" v-model="form.sceneMapping[role.key]">
-						<option value="">{{ $t("— None / Unmapped —") }}</option>
+				<div class="field-group">
+					<label class="field-label">🎮 {{ $t("Main Broadcast Scene (CS2 + HUD)") }}</label>
+					<select v-if="obsState.scenes && obsState.scenes.length > 0" class="text-input" v-model="form.mainSceneName">
+						<option value="">{{ $t("— Select OBS Scene —") }}</option>
 						<option v-for="s in obsState.scenes" :key="s" :value="s">{{ s }}</option>
 					</select>
 					<input
 						v-else
 						type="text"
 						class="text-input"
-						v-model="form.sceneMapping[role.key]"
-						:placeholder="role.placeholder"
+						v-model="form.mainSceneName"
+						placeholder="e.g. CS2 Game"
 					/>
+					<div class="field-hint">{{ $t("The primary OBS scene where CS2 capture and NeuronCast HUD Browser Source live.") }}</div>
+				</div>
+
+				<div class="field-group">
+					<label class="field-label">🎙️ {{ $t("Intermission / Caster Scene (Optional)") }}</label>
+					<select v-if="obsState.scenes && obsState.scenes.length > 0" class="text-input" v-model="form.intermissionSceneName">
+						<option value="">{{ $t("— None / Optional —") }}</option>
+						<option v-for="s in obsState.scenes" :key="s" :value="s">{{ s }}</option>
+					</select>
+					<input
+						v-else
+						type="text"
+						class="text-input"
+						v-model="form.intermissionSceneName"
+						placeholder="e.g. Facecam / Talk"
+					/>
+					<div class="field-hint">{{ $t("Optional camera or break scene to switch to during commercial or analyst breaks.") }}</div>
 				</div>
 			</div>
 		</div>
@@ -166,7 +186,8 @@ export default {
 				scenes: [],
 				micMuted: false,
 				replayBufferActive: false,
-				sceneMapping: {},
+				mainSceneName: '',
+				intermissionSceneName: '',
 			},
 			form: {
 				enabled: false,
@@ -174,21 +195,9 @@ export default {
 				port: 4455,
 				password: '',
 				micSourceName: '',
-				sceneMapping: {
-					live: '',
-					pause: '',
-					waiting: '',
-					caster: '',
-					result: '',
-				},
+				mainSceneName: '',
+				intermissionSceneName: '',
 			},
-			roles: [
-				{ key: 'live', label: '🎮 Live Match / Gameplay', placeholder: 'In-Game Scene' },
-				{ key: 'waiting', label: '⏳ Warmup / Waiting Screen', placeholder: 'Warmup / Intermission' },
-				{ key: 'pause', label: '⏸️ Tactical / Tech Pause', placeholder: 'Pause Scene' },
-				{ key: 'caster', label: '🎙️ Caster Cam / Analysis', placeholder: 'Facecam / Desk' },
-				{ key: 'result', label: '🏆 Post-Match / Results', placeholder: 'Result Scene' },
-			],
 		}
 	},
 	mounted() {
@@ -205,13 +214,8 @@ export default {
 					this.form.host = data.host || '127.0.0.1'
 					this.form.port = data.port || 4455
 					this.form.micSourceName = data.micSourceName || ''
-					this.form.sceneMapping = {
-						live: data.sceneMapping?.live || '',
-						pause: data.sceneMapping?.pause || '',
-						waiting: data.sceneMapping?.waiting || '',
-						caster: data.sceneMapping?.caster || '',
-						result: data.sceneMapping?.result || '',
-					}
+					this.form.mainSceneName = data.mainSceneName || ''
+					this.form.intermissionSceneName = data.intermissionSceneName || ''
 				}
 			} catch (err) {
 				console.error('[OBS Settings] Failed to fetch status:', err)
@@ -361,6 +365,24 @@ export default {
 	font-size: 0.85rem;
 }
 
+.hud-auto-info {
+	background: rgba(88, 166, 255, 0.08);
+	border: 1px solid rgba(88, 166, 255, 0.2);
+	border-radius: 6px;
+	padding: 12px 16px;
+	font-size: 0.85rem;
+	color: #adbac7;
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	line-height: 1.4;
+}
+
+.hud-auto-info strong {
+	color: #58a6ff;
+	flex-shrink: 0;
+}
+
 .obs-section {
 	display: flex;
 	flex-direction: column;
@@ -384,7 +406,7 @@ export default {
 
 .scene-mapping-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 	gap: 16px;
 }
 

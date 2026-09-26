@@ -13,14 +13,8 @@ const DEFAULT_CONFIG = {
 	autoReconnect: true,
 	reconnectIntervalMs: 5000,
 	micSourceName: '',
-	// Map NeuronCast HUD scenes to OBS scene names
-	sceneMapping: {
-		live: '',        // In-game Match / Live HUD
-		pause: '',       // Tactical Timeout / Technical Pause
-		waiting: '',     // Warmup / Halftime / Intermission
-		caster: '',      // Analysis / Caster Cam / Facecam
-		result: '',      // End of Match / Match Result
-	},
+	mainSceneName: '',         // Main OBS broadcast scene (CS2 + HUD layer)
+	intermissionSceneName: '', // Optional secondary scene (e.g. Caster Cam / Break)
 }
 
 class ObsManager {
@@ -56,10 +50,6 @@ class ObsManager {
 			this.config = {
 				...DEFAULT_CONFIG,
 				...saved,
-				sceneMapping: {
-					...DEFAULT_CONFIG.sceneMapping,
-					...(saved?.sceneMapping || {}),
-				},
 			}
 		} catch (_) {
 			this.config = { ...DEFAULT_CONFIG }
@@ -70,10 +60,6 @@ class ObsManager {
 		this.config = {
 			...this.config,
 			...newConfig,
-			sceneMapping: {
-				...this.config.sceneMapping,
-				...(newConfig?.sceneMapping || {}),
-			},
 		}
 
 		await writeJson(CONFIG_FILE, this.config)
@@ -248,7 +234,13 @@ class ObsManager {
 	}
 
 	async switchRoleScene(role) {
-		const targetScene = this.config.sceneMapping?.[role]
+		let targetScene = ''
+		if (role === 'main') {
+			targetScene = this.config.mainSceneName
+		} else if (role === 'intermission' || role === 'caster') {
+			targetScene = this.config.intermissionSceneName
+		}
+
 		if (!targetScene) {
 			throw new Error(`No OBS scene mapped for role: ${role}`)
 		}
@@ -280,8 +272,9 @@ class ObsManager {
 			scenes: this.scenes,
 			micMuted: this.micMuted,
 			micSourceName: this.config.micSourceName,
+			mainSceneName: this.config.mainSceneName,
+			intermissionSceneName: this.config.intermissionSceneName,
 			replayBufferActive: this.replayBufferActive,
-			sceneMapping: this.config.sceneMapping,
 			host: this.config.host,
 			port: this.config.port,
 		}

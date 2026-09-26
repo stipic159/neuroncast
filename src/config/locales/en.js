@@ -881,4 +881,13 @@ export default {
   "Single-Monitor Stream Control": "Single-Monitor Stream Control",
   "Open the touch-optimized remote on your phone to switch OBS scenes, toggle mic mute, and trigger replays blind.": "Open the touch-optimized remote on your phone to switch OBS scenes, toggle mic mute, and trigger replays blind.",
   "Open Local Remote": "Open Local Remote",
+  "HUD Automation Info:": "HUD Automation Info:",
+  "NeuronCast renders all match overlays, scoreboards, radar, overtime screens and match results inside a single Browser Source layer. You only need to assign your Main Broadcast Scene.": "NeuronCast renders all match overlays, scoreboards, radar, overtime screens and match results inside a single Browser Source layer. You only need to assign your Main Broadcast Scene.",
+  "OBS Broadcast Scenes": "OBS Broadcast Scenes",
+  "Main Broadcast Scene (CS2 + HUD)": "Main Broadcast Scene (CS2 + HUD)",
+  "The primary OBS scene where CS2 capture and NeuronCast HUD Browser Source live.": "The primary OBS scene where CS2 capture and NeuronCast HUD Browser Source live.",
+  "Intermission / Caster Scene (Optional)": "Intermission / Caster Scene (Optional)",
+  "— None / Optional —": "— None / Optional —",
+  "— Select OBS Scene —": "— Select OBS Scene —",
+  "Optional camera or break scene to switch to during commercial or analyst breaks.": "Optional camera or break scene to switch to during commercial or analyst breaks.",
 };

@@ -39,44 +39,32 @@ const RemoteApp = {
 				</button>
 			</section>
 
-			<!-- OBS Scene Director -->
-			<section class="remote-section">
+			<!-- Quick OBS Switcher (if Intermission/Caster scene is configured) -->
+			<section v-if="obs.intermissionSceneName" class="remote-section">
 				<div class="section-title">
-					<span>OBS Scene Director</span>
-					<span style="font-size: 0.7rem; color: #58a6ff;">{{ obs.currentScene || 'No scene' }}</span>
+					<span>OBS Scene Switch</span>
+					<span style="font-size: 0.7rem; color: #58a6ff;">{{ obs.currentScene || 'Active' }}</span>
 				</div>
 				<div class="button-grid-2">
 					<button 
-						:class="['btn-tap', { '--active': isObsRoleActive('live') }]"
-						@click="switchObsRole('live')"
+						:class="['btn-tap', { '--active': obs.currentScene === obs.mainSceneName }]"
+						@click="switchObsScene('main')"
 					>
-						🎮 Live Match
+						🎮 Main Game
 					</button>
 					<button 
-						:class="['btn-tap', { '--active': isObsRoleActive('waiting') }]"
-						@click="switchObsRole('waiting')"
-					>
-						⏳ Warmup / Break
-					</button>
-					<button 
-						:class="['btn-tap', { '--active': isObsRoleActive('pause') }]"
-						@click="switchObsRole('pause')"
-					>
-						⏸️ Timeout / Pause
-					</button>
-					<button 
-						:class="['btn-tap', { '--active': isObsRoleActive('caster') }]"
-						@click="switchObsRole('caster')"
+						:class="['btn-tap', { '--active': obs.currentScene === obs.intermissionSceneName }]"
+						@click="switchObsScene('intermission')"
 					>
 						🎙️ Caster Cam
 					</button>
 				</div>
 			</section>
 
-			<!-- HUD Scene Selector -->
+			<!-- HUD Overlay Scenes (Code-automated) -->
 			<section class="remote-section">
 				<div class="section-title">
-					<span>HUD Overlay Scenes</span>
+					<span>HUD Overlay Display</span>
 					<span style="font-size: 0.7rem; color: #58a6ff;">{{ currentHudScene }}</span>
 				</div>
 				<div class="button-grid-2">
@@ -169,7 +157,8 @@ const RemoteApp = {
 				connected: false,
 				currentScene: '',
 				micMuted: false,
-				sceneMapping: {},
+				mainSceneName: '',
+				intermissionSceneName: '',
 			},
 			options: {},
 		}
@@ -290,15 +279,10 @@ const RemoteApp = {
 			await this.sendControlRequest('/api/obs/replay-buffer/save')
 		},
 
-		async switchObsRole(role) {
+		async switchObsScene(role) {
 			this.vibrate(35)
 			await this.sendControlRequest('/api/obs/scene', { role })
 			await this.fetchObsStatus()
-		},
-
-		isObsRoleActive(role) {
-			const target = this.obs.sceneMapping?.[role]
-			return target && this.obs.currentScene === target
 		},
 
 		setHudScene(id) {
@@ -329,7 +313,6 @@ const RemoteApp = {
 		sendTicker() {
 			if (!this.tickerText) return
 			this.vibrate(40)
-			// Trigger ticker on HUD via config:update
 			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: this.tickerText } }))
 			}
