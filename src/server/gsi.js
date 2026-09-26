@@ -160,22 +160,47 @@ export const syncGsiConfigFile = (token) => {
 
 const gsiToken = getOrGenerateGsiToken()
 syncGsiConfigFile(gsiToken)
-// Raw GSI session recorder: every ACCEPTED frame, timestamped, JSONL. This is
-// the replay source - `node scripts/gsi-simulator.js --session <file>` streams
-// it back through /api/gsi with original pacing, reproducing an entire game
-// against the live stack (HUD + director) deterministically. Expect roughly
-// 0.5-1 GB per match night in tmp/; disable with EON_GSI_RECORD=0.
-const gsiRecordEnabled = process.env.EON_GSI_RECORD !== '0'
+// Raw GSI session recorder with automatic retention & disk protection (watchdog).
+// Enabled by default only when explicitly set to '1' or in development replay mode.
+const gsiRecordEnabled = process.env.EON_GSI_RECORD === '1' || process.env.NEURON_GSI_RECORD === '1'
 let gsiRecordStream = null
+let lastRetentionCheck = 0
+
+const runGsiRetentionPolicy = (tmpDir) => {
+	const now = Date.now()
+	if (now - lastRetentionCheck < 3600000) return // Check once per hour
+	lastRetentionCheck = now
+
+	try {
+		if (!fs.existsSync(tmpDir)) return
+		const files = fs.readdirSync(tmpDir).filter(f => f.startsWith('gsi-') && f.endsWith('.jsonl'))
+		const maxAgeMs = 7 * 24 * 3600 * 1000 // 7 days retention
+		for (const file of files) {
+			const filePath = path.join(tmpDir, file)
+			try {
+				const stat = fs.statSync(filePath)
+				if (now - stat.mtimeMs > maxAgeMs) {
+					fs.unlinkSync(filePath)
+					console.log(`[GSI Retention] Removed old replay log: ${file}`)
+				}
+			} catch (_) {}
+		}
+	} catch (err) {
+		console.warn('[GSI Retention] Failed to prune old logs:', err.message)
+	}
+}
+
 const recordRawGsiFrame = (body) => {
 	if (!gsiRecordEnabled) return
+	const dir = path.join(process.cwd(), 'tmp')
+	runGsiRetentionPolicy(dir)
+
 	if (!gsiRecordStream) {
-		const dir = path.join(process.cwd(), 'tmp')
 		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 		const stamp = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')
 		const file = path.join(dir, `gsi-${stamp}.jsonl`)
 		gsiRecordStream = fs.createWriteStream(file, { flags: 'a' })
-		console.log(`[gsi] recording raw session -> ${file}`)
+		console.log(`[GSI] Recording raw replay session -> ${file}`)
 	}
 	const { auth, ...frame } = body // token has no business in a replay file
 	gsiRecordStream.write(JSON.stringify({ t: Date.now(), frame }) + '\n')
@@ -612,9 +637,7 @@ export const registerGsiRoutes = (router, websocket) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NeuronCast Operator Status</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Offline Safe System Fonts -->
     <style>
         :root {
             --bg-gradient: radial-gradient(circle at top left, #0e1117, #07090e);
@@ -636,7 +659,7 @@ export const registerGsiRoutes = (router, websocket) => {
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg-gradient);
             color: var(--color-text);
             min-height: 100vh;
@@ -776,7 +799,7 @@ export const registerGsiRoutes = (router, websocket) => {
         .hero-meta-value {
             font-size: 1.1rem;
             font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
         }
 
         /* Diagnostic Grid */

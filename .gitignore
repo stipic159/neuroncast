@@ -6,7 +6,10 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-GEMINI.md 
+GEMINI.md
+
+# Game State Integration config with local token
+gamestate_integration_neuroncast.cfg
 
 node_modules
 dist
@@ -19,8 +22,9 @@ temp-hud-debug.png
 test-results/
 playwright-report/
 
-# Control-plane secret (auto-generated per install)
+# Secrets & Userspace tokens (auto-generated per install)
 src/themes/userspace/control-token.txt
+src/themes/userspace/gsi-token.txt
 
 # Editor directories and files
 .vscode/*

@@ -11,6 +11,9 @@ export class Websocket {
 		this.websocket = new WebSocketServer({ server })
 
 		this.websocket.on('connection', (client, request) => {
+			client.isAlive = true
+			client.on('pong', () => { client.isAlive = true })
+
 			// Read-only state is pushed to every client (so overlays render on any
 			// machine), but only trusted clients (loopback or valid token) may
 			// inject draw:/config: control events into the broadcast.
@@ -20,7 +23,12 @@ export class Websocket {
 
 			client.on('message', (data) => {
 				try {
-					const { event, body } = JSON.parse(data)
+					const parsed = JSON.parse(data)
+					if (parsed.event === 'ping') {
+						client.send(JSON.stringify({ event: 'pong', at: Date.now() }))
+						return
+					}
+					const { event, body } = parsed
 					// Relay drawing and config events to all clients
 					if (event && (event.startsWith('draw:') || event.startsWith('config:'))) {
 						if (!client._eonTrusted) return
@@ -31,6 +39,19 @@ export class Websocket {
 				}
 			})
 		})
+
+		// Heartbeat ping interval to clean dead connections & unstick frozen sockets
+		this.pingInterval = setInterval(() => {
+			for (const client of this.websocket.clients) {
+				if (client.isAlive === false) {
+					try { client.terminate() } catch (_) {}
+					continue
+				}
+				client.isAlive = false
+				try { client.ping() } catch (_) {}
+			}
+		}, 15000)
+		if (this.pingInterval.unref) this.pingInterval.unref()
 
 		this.bombsitesCache = {}
 		this.optionsCache = {}

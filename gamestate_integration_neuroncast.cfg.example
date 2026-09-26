@@ -1,4 +1,4 @@
-"NeuronCast CS2 Game State Integration"
+"NeuronCast CS2 Game State Integration (Template)"
 {
  "uri" "http://127.0.0.1:31982/gsi"
  "timeout" "5.0"
@@ -7,7 +7,7 @@
  "heartbeat" "30.0"
  "auth"
  {
-   "token" "377fd6e87edce4f91b3d5b112b8b79d1"
+   "token" "NEURONCAST_GSI_TOKEN_PLACEHOLDER"
  }
  "data"
  {

@@ -26,6 +26,7 @@ class ObsManager {
 		this.lastError = null
 		this.lastLoggedError = null
 		this.reconnectTimer = null
+		this.reconnectAttempts = 0
 		this.scenes = []
 		this.currentScene = ''
 		this.micMuted = false

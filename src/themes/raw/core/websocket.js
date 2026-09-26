@@ -9,6 +9,36 @@ let reconnectAttempts = 0;
 const INITIAL_DELAY = 500;
 const MAX_DELAY = 10000;
 let reconnectTimer = null;
+let watchdogTimer = null;
+let lastHeartbeat = Date.now();
+
+const resetWatchdog = () => {
+	lastHeartbeat = Date.now();
+};
+
+const startWatchdog = () => {
+	stopWatchdog();
+	lastHeartbeat = Date.now();
+	// Check every 5 seconds; if no message received in 25 seconds, force self-heal reconnect
+	watchdogTimer = setInterval(() => {
+		if (ws && ws.readyState === WebSocket.OPEN) {
+			try {
+				ws.send(JSON.stringify({ event: 'ping' }));
+			} catch (_) {}
+			if (Date.now() - lastHeartbeat > 25000) {
+				console.warn('[HUD Watchdog] Connection frozen/stale (no packets in 25s). Self-healing reconnect...');
+				try { ws.close(); } catch (_) {}
+			}
+		}
+	}, 5000);
+};
+
+const stopWatchdog = () => {
+	if (watchdogTimer) {
+		clearInterval(watchdogTimer);
+		watchdogTimer = null;
+	}
+};
 
 export const connectToWebsocket = () => {
 	// If there's an active or opening socket, do not instantiate a duplicate
@@ -21,6 +51,8 @@ export const connectToWebsocket = () => {
 		clearTimeout(reconnectTimer);
 		reconnectTimer = null;
 	}
+
+	stopWatchdog();
 
 	// Clean up previous socket completely to avoid memory leaks / event handler duplication
 	if (ws) {
@@ -42,18 +74,24 @@ export const connectToWebsocket = () => {
 	ws.onopen = () => {
 		reconnectAttempts = 0;
 		additionalState.connectionState = 'connected';
+		resetWatchdog();
+		startWatchdog();
 		console.info('Websocket connection established. Reconnect attempts reset.');
 	};
 
-	ws.onmessage = onMessage;
+	ws.onmessage = (event) => {
+		resetWatchdog();
+		onMessage(event);
+	};
 
 	ws.onerror = (err) => {
 		console.error('Websocket connection error; closing connection', err.message || err);
 		// Let onclose handle the reconnect logic
-		ws.close();
+		try { ws.close(); } catch (_) {}
 	};
 
 	ws.onclose = () => {
+		stopWatchdog();
 		ws = null;
 		additionalState.connectionState = 'disconnected';
 		reconnectAttempts++;

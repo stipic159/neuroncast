@@ -117,6 +117,29 @@ function flushAllSummaries() {
 // Flush any pending summary writes on process exit (sync writes are safe here).
 process.on('exit', flushAllSummaries)
 
+// ── Non-blocking asynchronous event batch queue ──
+const writeStreams = new Map() // filePath -> fs.WriteStream
+
+function getOrCreateStream(filePath) {
+	if (writeStreams.has(filePath)) return writeStreams.get(filePath)
+	const stream = fs.createWriteStream(filePath, { flags: 'a', encoding: 'utf8' })
+	stream.on('error', (err) => console.warn(`[SessionStore] Stream write error on ${filePath}:`, err.message))
+	writeStreams.set(filePath, stream)
+	return stream
+}
+
+function flushAllStreams() {
+	for (const [filePath, stream] of writeStreams.entries()) {
+		try {
+			stream.end()
+		} catch (_) {}
+	}
+	writeStreams.clear()
+}
+
+process.on('exit', flushAllStreams)
+
+
 /**
  * Finds a session path on disk by ID or Slug.
  * Returns null if not found.
@@ -500,7 +523,8 @@ export function appendTimelineEvent(sessionId, event) {
 		if (!sPath) return false
 		
 		const timelinePath = path.join(sPath, 'timeline.jsonl')
-		fs.appendFileSync(timelinePath, JSON.stringify(event) + '\n', 'utf8')
+		const stream = getOrCreateStream(timelinePath)
+		stream.write(JSON.stringify(event) + '\n')
 
 		// Update summary statistics in memory; the write is debounced.
 		const summary = loadSummaryCached(sessionId, sPath)
@@ -530,7 +554,8 @@ export function appendSnapshot(sessionId, snapshot) {
 		if (!sPath) return false
 		
 		const snapshotsPath = path.join(sPath, 'snapshots.jsonl')
-		fs.appendFileSync(snapshotsPath, JSON.stringify(snapshot) + '\n', 'utf8')
+		const stream = getOrCreateStream(snapshotsPath)
+		stream.write(JSON.stringify(snapshot) + '\n')
 		return true
 	} catch (err) {
 		console.warn(`[SessionStore] Failed to append snapshot to session ${sessionId}:`, err)
