@@ -53,10 +53,6 @@
 						<input type="checkbox" v-model="showLiveHUDReference">
 						<span>{{ $t("📺 Live HUD Reference") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t('Show/Hide Live Text from Mobile Phone')">
-						<input type="checkbox" v-model="showMobileTicker">
-						<span>{{ $t("💬 Mobile Text") }}</span>
-					</label>
 				</div>
 				
 				<div class="grid-size-selector" style="display: flex; align-items: center; gap: 8px;">
@@ -116,7 +112,6 @@
 						<div 
 							v-for="el in sortedElements" 
 							:key="el.def.id"
-							v-show="el.def.id !== 'mobile-ticker' || showMobileTicker"
 							:class="[
 								'hud-el', 
 								{ 
@@ -219,15 +214,6 @@
 									<span class="title">{{ $t("SPONSOR SLOT") }}</span>
 								</div>
 
-								<!-- 11. MOBILE LOWER THIRD / TEXT TICKER -->
-								<div v-else-if="el.def.id === 'mobile-ticker'" class="mock-mobile-ticker">
-									<div class="mock-ticker-header">
-										<span class="mock-badge">⚡ {{ $t("PHONE ON-AIR") }}</span>
-										<span class="mock-ticker-title">{{ currentMobileTickerTitle }}</span>
-									</div>
-									<div class="mock-ticker-text">{{ currentMobileTickerText }}</div>
-								</div>
-
 								<!-- FALLBACK WIREFRAME BOX -->
 								<div v-else class="mock-box" :style="{ backgroundColor: el.def.color }">
 									{{ $text(el.def.label) }}
@@ -252,20 +238,25 @@
 				</div>
 			</div>
 
-			<!-- Diagnostics Sidebar Inspector & Element Navigator -->
-			<aside class="editor-sidebar">
-				<div class="elements-list">
+			<!-- Properties Sidebar with Technical Diagnostics -->
+			<aside class="properties-sidebar">
+				<div class="sidebar-header">
+					<h3>{{ $t("Elements") }}</h3>
+					<p class="sidebar-tip">{{ $t("Select items here if they are overlapping on the canvas.") }}</p>
+				</div>
+				
+				<div class="element-list">
 					<div 
 						v-for="el in elements" 
 						:key="el.def.id"
-						:class="['element-item', { '--active': selectedId === el.def.id }]"
-						@click="selectedId = el.def.id"
+						:class="['element-item', { 
+							'--active': selectedId === el.def.id,
+							'--warning': showSafeArea && checkOutsideSafe(el) && el.visible,
+							'--danger': getCollidingElements(el).length > 0 && el.visible
+						}]"
+						@click="selectElement(el.def.id)"
 					>
-						<div style="display: flex; align-items: center; gap: 8px;">
-							<span class="element-color-bullet" :style="{ background: el.def.border || el.def.color }"></span>
-							<span class="element-name">{{ $text(el.def.label) }}</span>
-						</div>
-						
+						<span class="el-name">{{ $text(el.def.label) }}</span>
 						<div style="display: flex; align-items: center; gap: 8px;">
 							<span v-if="el.visible && getCollidingElements(el).length > 0" :title="$t('Collision detected')" style="font-size: 0.75rem;">💥</span>
 							<span v-else-if="el.visible && showSafeArea && checkOutsideSafe(el)" :title="$t('Outside Safe Area')" style="font-size: 0.75rem;">⚠️</span>
@@ -285,28 +276,6 @@
 				<div v-if="selectedElement" class="properties-panel">
 					<h3>{{ $t("Properties:") }} {{ $text(selectedElement.def.label) }}</h3>
 					
-					<!-- Special Mobile Text Tester when mobile-ticker is selected -->
-					<div v-if="selectedElement.def.id === 'mobile-ticker'" class="prop-group" style="background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(88, 166, 255, 0.3); border-radius: 6px; padding: 10px;">
-						<label style="color: #58a6ff; font-weight: bold;">💬 {{ $t("Live Phone Text Stream") }}</label>
-						<div class="prop-row" style="flex-direction: column; gap: 8px;">
-							<input 
-								type="text" 
-								v-model="phoneTextDraft" 
-								:placeholder="$t('Type text or send from mobile...')"
-								style="background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 6px 8px; color: #fff; font-size: 0.8rem; width: 100%;"
-								@keyup.enter="sendPhoneTextDraft"
-							/>
-							<div style="display: flex; gap: 6px;">
-								<button class="btn-secondary" style="flex: 1; background: #1f6feb; color: #fff; border: none;" @click="sendPhoneTextDraft">
-									{{ $t("🚀 Send to Stream") }}
-								</button>
-								<button class="btn-secondary --danger-btn" @click="clearPhoneTextDraft">
-									{{ $t("Clear") }}
-								</button>
-							</div>
-						</div>
-					</div>
-
 					<!-- 1. Anchor -->
 					<div class="prop-group">
 						<label>{{ $t("Anchor alignment") }}</label>
@@ -416,6 +385,7 @@
 
 <script>
 import { text as translateText, state as languageState } from '/config/i18n.js'
+
 import { state, actions } from '/config/store.js'
 
 const VP_W = 1920, VP_H = 1080;
@@ -514,15 +484,6 @@ const DEFS = [
 		props: [ { key: 'layout.eventBadge.top', edge: 'top' }, { key: 'layout.eventBadge.left', edge: 'left' } ],
 		resizable: true, sizeKey: 'style.eventBadge.width', sizeUnit: 'rem',
 		visibleKey: 'layout.eventBadge.visible'
-	},
-	{
-		id: 'mobile-ticker', label: 'Mobile Ticker / Banner',
-		color: 'rgba(31,111,235,0.25)', border: 'rgba(88,166,255,0.7)',
-		baseW: 460, baseH: 80,
-		anchor: { v: 'bottom', h: 'left' },
-		props: [ { key: 'layout.promotion.left', edge: 'left' }, { key: 'layout.promotion.bottom', edge: 'bottom' } ],
-		resizable: true, sizeKey: 'layout.promotion.width', sizeUnit: 'px',
-		visibleKey: 'promotion.visible'
 	}
 ]
 
@@ -548,8 +509,6 @@ export default {
 			showSafeArea: true,
 			smartGuidesEnabled: true,
 			showLiveHUDReference: false,
-			showMobileTicker: true,
-			phoneTextDraft: '',
 			activeSnapX: null,
 			activeSnapY: null
 		}
@@ -567,12 +526,6 @@ export default {
 			if (!this.activePreset) return false
 			const p = this.presets.find(x => x.id === this.activePreset)
 			return p ? p.isCustom !== false : false
-		},
-		currentMobileTickerTitle() {
-			return state.options['promotion.title'] || '📢 ПРЯМОЙ ЭФИР'
-		},
-		currentMobileTickerText() {
-			return state.options['branding.ticker'] || this.phoneTextDraft || '🔥 MATCH POINT / РЕШАЮЩИЙ РАУНД'
 		},
 		viewportStyles() {
 			const ct = state.options['theme.colors.ctFill'] || '25, 106, 232'
@@ -626,21 +579,13 @@ export default {
 		window.removeEventListener('mouseup', this.onMouseUp)
 	},
 	methods: {
-		sendPhoneTextDraft() {
-			if (!this.phoneTextDraft) return
-			actions.setOption('branding.ticker', this.phoneTextDraft)
-		},
-		clearPhoneTextDraft() {
-			this.phoneTextDraft = ''
-			actions.setOption('branding.ticker', '')
-		},
-		snapLabel(label) {
-			const edges = { ' Left Edge': 'left', ' Right Edge': 'right', ' Top Edge': 'top', ' Bottom Edge': 'bottom', ' Center X': 'center', ' Center Y': 'center' }
-			for (const [suffix, key] of Object.entries(edges)) {
-				if (label.endsWith(suffix)) return this.$text(label.slice(0, -suffix.length)) + ' · ' + this.$text(key) + (suffix.includes('Center') ? suffix.slice(-2) : '')
-			}
-			return this.$text(label)
-		},
+    snapLabel(label) {
+      const edges = { ' Left Edge': 'left', ' Right Edge': 'right', ' Top Edge': 'top', ' Bottom Edge': 'bottom', ' Center X': 'center', ' Center Y': 'center' }
+      for (const [suffix, key] of Object.entries(edges)) {
+        if (label.endsWith(suffix)) return this.$text(label.slice(0, -suffix.length)) + ' · ' + this.$text(key) + (suffix.includes('Center') ? suffix.slice(-2) : '')
+      }
+      return this.$text(label)
+    },
 		computeRemPx() {
 			const raw = String(state.options['css.base-scale-factor'] || '0.925925926vh')
 			const val = parseFloat(raw)
@@ -675,347 +620,331 @@ export default {
 			})
 
 			try {
-				if (/^[\d\s\+\-\*\/\(\)\.]+$/.test(s)) {
-					const res = Function(`'use strict'; return (${s})`)()
-					return isNaN(res) ? fb : res
-				}
-			} catch (_) {}
+				if (/^[ \d\.\-\+\*\/\(\)]+$/.test(s)) return new Function(`return (${s})`)()
+			} catch(e) {}
 			return parseFloat(s) || fb
 		},
-		getTransformOrigin(hAnchor) {
-			if (hAnchor === 'left') return 'left center'
-			if (hAnchor === 'right') return 'right center'
-			return 'center center'
-		},
+		resolveNum(key, fb) { const v = state.options[key]; return v != null ? (parseFloat(v) || fb) : fb },
 		initElements() {
 			this.elements = DEFS.map(def => {
-				let bw = def.baseW
-				let bh = def.baseH
-				
+				let bw = def.baseW, bh = def.baseH
+
 				if (def.sizeKey) {
-					const sizeVal = state.options[def.sizeKey]
-					if (sizeVal !== undefined && sizeVal !== null) {
-						if (def.sizeUnit === '%') {
-							const pct = parseFloat(sizeVal) || 100
-							bw = (pct / 100) * (def.sizeRef || VP_W)
-						} else if (def.sizeUnit === 'rem') {
-							const rem = parseFloat(sizeVal) || (def.baseW / this.remPx)
-							bw = rem * this.remPx
-						} else if (def.sizeUnit === '') {
-							const scale = parseFloat(sizeVal) || 1
-							bw = def.baseW * scale
-							bh = def.baseH * scale
-						}
-					}
+					const refSize = (def.sizeKey.includes('width') || def.sizeKey.includes('left') || def.sizeKey.includes('right')) ? VP_W : VP_H
+					bw = this.evaluateCss(state.options[def.sizeKey], refSize, def.baseW)
+					if (def.keepAspect) bh = bw * (def.baseH / def.baseW)
 				}
 
 				if (def.id.startsWith('sponsor-')) {
-					const wOpt = state.options['style.sponsors.width']
-					const hOpt = state.options['style.sponsors.height']
-					if (wOpt) bw = this.evaluateCss(wOpt, VP_W, bw)
-					if (hOpt) bh = this.evaluateCss(hOpt, VP_H, bh)
+					bw = this.evaluateCss(state.options['style.sponsors.width'], VP_W, 130)
+					bh = this.evaluateCss(state.options['style.sponsors.height'], VP_H, 48)
 				}
 
 				const positions = {}
-				for (const prop of def.props) {
-					const val = state.options[prop.key]
-					positions[prop.edge] = this.evaluateCss(val, prop.edge === 'top' || prop.edge === 'bottom' ? VP_H : VP_W, 0)
+				for (const p of def.props) {
+					const refSize = (p.edge === 'top' || p.edge === 'bottom') ? VP_H : VP_W
+					positions[p.edge] = this.evaluateCss(state.options[p.key], refSize, 11)
 				}
 
+				let w = bw, h = bh
 				let top = 0, left = 0
+				
 				if (def.anchor.v === 'top') top = positions.top ?? 0
-				else top = VP_H - (positions.bottom ?? 0) - bh
+				else top = VP_H - (positions.bottom ?? 0) - h
 
 				if (def.anchor.h === 'left') left = positions.left ?? 0
-				else if (def.anchor.h === 'right') left = VP_W - (positions.right ?? 0) - bw
-				else left = (VP_W - bw) / 2
+				else if (def.anchor.h === 'right') left = VP_W - (positions.right ?? 0) - w
+				else {
+					// center anchor: if a left prop has a saved value, it is the center X (HUD uses translateX(-50%))
+					const leftProp = def.props.find(p => p.edge === 'left')
+					if (leftProp && state.options[leftProp.key] != null) {
+						left = positions.left - w / 2
+					} else {
+						left = (VP_W - w) / 2
+					}
+				}
 
 				const visibleVal = state.options[def.visibleKey]
 				const visible = visibleVal !== false && visibleVal !== 'none'
-
-				return {
-					def,
-					top, left,
-					w: bw, h: bh,
-					baseW: bw, baseH: bh,
-					visible
-				}
+				return { def, top, left, w, h, baseW: bw, baseH: bh, scaleX: 1, scaleY: 1, visible }
 			})
+		},
+		getTransformOrigin(anchorH) {
+			if (anchorH === 'left') return 'bottom left'
+			if (anchorH === 'right') return 'bottom right'
+			return 'bottom center'
+		},
+		selectElement(id) {
+			this.selectedId = id
+		},
+		toggleVisibility(el) {
+			el.visible = !el.visible
+			const val = el.visible ? 'flex' : 'none'
+			state.options[el.def.visibleKey] = val
+			actions.broadcast(el.def.visibleKey, val)
+			actions.save({ [el.def.visibleKey]: val })
+		},
+		resetElement(el) {
+			const partial = {}
+			for (const p of el.def.props) { partial[p.key] = null; state.options[p.key] = null }
+			if (el.def.sizeKey) { partial[el.def.sizeKey] = null; state.options[el.def.sizeKey] = null }
+			actions.save(partial)
+			this.computeRemPx()
+			this.initElements()
 		},
 		resize() {
 			if (!this.$refs.container) return
 			const rect = this.$refs.container.getBoundingClientRect()
-			const padding = 20
-			const availW = rect.width - padding * 2
-			const availH = rect.height - padding * 2
-			
-			const scaleX = availW / VP_W
-			const scaleY = availH / VP_H
-			this.viewportScale = Math.min(scaleX, scaleY, 1)
+			const scale = Math.min((rect.width - 40) / VP_W, (rect.height - 40) / VP_H)
+			this.viewportScale = Math.max(0.1, scale)
 		},
-		startDrag(e, el, mode) {
-			e.preventDefault()
+		startDrag(e, el, type) {
 			this.selectedId = el.def.id
-			
 			this.drag = {
-				mode,
-				el,
-				startX: e.clientX,
-				startY: e.clientY,
-				initLeft: el.left,
-				initTop: el.top,
-				initW: el.w,
-				initH: el.h,
-				initBaseW: el.baseW,
-				initBaseH: el.baseH
+				el, type,
+				startX: e.clientX, startY: e.clientY,
+				initTop: el.top, initLeft: el.left,
+				initW: el.baseW, initH: el.baseH
 			}
 		},
 		onMouseMove(e) {
 			if (!this.drag) return
-			const { mode, el, startX, startY, initLeft, initTop, initW, initH, initBaseW, initBaseH } = this.drag
-			const dx = (e.clientX - startX) / this.viewportScale
-			const dy = (e.clientY - startY) / this.viewportScale
-			
-			const grid = this.gridSizes[this.gridIdx]
-			
-			if (mode === 'move') {
-				let nextLeft = initLeft + dx
-				let nextTop = initTop + dy
+			const dx = (e.clientX - this.drag.startX) / this.viewportScale
+			const dy = (e.clientY - this.drag.startY) / this.viewportScale
+			const el = this.drag.el
+			const g = this.snapEnabled ? this.gridSizes[this.gridIdx] : 0
+			const snap = v => (g ? Math.round(v / g) * g : v)
+
+			if (this.drag.type === 'move') {
+				let newTop = this.drag.initTop + dy
+				let newLeft = this.drag.initLeft + dx
 				
-				this.activeSnapX = null
-				this.activeSnapY = null
+				// Clamp values within 1920x1080 stage boundaries to prevent element loss
+				newTop = Math.max(0, Math.min(VP_H - el.h, newTop))
+				newLeft = Math.max(0, Math.min(VP_W - el.w, newLeft))
+
+				// Lock horizontal position for center-anchored components unless they have horizontal props
+				const hasHorizontal = el.def.props.some(p => p.edge === 'left' || p.edge === 'right')
+				if (el.def.anchor.h === 'center' && !hasHorizontal) {
+					newLeft = (VP_W - el.w) / 2
+				}
+
+				// Lock vertical position if there are no vertical keys mapped
+				const hasVertical = el.def.props.some(p => p.edge === 'top' || p.edge === 'bottom')
+				if (!hasVertical) {
+					newTop = el.top
+				}
+
+				// Smart composition snapping & alignment guidelines (Phase 19A)
+				let activeSnapX = null
+				let activeSnapY = null
 				
 				if (this.smartGuidesEnabled) {
-					const snapThreshold = 6
+					const snapTolerance = 6
 					
-					const linesX = [
-						{ value: 0, label: 'Stage Left Edge' },
-						{ value: VP_W / 2, label: 'Stage Center X' },
-						{ value: VP_W, label: 'Stage Right Edge' },
-						{ value: 96, label: '90% Title Safe Area Left' },
-						{ value: VP_W - 96, label: '90% Title Safe Area Right' }
-					]
-					
-					const linesY = [
-						{ value: 0, label: 'Stage Top Edge' },
-						{ value: VP_H / 2, label: 'Stage Center Y' },
-						{ value: VP_H, label: 'Stage Bottom Edge' },
-						{ value: 54, label: '90% Title Safe Area Top' },
-						{ value: VP_H - 54, label: '90% Title Safe Area Bottom' }
-					]
-					
-					this.elements.forEach(other => {
-						if (other.def.id === el.def.id || !other.visible) return
-						linesX.push(
-							{ value: other.left, label: `${this.$text(other.def.label)} Left Edge` },
-							{ value: other.left + other.w / 2, label: `${this.$text(other.def.label)} Center X` },
-							{ value: other.left + other.w, label: `${this.$text(other.def.label)} Right Edge` }
-						)
-						linesY.push(
-							{ value: other.top, label: `${this.$text(other.def.label)} Top Edge` },
-							{ value: other.top + other.h / 2, label: `${this.$text(other.def.label)} Center Y` },
-							{ value: other.top + other.h, label: `${this.$text(other.def.label)} Bottom Edge` }
-						)
-					})
-					
-					let bestDistX = snapThreshold + 1
-					let bestSnapX = null
-					
-					const elEdgesX = [
-						{ offset: 0, label: 'Left' },
-						{ offset: el.w / 2, label: 'Center' },
-						{ offset: el.w, label: 'Right' }
-					]
-					
-					for (const target of linesX) {
-						for (const edge of elEdgesX) {
-							const currentEdgePos = nextLeft + edge.offset
-							const dist = Math.abs(currentEdgePos - target.value)
-							if (dist <= snapThreshold && dist < bestDistX) {
-								bestDistX = dist
-								bestSnapX = {
-									nextLeft: target.value - edge.offset,
-									lineValue: target.value,
-									label: target.label
-								}
+					// A. Horizontal axis (X) Snapping - Bypassed if center-anchored horizontally locked
+					const isHorizontallyLocked = el.def.anchor.h === 'center' && !hasHorizontal
+					if (!isHorizontallyLocked) {
+						const xCandidates = [
+							{ value: 960, label: 'Viewport Center X' },
+							{ value: 96, label: 'Title Safe Left (96px)' },
+							{ value: 1824, label: 'Title Safe Right (1824px)' }
+						]
+						this.elements.forEach(other => {
+							if (!other.visible || other.def.id === el.def.id) return
+							xCandidates.push({ value: other.left, label: `${other.def.label} Left Edge` })
+							xCandidates.push({ value: other.left + other.w, label: `${other.def.label} Right Edge` })
+							xCandidates.push({ value: other.left + other.w / 2, label: `${other.def.label} Center X` })
+						})
+						
+						let bestSnapX = null
+						let minDeltaX = snapTolerance + 1
+						
+						const proposedLeft = newLeft
+						const proposedRight = newLeft + el.w
+						const proposedCenterX = newLeft + el.w / 2
+						
+						xCandidates.forEach(cand => {
+							// 1. el.left snaps to candidate
+							const dL = Math.abs(proposedLeft - cand.value)
+							if (dL <= snapTolerance && dL < minDeltaX) {
+								minDeltaX = dL
+								bestSnapX = { snappedPos: cand.value, lineValue: cand.value, label: cand.label }
 							}
+							// 2. el.right snaps to candidate
+							const dR = Math.abs(proposedRight - cand.value)
+							if (dR <= snapTolerance && dR < minDeltaX) {
+								minDeltaX = dR
+								bestSnapX = { snappedPos: cand.value - el.w, lineValue: cand.value, label: cand.label }
+							}
+							// 3. el.centerX snaps to candidate
+							const dC = Math.abs(proposedCenterX - cand.value)
+							if (dC <= snapTolerance && dC < minDeltaX) {
+								minDeltaX = dC
+								bestSnapX = { snappedPos: cand.value - el.w / 2, lineValue: cand.value, label: cand.label }
+							}
+						})
+						
+						if (bestSnapX) {
+							newLeft = bestSnapX.snappedPos
+							activeSnapX = bestSnapX
 						}
 					}
 					
-					if (bestSnapX) {
-						nextLeft = bestSnapX.nextLeft
-						this.activeSnapX = bestSnapX
-					}
-					
-					let bestDistY = snapThreshold + 1
-					let bestSnapY = null
-					
-					const elEdgesY = [
-						{ offset: 0, label: 'Top' },
-						{ offset: el.h / 2, label: 'Center' },
-						{ offset: el.h, label: 'Bottom' }
-					]
-					
-					for (const target of linesY) {
-						for (const edge of elEdgesY) {
-							const currentEdgePos = nextTop + edge.offset
-							const dist = Math.abs(currentEdgePos - target.value)
-							if (dist <= snapThreshold && dist < bestDistY) {
-								bestDistY = dist
-								bestSnapY = {
-									nextTop: target.value - edge.offset,
-									lineValue: target.value,
-									label: target.label
-								}
+					// B. Vertical axis (Y) Snapping - Bypassed if vertically locked
+					if (hasVertical) {
+						const yCandidates = [
+							{ value: 540, label: 'Viewport Center Y' },
+							{ value: 54, label: 'Title Safe Top (54px)' },
+							{ value: 1026, label: 'Title Safe Bottom (1026px)' }
+						]
+						this.elements.forEach(other => {
+							if (!other.visible || other.def.id === el.def.id) return
+							yCandidates.push({ value: other.top, label: `${other.def.label} Top Edge` })
+							yCandidates.push({ value: other.top + other.h, label: `${other.def.label} Bottom Edge` })
+							yCandidates.push({ value: other.top + other.h / 2, label: `${other.def.label} Center Y` })
+						})
+						
+						let bestSnapY = null
+						let minDeltaY = snapTolerance + 1
+						
+						const proposedTop = newTop
+						const proposedBottom = newTop + el.h
+						const proposedCenterY = newTop + el.h / 2
+						
+						yCandidates.forEach(cand => {
+							// 1. el.top snaps to candidate
+							const dT = Math.abs(proposedTop - cand.value)
+							if (dT <= snapTolerance && dT < minDeltaY) {
+								minDeltaY = dT
+								bestSnapY = { snappedPos: cand.value, lineValue: cand.value, label: cand.label }
 							}
+							// 2. el.bottom snaps to candidate
+							const dB = Math.abs(proposedBottom - cand.value)
+							if (dB <= snapTolerance && dB < minDeltaY) {
+								minDeltaY = dB
+								bestSnapY = { snappedPos: cand.value - el.h, lineValue: cand.value, label: cand.label }
+							}
+							// 3. el.centerY snaps to candidate
+							const dC = Math.abs(proposedCenterY - cand.value)
+							if (dC <= snapTolerance && dC < minDeltaY) {
+								minDeltaY = dC
+								bestSnapY = { snappedPos: cand.value - el.h / 2, lineValue: cand.value, label: cand.label }
+							}
+						})
+						
+						if (bestSnapY) {
+							newTop = bestSnapY.snappedPos
+							activeSnapY = bestSnapY
 						}
 					}
-					
-					if (bestSnapY) {
-						nextTop = bestSnapY.nextTop
-						this.activeSnapY = bestSnapY
+				}
+				
+				this.activeSnapX = activeSnapX
+				this.activeSnapY = activeSnapY
+
+				// Fallback to normal grid snapping only if no smart snapping occurred on that axis
+				el.top = activeSnapY ? newTop : snap(newTop)
+				el.left = activeSnapX ? newLeft : snap(newLeft)
+			} else if (this.drag.type === 'resize-x' || this.drag.type === 'resize-y') {
+				// Use direct width/height resizing
+				if (this.drag.type === 'resize-x') {
+					const sign = (el.def.anchor.h === 'right') ? -1 : 1
+					el.baseW = snap(Math.max(20, this.drag.initW + dx * sign))
+					el.w = el.baseW
+					if (el.def.keepAspect) {
+						el.baseH = el.baseW * (el.def.baseH / el.def.baseW)
+						el.h = el.baseH
 					}
+				} else {
+					el.baseH = snap(Math.max(20, this.drag.initH - dy))
+					el.h = el.baseH
 				}
-				
-				if (grid > 0 && this.snapEnabled && !this.activeSnapX) {
-					nextLeft = Math.round(nextLeft / grid) * grid
-				}
-				if (grid > 0 && this.snapEnabled && !this.activeSnapY) {
-					nextTop = Math.round(nextTop / grid) * grid
-				}
-				
-				el.left = Math.max(0, Math.min(VP_W - el.w, nextLeft))
-				el.top = Math.max(0, Math.min(VP_H - el.h, nextTop))
-				
-				this.persistElementCoordinates(el)
-			} else if (mode === 'resize-x') {
-				let factor = 1
-				if (el.def.anchor.h === 'right') factor = -1
-				
-				let nextW = initW + dx * factor
-				if (grid > 0 && this.snapEnabled) nextW = Math.round(nextW / grid) * grid
-				
-				nextW = Math.max(50, Math.min(VP_W, nextW))
-				el.w = nextW
-				el.baseW = nextW
-				
-				if (el.def.keepAspect) {
-					const ratio = el.def.baseH / el.def.baseW
-					el.h = nextW * ratio
-					el.baseH = el.h
-				}
-				
-				if (el.def.anchor.h === 'right') {
-					el.left = initLeft - (nextW - initW)
-				}
-				
-				this.persistElementSize(el)
-			} else if (mode === 'resize-y') {
-				let nextH = initH + dy
-				if (grid > 0 && this.snapEnabled) nextH = Math.round(nextH / grid) * grid
-				
-				nextH = Math.max(20, Math.min(VP_H, nextH))
-				el.h = nextH
-				el.baseH = nextH
-				
-				this.persistElementSize(el)
 			}
 		},
 		onMouseUp() {
+			if (!this.drag) return
+			const el = this.drag.el
 			this.drag = null
+
 			this.activeSnapX = null
 			this.activeSnapY = null
-		},
-		persistElementCoordinates(el) {
+
+			// Save positions to state
+			const partial = {}
 			for (const prop of el.def.props) {
 				let val = 0
 				if (prop.edge === 'top') val = el.top
 				else if (prop.edge === 'bottom') val = VP_H - el.top - el.h
-				else if (prop.edge === 'left') {
-					if (el.def.anchor.h === 'center') val = el.left + el.w / 2
-					else val = el.left
-				}
+				else if (prop.edge === 'left') val = (el.def.anchor.h === 'center') ? el.left + el.w / 2 : el.left
 				else if (prop.edge === 'right') val = VP_W - el.left - el.w
-				
+
 				const remVal = (val / this.remPx).toFixed(2) + 'rem'
-				actions.setOption(prop.key, remVal)
+				state.options[prop.key] = remVal
+				partial[prop.key] = remVal
+				actions.broadcast(prop.key, remVal)
 			}
-		},
-		persistElementSize(el) {
-			if (!el.def.sizeKey) return
-			const unit = el.def.sizeUnit
-			let val = el.baseW
-			if (unit === '%') {
-				val = (el.baseW / VP_W * 100).toFixed(2) + '%'
-			} else if (unit === 'rem') {
-				val = (el.baseW / this.remPx).toFixed(2) + 'rem'
-			} else if (unit === '') {
-				val = (el.baseW / el.def.baseW).toFixed(2)
+
+			if (el.def.sizeKey) {
+				const unit = el.def.sizeUnit || 'px'
+				let val = el.baseW
+				if (unit === '%') val = (el.baseW / VP_W * 100).toFixed(2) + '%'
+				else if (unit === 'rem') val = (el.baseW / this.remPx).toFixed(2) + 'rem'
+				else val = Math.round(val) + 'px'
+
+				state.options[el.def.sizeKey] = val
+				partial[el.def.sizeKey] = val
+				actions.broadcast(el.def.sizeKey, val)
 			}
-			actions.setOption(el.def.sizeKey, val)
-			
-			if (el.def.id.startsWith('sponsor-')) {
-				const remW = (el.baseW / this.remPx).toFixed(2) + 'rem'
-				const remH = (el.baseH / this.remPx).toFixed(2) + 'rem'
-				actions.setOption('style.sponsors.width', remW)
-				actions.setOption('style.sponsors.height', remH)
-			}
+
+			actions.save(partial)
 		},
-		toggleVisibility(el) {
-			if (!el.def.visibleKey) return
-			el.visible = !el.visible
-			actions.setOption(el.def.visibleKey, el.visible)
-		},
-		resetElement(el) {
-			this.initElements()
-			this.persistElementCoordinates(el)
-			this.persistElementSize(el)
-		},
-		
-		// Presets Management
 		async loadPresetsList() {
 			try {
 				const res = await fetch('/config/layout-presets')
-				if (res.ok) {
-					this.presets = await res.json()
-				}
+				this.presets = await res.json()
 			} catch (err) {
-				console.error('Failed to load presets:', err)
+				console.error('Failed to load layout presets:', err)
 			}
 		},
 		selectPreset() {
-			localStorage.setItem('lastSelectedLayoutPresetId', this.activePreset)
 			if (!this.activePreset) {
 				this.initElements()
+				localStorage.removeItem('lastSelectedLayoutPresetId')
 				return
 			}
+			
 			const p = this.presets.find(x => x.id === this.activePreset)
 			if (!p) return
 			
+			localStorage.setItem('lastSelectedLayoutPresetId', this.activePreset)
+			
 			this.elements.forEach(el => {
-				let bw = el.def.baseW
-				let bh = el.def.baseH
+				let bw = el.def.baseW, bh = el.def.baseH
 				
-				if (el.def.sizeKey && p.options[el.def.sizeKey]) {
-					const sizeVal = p.options[el.def.sizeKey].value
-					if (el.def.sizeUnit === '%') bw = (parseFloat(sizeVal) / 100) * (el.def.sizeRef || VP_W)
-					else if (el.def.sizeUnit === 'rem') bw = parseFloat(sizeVal) * this.remPx
-					else if (el.def.sizeUnit === '') {
-						bw = el.def.baseW * parseFloat(sizeVal)
-						bh = el.def.baseH * parseFloat(sizeVal)
-					}
+				if (el.def.sizeKey) {
+					const refSize = (el.def.sizeKey.includes('width') || el.def.sizeKey.includes('left') || el.def.sizeKey.includes('right')) ? VP_W : VP_H
+					const presetSize = p.options[el.def.sizeKey] ? p.options[el.def.sizeKey].value : null
+					bw = this.evaluateCss(presetSize ?? state.options[el.def.sizeKey], refSize, el.def.baseW)
+					if (el.def.keepAspect) bh = bw * (el.def.baseH / el.def.baseW)
+				}
+				
+				if (el.def.id.startsWith('sponsor-')) {
+					const presetW = p.options['style.sponsors.width'] ? p.options['style.sponsors.width'].value : null
+					const presetH = p.options['style.sponsors.height'] ? p.options['style.sponsors.height'].value : null
+					bw = this.evaluateCss(presetW ?? state.options['style.sponsors.width'], VP_W, 130)
+					bh = this.evaluateCss(presetH ?? state.options['style.sponsors.height'], VP_H, 48)
 				}
 				
 				const positions = {}
 				for (const prop of el.def.props) {
-					const opt = p.options[prop.key]
-					if (opt) {
-						positions[prop.edge] = this.evaluateCss(opt.value, prop.edge === 'top' || prop.edge === 'bottom' ? VP_H : VP_W, 0)
-					}
+					const refSize = (prop.edge === 'top' || prop.edge === 'bottom') ? VP_H : VP_W
+					const presetPos = p.options[prop.key] ? p.options[prop.key].value : null
+					positions[prop.edge] = this.evaluateCss(presetPos ?? state.options[prop.key], refSize, 11)
 				}
 				
-				let top = 0, left = 0
 				let w = bw, h = bh
+				let top = 0, left = 0
 				
 				if (el.def.anchor.v === 'top') top = positions.top ?? 0
 				else top = VP_H - (positions.bottom ?? 0) - h
@@ -1126,8 +1055,7 @@ export default {
 			const p = this.presets.find(x => x.id === this.activePreset)
 			if (!p) return
 			
-			const name = prompt(translateText("Enter name for duplicated preset:"), `${p.name} (Copy)`)
-			if (!name) return
+			const name = `${p.name} (Copy)`
 			
 			try {
 				const res = await fetch('/config/layout-presets', {
@@ -1135,7 +1063,6 @@ export default {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
 						name,
-						description: p.description,
 						options: p.options
 					})
 				})
@@ -1148,7 +1075,6 @@ export default {
 				this.presets.push(saved)
 				this.activePreset = saved.id
 				this.selectPreset()
-				alert(translateText('Preset duplicated successfully!'))
 			} catch (err) {
 				alert(translateText(`Failed to duplicate preset: ${err.message}`))
 			}
@@ -1156,21 +1082,21 @@ export default {
 		async deletePreset() {
 			if (!this.activePreset) return
 			const p = this.presets.find(x => x.id === this.activePreset)
-			if (!p || p.isCustom === false) return
+			if (!p) return
 			
-			if (!confirm(translateText(`Are you sure you want to delete preset "${p.name}"?`))) return
+			if (!confirm(translateText(`Are you sure you want to delete layout preset "${p.name}"?`))) return
 			
 			try {
-				const res = await fetch(`/config/layout-presets/${p.id}`, { method: 'DELETE' })
+				const res = await fetch(`/config/layout-presets/${p.id}`, {
+					method: 'DELETE'
+				})
 				if (!res.ok) {
-					const err = await res.json()
-					alert(translateText(`Delete failed: ${err.message}`))
+					alert(translateText('Failed to delete preset.'))
 					return
 				}
 				this.presets = this.presets.filter(x => x.id !== p.id)
 				this.activePreset = ''
 				this.selectPreset()
-				alert(translateText('Preset deleted successfully!'))
 			} catch (err) {
 				alert(translateText(`Failed to delete preset: ${err.message}`))
 			}
@@ -1180,39 +1106,47 @@ export default {
 			const p = this.presets.find(x => x.id === this.activePreset)
 			if (!p) return
 			
-			for (const [key, val] of Object.entries(p.options)) {
-				actions.setOption(key, val.value)
+			try {
+				const res = await fetch(`/config/layout-presets/${p.id}/apply`, {
+					method: 'POST'
+				})
+				if (!res.ok) {
+					const err = await res.json()
+					alert(translateText(`Apply failed: ${err.message}`))
+					return
+				}
+				this.computeRemPx()
+				this.initElements()
+				this.activePreset = p.id
+				this.selectPreset()
+				alert(translateText(`Preset "${p.name}" applied successfully to Live HUD!`))
+			} catch (err) {
+				alert(translateText(`Failed to apply preset: ${err.message}`))
 			}
-			alert(translateText(`Preset "${p.name}" applied live to HUD options!`))
 		},
 		exportPreset() {
 			if (!this.activePreset) return
 			const p = this.presets.find(x => x.id === this.activePreset)
 			if (!p) return
 			
-			const json = JSON.stringify({
-				name: p.name,
-				description: p.description,
-				options: p.options
-			}, null, 2)
-			
-			const blob = new Blob([json], { type: 'application/json' })
-			const url = URL.createObjectURL(blob)
-			const a = document.createElement('a')
-			a.href = url
-			a.download = `neuroncast-layout-${p.id}.json`
-			a.click()
-			URL.revokeObjectURL(url)
+			const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2))
+			const downloadAnchor = document.createElement('a')
+			downloadAnchor.setAttribute("href",     dataStr)
+			downloadAnchor.setAttribute("download", `eon-layout-${p.id}.json`)
+			document.body.appendChild(downloadAnchor)
+			downloadAnchor.click()
+			downloadAnchor.remove()
 		},
-		importPreset(e) {
+		async importPreset(e) {
 			const file = e.target.files[0]
 			if (!file) return
 			
 			const reader = new FileReader()
-			reader.onload = async (evt) => {
+			reader.onload = async (event) => {
 				try {
-					const imported = JSON.parse(evt.target.result)
-					if (!imported.name || !imported.options) {
+					const imported = JSON.parse(event.target.result)
+					
+					if (!imported.name || !imported.options || typeof imported.options !== 'object') {
 						alert(translateText('Invalid layout preset JSON format. Must contain "name" and "options".'))
 						return
 					}
@@ -1223,9 +1157,7 @@ export default {
 						'style.sponsors.width',
 						'style.sponsors.height',
 						'style.maps.scale',
-						'style.mapsSleek.scale',
-						'layout.promotion.width',
-						'promotion.visible'
+						'style.mapsSleek.scale'
 					]
 					
 					for (const key of Object.keys(imported.options)) {
@@ -1367,515 +1299,719 @@ export default {
 	background: #161b22;
 	border: 1px solid #30363d;
 	border-radius: 6px;
-	padding: 4px 8px;
-	gap: 12px;
+	padding: 4px;
+	gap: 4px;
 }
 
 .toggle-control {
-	display: inline-flex;
+	display: flex;
+	white-space: nowrap;
 	align-items: center;
 	gap: 6px;
-	font-size: 0.8rem;
-	color: #c9d1d9;
+	padding: 6px 10px;
+	border-radius: 4px;
 	cursor: pointer;
 	user-select: none;
+	transition: background 0.15s;
+}
+
+.toggle-control:hover {
+	background: #21262d;
 }
 
 .toggle-control input[type="checkbox"] {
+	margin: 0;
 	cursor: pointer;
-	accent-color: #58a6ff;
+}
+
+.toggle-control span {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #adbac7;
+}
+
+.toggle-control input[type="checkbox"]:checked + span {
+	color: #fff;
 }
 
 .grid-select {
-	padding: 4px 8px;
+	padding: 6px;
 	background: #0d1117;
 	border: 1px solid #30363d;
 	color: #c9d1d9;
 	border-radius: 4px;
-	font-size: 0.8rem;
+	font-size: 0.75rem;
 }
 
 .editor-workspace {
-	display: flex;
-	gap: 20px;
-	flex: 1;
-	min-height: 0;
+	display: flex; gap: 24px; flex: 1; min-height: 0;
 }
 
 .canvas-container {
 	flex: 1;
-	background: #090d13;
+	background: #0d1117;
 	border: 1px solid #30363d;
 	border-radius: 8px;
+	position: relative;
+	overflow: hidden;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	position: relative;
-	overflow: hidden;
 }
 
 .viewport {
 	width: 1920px;
 	height: 1080px;
-	background: #000;
 	position: relative;
+	background: #111;
+	box-shadow: 0 0 40px rgba(0,0,0,0.8);
 	transform-origin: center center;
-	box-shadow: 0 0 30px rgba(0,0,0,0.8);
-	overflow: hidden;
 }
 
+/* Optional Background CS2 Screenshot */
 .hud-screenshot-bg {
 	position: absolute;
-	top: 0;
-	left: 0;
+	inset: 0;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
 	pointer-events: none;
+	z-index: 1;
 	opacity: 0.75;
 }
 
 .hud-bg {
 	position: absolute;
-	top: 0;
-	left: 0;
+	inset: 0;
 	width: 100%;
 	height: 100%;
 	border: none;
 	pointer-events: none;
-	opacity: 0.6;
+	z-index: 2;
 }
 
-/* Technical Alignment Grid */
+/* Technical Alignment Grid styling */
 .tech-grid {
 	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-size: 50px 50px;
-	background-image: 
-		linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+	inset: 0;
 	pointer-events: none;
+	z-index: 3;
+	background-size: 40px 40px, 40px 40px, 10px 10px, 10px 10px;
+	background-image: 
+		linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+		linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
 }
 
-/* Center Crosshairs */
+/* Center Crosshair Lines styling */
 .center-lines {
 	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
+	inset: 0;
 	pointer-events: none;
+	z-index: 4;
+}
+
+.center-line {
+	position: absolute;
+	background: none;
 }
 
 .center-line.--vertical {
-	position: absolute;
 	left: 50%;
 	top: 0;
 	bottom: 0;
 	width: 1px;
-	background: rgba(88, 166, 255, 0.4);
-	border-left: 1px dashed rgba(88, 166, 255, 0.6);
+	border-left: 1px dashed rgba(52, 152, 219, 0.35);
 }
 
 .center-line.--horizontal {
-	position: absolute;
 	top: 50%;
 	left: 0;
 	right: 0;
 	height: 1px;
-	background: rgba(88, 166, 255, 0.4);
-	border-top: 1px dashed rgba(88, 166, 255, 0.6);
+	border-top: 1px dashed rgba(52, 152, 219, 0.35);
 }
 
-/* 10% Safe Area Guide */
+/* 10% TV safe area outline styling */
 .safe-area-outline {
 	position: absolute;
-	top: 54px;
 	left: 96px;
-	right: 96px;
-	bottom: 54px;
-	border: 1px dashed rgba(46, 204, 113, 0.5);
+	top: 54px;
+	width: 1728px;
+	height: 972px;
+	border: 1px dashed rgba(230, 126, 34, 0.35);
 	pointer-events: none;
+	z-index: 5;
+	box-sizing: border-box;
 }
 
 .safe-area-label {
 	position: absolute;
-	top: 4px;
-	left: 8px;
-	font-size: 10px;
-	color: rgba(46, 204, 113, 0.7);
+	top: 6px;
+	left: 10px;
+	font-size: 0.65rem;
+	color: rgba(230, 126, 34, 0.5);
 	text-transform: uppercase;
+	font-weight: 600;
 	letter-spacing: 0.05em;
 }
 
-/* Smart Snap Visual Guidelines */
-.smart-guide {
-	position: absolute;
-	pointer-events: none;
-	z-index: 999;
-}
-
-.smart-guide.--vertical {
-	top: 0;
-	bottom: 0;
-	width: 1px;
-	background: #00e5ff;
-	box-shadow: 0 0 6px rgba(0, 229, 255, 0.8);
-}
-
-.smart-guide.--horizontal {
-	left: 0;
-	right: 0;
-	height: 1px;
-	background: #00e5ff;
-	box-shadow: 0 0 6px rgba(0, 229, 255, 0.8);
-}
-
-.smart-guide-label {
-	position: absolute;
-	background: rgba(0, 229, 255, 0.9);
-	color: #000;
-	font-size: 9px;
-	font-weight: bold;
-	padding: 1px 4px;
-	border-radius: 2px;
-	white-space: nowrap;
-}
-
-.smart-guide.--vertical .smart-guide-label {
-	top: 8px;
-	left: 4px;
-}
-
-.smart-guide.--horizontal .smart-guide-label {
-	left: 8px;
-	top: 4px;
-}
-
-/* Elements on canvas */
+/* Draggable elements - Border details */
 .hud-el {
 	position: absolute;
-	cursor: move;
-	user-select: none;
-	transition: outline 0.15s ease;
+	border: 2px dashed transparent;
 	box-sizing: border-box;
+	cursor: move;
+	opacity: 0.9;
+	transition: border-color 0.15s, opacity 0.15s, box-shadow 0.15s, background-color 0.15s;
+	z-index: 10;
 }
 
-.hud-el:hover {
-	outline: 1.5px dashed rgba(255, 255, 255, 0.6);
+.hud-el:hover { 
+	opacity: 1; 
+	border-color: rgba(52, 152, 219, 0.45);
 }
 
-.hud-el.--active {
-	outline: 2px solid #58a6ff !important;
-	z-index: 100 !important;
+.hud-el.--hidden { opacity: 0.15; pointer-events: none; }
+
+.hud-el.--active { 
+	border-color: #3498db; 
+	border-style: dashed; 
+	z-index: 100; 
+	opacity: 1; 
+	background: rgba(255, 255, 255, 0.02);
+	box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000;
 }
 
-.hud-el.--hidden {
-	opacity: 0.35;
-	filter: grayscale(80%);
+/* Phase 18C: Subtle Safe area and Collision warning outlines */
+.hud-el.--outside-safe:not(.--active) {
+	border-color: rgba(230, 126, 34, 0.5) !important;
+	border-style: dashed;
+	background: rgba(230, 126, 34, 0.03);
 }
 
-.hud-el.--outside-safe {
-	outline: 2px dashed #e67e22;
+.hud-el.--colliding:not(.--active) {
+	border-color: rgba(231, 76, 60, 0.55) !important;
+	border-style: dashed;
+	background: rgba(231, 76, 60, 0.03);
 }
 
-.hud-el.--colliding {
-	outline: 2px dashed #e74c3c;
+.hud-el.--active.--colliding {
+	border-color: #e74c3c !important;
+	box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, 0 0 8px rgba(231, 76, 60, 0.35);
 }
 
+.hud-el.--active.--outside-safe:not(.--colliding) {
+	border-color: #e67e22 !important;
+	box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, 0 0 8px rgba(230, 126, 34, 0.35);
+}
+
+/* Mock components wrappers */
 .mock-content {
 	width: 100%;
 	height: 100%;
-	pointer-events: none;
 	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-family: var(--primary-font), 'Quantico', sans-serif;
+	font-size: 0.8rem;
+	overflow: hidden;
 }
 
-/* 1. Mock Top Bar */
+/* TOP BAR score board */
 .mock-top-bar {
 	width: 100%;
 	height: 100%;
-	display: flex;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
 	background: var(--panel-bg);
 	border: 1px solid var(--panel-border);
 	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
 	overflow: hidden;
-	font-family: var(--primary-font);
+	box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 .mock-top-bar-team {
-	flex: 1;
+	height: 100%;
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	font-weight: bold;
-	font-size: 1.1rem;
+	justify-content: space-between;
+	padding: 0 16px;
+	font-weight: 700;
 }
 
-.mock-team-ct { background: var(--ct-fill); color: var(--ct-text-color); border-right: 2px solid var(--ct-border); }
-.mock-team-t { background: var(--t-fill); color: var(--t-text-color); border-left: 2px solid var(--t-border); }
+.mock-team-ct {
+	background: var(--ct-fill);
+	color: var(--ct-text-color);
+}
+
+.mock-team-t {
+	background: var(--t-fill);
+	color: var(--t-text-color);
+}
+
+.mock-top-bar-team .team-name {
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-top-bar-team .score {
+	font-size: 1.1rem;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
 
 .mock-top-bar-center {
-	width: 180px;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	padding: 0 20px;
+	transform: skewX(calc(-1 * var(--panel-skew)));
 	color: #fff;
-	font-weight: bold;
-	font-size: 0.9rem;
-	letter-spacing: 0.05em;
 }
 
-/* 2. Mock Radar */
+.mock-top-bar-center .timer {
+	font-size: 1.1rem;
+	font-weight: 700;
+}
+
+.mock-top-bar-center .round {
+	font-size: 0.6rem;
+	color: #8b949e;
+	text-transform: uppercase;
+}
+
+/* RADAR plate */
 .mock-radar {
 	width: 100%;
 	height: 100%;
-	background: radial-gradient(circle, rgba(16, 24, 38, 0.9) 0%, rgba(8, 12, 20, 0.95) 100%);
-	border: 2px solid rgba(88, 166, 255, 0.5);
-	border-radius: 8px;
 	position: relative;
+	background: rgba(13, 17, 23, 0.85);
+	border: 1.5px solid var(--panel-border);
+	border-radius: 50%;
 	overflow: hidden;
+	box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
 .radar-plate {
-	width: 100%;
-	height: 100%;
-	position: relative;
-	opacity: 0.4;
+	position: absolute;
+	inset: 4px;
+	border: 1px solid rgba(255,255,255,0.06);
+	border-radius: 50%;
+	background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,0.5) 100%);
+	overflow: hidden;
+}
+
+.radar-sweep {
+	position: absolute;
+	inset: 0;
+	background: conic-gradient(from 0deg, rgba(88, 166, 255, 0.15) 0deg, rgba(88, 166, 255, 0) 120deg);
+	border-radius: 50%;
+	animation: sweep-rotation 6s linear infinite;
+}
+
+@keyframes sweep-rotation {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
 }
 
 .radar-grid-vertical {
 	position: absolute;
-	top: 0; bottom: 0; left: 50%;
-	width: 1px;
-	background: rgba(88, 166, 255, 0.4);
+	left: 50%; top: 0; bottom: 0; width: 1px;
+	background: rgba(255,255,255,0.08);
 }
 
 .radar-grid-horizontal {
 	position: absolute;
-	left: 0; right: 0; top: 50%;
-	height: 1px;
-	background: rgba(88, 166, 255, 0.4);
+	top: 50%; left: 0; right: 0; height: 1px;
+	background: rgba(255,255,255,0.08);
 }
+
+.radar-blip {
+	position: absolute;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	box-shadow: 0 0 8px currentColor;
+}
+
+.radar-blip.--ct { background: var(--ct-fill); color: var(--ct-fill); }
+.radar-blip.--t { background: var(--t-fill); color: var(--t-fill); }
+.radar-blip.--bomb { background: #e74c3c; color: #e74c3c; width: 10px; height: 10px; clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); }
 
 .mock-label-overlay {
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	color: #58a6ff;
-	font-weight: 800;
-	font-size: 1.1rem;
+	bottom: 12px;
+	left: 0; right: 0;
+	text-align: center;
+	font-weight: 700;
+	color: rgba(255,255,255,0.35);
+	font-size: 0.75rem;
+	text-transform: uppercase;
 	letter-spacing: 0.1em;
+	pointer-events: none;
 }
 
-/* 3 & 4. Mock Sidebars */
+/* SIDEBARS player rows */
 .mock-sidebar {
 	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	justify-content: space-between;
+	gap: 6px;
+	justify-content: flex-end;
 }
 
 .mock-player-card {
-	flex: 1;
 	background: var(--panel-bg);
 	border: 1px solid var(--panel-border);
 	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
+	height: 32px;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
+	padding: 0 10px;
+	position: relative;
+	overflow: hidden;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+}
+
+.mock-player-card .hp-bar {
+	position: absolute;
+	left: 0; top: 0; bottom: 0;
+	opacity: 0.15;
+	z-index: 1;
+}
+
+.mock-sidebar.--left .hp-bar {
+	background: var(--ct-fill);
+	transform-origin: left;
+}
+
+.mock-sidebar.--right .hp-bar {
+	background: var(--t-fill);
+	right: 0; left: auto;
+	transform-origin: right;
+}
+
+.mock-player-card .player-name {
+	font-weight: 600;
+	color: #fff;
+	z-index: 2;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-player-card .player-hp {
+	font-size: 0.75rem;
+	font-weight: 700;
+	z-index: 2;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-sidebar.--left .player-hp { color: var(--ct-text-color); }
+.mock-sidebar.--right .player-hp { color: var(--t-text-color); }
+
+.mock-player-card .weapons {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	z-index: 2;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-player-card .weapon {
+	font-size: 0.8rem;
+}
+
+/* FOCUSED PLAYER card */
+.mock-focused-player {
+	width: 100%;
+	height: 100%;
+	background: var(--panel-bg);
+	border: 1.5px solid var(--panel-border);
+	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
+	display: flex;
+	padding: 8px 12px;
+	gap: 12px;
+	box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+	overflow: hidden;
+}
+
+.avatar-placeholder {
+	width: 50px;
+	height: 100%;
+	background: rgba(255,255,255,0.05);
+	border: 1px solid var(--panel-border);
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.5rem;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.player-details {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.details-top {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.details-top .player-name {
+	font-weight: 700;
+	color: #fff;
+	font-size: 0.9rem;
+}
+
+.details-top .player-weapon {
+	font-weight: 600;
+	color: var(--ct-text-color);
+	font-size: 0.75rem;
+}
+
+.details-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 20px;
+	background: rgba(0,0,0,0.2);
+	border-radius: 3px;
 	padding: 0 8px;
 	position: relative;
 	overflow: hidden;
 }
 
-.mock-sidebar.--left .mock-player-card { border-left: 3px solid var(--ct-border); }
-.mock-sidebar.--right .mock-player-card { border-right: 3px solid var(--t-border); justify-content: flex-end; }
-
-.mock-player-card .hp-bar {
+.details-bottom .hp-bar {
 	position: absolute;
-	bottom: 0;
-	left: 0;
-	height: 2px;
-	background: #2ecc71;
-}
-
-.mock-player-card .player-name {
-	font-size: 0.75rem;
-	font-weight: bold;
-	color: #fff;
+	left: 0; top: 0; bottom: 0;
+	background: var(--ct-fill);
+	opacity: 0.25;
 	z-index: 1;
 }
 
-/* 5. Mock Focused Player */
-.mock-focused-player {
-	width: 100%;
-	height: 100%;
-	background: var(--panel-bg);
-	border: 1px solid var(--panel-border);
-	border-radius: var(--panel-radius);
-	display: flex;
-	align-items: center;
-	padding: 0 16px;
-}
-
-.mock-focused-player .player-details {
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
-
-.mock-focused-player .player-name {
+.details-bottom .health-armor {
+	font-weight: 700;
 	color: #fff;
-	font-weight: bold;
-	font-size: 0.9rem;
-	letter-spacing: 0.05em;
+	z-index: 2;
+	font-size: 0.75rem;
 }
 
-.mock-focused-player .hp-bar {
-	height: 4px;
-	background: #2ecc71;
-	border-radius: 2px;
+.details-bottom .ammo {
+	font-family: monospace;
+	font-weight: 700;
+	color: #adbac7;
+	z-index: 2;
+	font-size: 0.75rem;
 }
 
-/* 6. Mock Players Alive */
+/* PLAYERS ALIVE meter */
 .mock-players-alive {
 	width: 100%;
 	height: 100%;
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
 	background: var(--panel-bg);
 	border: 1px solid var(--panel-border);
 	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
 	overflow: hidden;
-	font-weight: bold;
-	font-size: 0.8rem;
+	box-shadow: 0 3px 8px rgba(0,0,0,0.25);
 }
 
-.mock-players-alive .ct-alive { flex: 1; background: var(--ct-fill); color: #fff; text-align: center; height: 100%; display: flex; align-items: center; justify-content: center; }
-.mock-players-alive .t-alive { flex: 1; background: var(--t-fill); color: #fff; text-align: center; height: 100%; display: flex; align-items: center; justify-content: center; }
-.mock-players-alive .vs-label { padding: 0 4px; color: #8b949e; font-size: 0.65rem; }
+.mock-players-alive div {
+	flex: 1;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 700;
+	font-size: 0.75rem;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
 
-/* 7. Mock Event Badge */
+.mock-players-alive .ct-alive { background: var(--ct-fill); color: var(--ct-text-color); }
+.mock-players-alive .t-alive { background: var(--t-fill); color: var(--t-text-color); }
+.mock-players-alive .vs-label { flex: none; width: 30px; color: #8b949e; background: none; }
+
+/* EVENT BADGE */
 .mock-event-badge {
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(90deg, rgba(231,76,60,0.3) 0%, var(--panel-bg) 100%);
-	border: 1px solid var(--panel-border);
-	border-left: 3px solid #e74c3c;
-	border-radius: var(--panel-radius);
-	display: flex;
-	align-items: center;
-	padding: 0 12px;
-	color: #fff;
-	font-weight: bold;
-	font-size: 0.8rem;
-}
-
-/* 8. Mock Current Map */
-.mock-current-map {
-	width: 100%;
-	height: 100%;
-	border: 1px solid var(--panel-border);
-	border-radius: var(--panel-radius);
-	overflow: hidden;
-	position: relative;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.mock-current-map .map-name {
-	color: #fff;
-	font-weight: bold;
-	font-size: 0.85rem;
-	letter-spacing: 0.05em;
-}
-
-/* 9. Mock Sleek Maps */
-.mock-maps-sleek {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
 	background: var(--panel-bg);
 	border: 1px solid var(--panel-border);
 	border-radius: var(--panel-radius);
-	color: #4fe3c1;
-	font-size: 0.75rem;
-	font-weight: bold;
-}
-
-/* 10. Mock Sponsor Panel */
-.mock-sponsor-panel {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	background: rgba(220,180,80,0.15);
-	border: 1px dashed rgba(220,180,80,0.5);
-	border-radius: var(--panel-radius);
-	color: #e3b341;
-	font-size: 0.75rem;
-	font-weight: bold;
-}
-
-/* 11. Mock Mobile Ticker */
-.mock-mobile-ticker {
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(135deg, rgba(31, 111, 235, 0.25) 0%, rgba(13, 17, 23, 0.95) 100%);
-	border: 1.5px solid rgba(88, 166, 255, 0.65);
-	border-left: 4px solid #58a6ff;
-	border-radius: 6px;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	padding: 10px 14px;
-	gap: 4px;
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-	backdrop-filter: blur(10px);
-}
-
-.mock-mobile-ticker .mock-ticker-header {
+	transform: skewX(var(--panel-skew));
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	padding: 0 10px;
+	gap: 8px;
+	box-shadow: 0 3px 8px rgba(0,0,0,0.2);
 }
 
-.mock-mobile-ticker .mock-badge {
-	background: #1f6feb;
-	color: #fff;
+.mock-event-badge .logo {
+	height: 24px;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-event-badge .text {
+	display: flex;
+	flex-direction: column;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-event-badge .title {
 	font-size: 0.65rem;
-	font-weight: 800;
-	padding: 2px 6px;
-	border-radius: 4px;
+	font-weight: 700;
+	color: #fff;
 	letter-spacing: 0.05em;
 }
 
-.mock-mobile-ticker .mock-ticker-title {
-	font-size: 0.75rem;
-	font-weight: 800;
-	color: #adbac7;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
+.mock-event-badge .subtitle {
+	font-size: 0.55rem;
+	color: #8b949e;
 }
 
-.mock-mobile-ticker .mock-ticker-text {
-	font-size: 0.9rem;
+/* CURRENT MAP and VETO STRIP */
+.mock-current-map {
+	width: 100%;
+	height: 100%;
+	background: #0d1117;
+	border: 1.5px solid var(--panel-border);
+	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
+	overflow: hidden;
+	position: relative;
+	box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.mock-current-map .map-bg {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: rgba(255,255,255,0.06);
+	font-size: 1.4rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-current-map .map-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 0 12px;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+	z-index: 2;
+}
+
+.mock-current-map .map-name {
 	font-weight: 700;
 	color: #fff;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	font-size: 0.8rem;
+	text-transform: uppercase;
 }
 
-/* Fallback Wireframe */
+.mock-current-map .series-score {
+	font-size: 0.65rem;
+	color: var(--t-text-color);
+	font-weight: 600;
+}
+
+/* SLEEK MAP VETO BAR */
+.mock-maps-sleek {
+	width: 100%;
+	height: 100%;
+	background: var(--panel-bg);
+	border: 1px solid var(--panel-border);
+	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
+	overflow: hidden;
+	display: flex;
+	box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+
+.veto-bar {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.veto-item {
+	flex: 1;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.65rem;
+	font-weight: 700;
+	color: #8b949e;
+	border-right: 1px solid var(--panel-border);
+}
+
+.veto-item:last-child { border-right: none; }
+
+.veto-item.--picked {
+	background: rgba(255,255,255,0.03);
+	color: #adbac7;
+}
+
+.veto-item.--active {
+	background: var(--ct-fill);
+	color: var(--ct-text-color);
+}
+
+/* SPONSOR PANELS */
+.mock-sponsor-panel {
+	width: 100%;
+	height: 100%;
+	background: var(--panel-bg);
+	border: 1px solid var(--panel-border);
+	border-left: 3px solid var(--t-border);
+	border-radius: var(--panel-radius);
+	transform: skewX(var(--panel-skew));
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 0 10px;
+	box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+.mock-sponsor-panel span {
+	display: block;
+	transform: skewX(calc(-1 * var(--panel-skew)));
+}
+
+.mock-sponsor-panel .title {
+	font-size: 0.7rem;
+	font-weight: 700;
+	color: #fff;
+}
+
+.mock-sponsor-panel .subtitle {
+	font-size: 0.55rem;
+	color: #8b949e;
+	text-transform: uppercase;
+}
+
 .mock-box {
 	width: 100%;
 	height: 100%;
@@ -1883,148 +2019,156 @@ export default {
 	align-items: center;
 	justify-content: center;
 	color: #fff;
-	font-weight: bold;
-	font-size: 0.8rem;
+	font-weight: 600;
 	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-size: 24px;
 }
 
-/* Resize Handles */
 .resize-handle {
 	position: absolute;
-	background: #58a6ff;
-	border: 1px solid #fff;
-	z-index: 101;
+	background: #fff;
+	border: 2px solid #3498db;
+	z-index: 20;
 }
 
-.resize-handle.--x {
-	top: 50%;
-	transform: translateY(-50%);
-	width: 10px;
-	height: 24px;
-	border-radius: 3px;
-	cursor: ew-resize;
-}
+.resize-handle.--x { width: 12px; height: 30px; top: calc(50% - 15px); cursor: ew-resize; }
+.resize-handle.--y { width: 30px; height: 12px; left: calc(50% - 15px); top: -6px; cursor: ns-resize; }
 
-.resize-handle.--y {
-	left: 50%;
-	bottom: -6px;
-	transform: translateX(-50%);
-	width: 24px;
-	height: 10px;
-	border-radius: 3px;
-	cursor: ns-resize;
-}
-
-/* Sidebar Navigator & Diagnostics Inspector */
-.editor-sidebar {
+.properties-sidebar {
 	width: 320px;
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
 	background: #161b22;
 	border: 1px solid #30363d;
 	border-radius: 8px;
-	padding: 16px;
-	overflow-y: auto;
-}
-
-.elements-list {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+}
+
+.sidebar-header { padding: 16px; border-bottom: 1px solid #30363d; }
+.sidebar-header h3 { margin: 0 0 4px 0; font-size: 1rem; color: #fff; }
+.sidebar-tip { margin: 0; font-size: 0.75rem; color: #8b949e; line-height: 1.3; }
+
+.element-list {
+	flex: 1;
+	overflow-y: auto;
+	padding: 8px;
 }
 
 .element-item {
 	display: flex;
-	align-items: center;
 	justify-content: space-between;
-	padding: 8px 12px;
-	background: #0d1117;
-	border: 1px solid #30363d;
+	align-items: center;
+	padding: 10px 12px;
+	margin-bottom: 4px;
 	border-radius: 6px;
 	cursor: pointer;
-	font-size: 0.85rem;
-	color: #c9d1d9;
+	color: #adbac7;
+	transition: background 0.15s, border-color 0.15s;
+	border: 1px solid transparent;
 }
 
-.element-item:hover {
-	background: #21262d;
+.element-item:hover { background: #21262d; color: #fff; }
+.element-item.--active { background: #3498db; color: #fff; }
+
+/* Out of Safe Area Warnings in list */
+.element-item.--warning:not(.--active) {
+	border-color: rgba(230, 126, 34, 0.4);
+	background: rgba(230, 126, 34, 0.05);
+	color: #e67e22;
+}
+.element-item.--warning:not(.--active):hover {
+	background: rgba(230, 126, 34, 0.1);
 }
 
-.element-item.--active {
-	border-color: #58a6ff;
-	background: rgba(88, 166, 255, 0.1);
-	color: #fff;
+/* Collision Warnings in list */
+.element-item.--danger:not(.--active) {
+	border-color: rgba(231, 76, 60, 0.4);
+	background: rgba(231, 76, 60, 0.05);
+	color: #ea6060;
+}
+.element-item.--danger:not(.--active):hover {
+	background: rgba(231, 76, 60, 0.1);
 }
 
-.element-color-bullet {
-	width: 10px;
-	height: 10px;
-	border-radius: 50%;
-}
-
-.btn-icon {
-	background: none;
-	border: none;
-	cursor: pointer;
-	padding: 2px;
-	font-size: 1rem;
-	opacity: 0.7;
-}
-
-.btn-icon:hover {
-	opacity: 1;
-}
+.btn-icon { background: none; border: none; cursor: pointer; filter: grayscale(1); }
+.element-item.--active .btn-icon { filter: none; }
 
 .properties-panel {
+	padding: 16px;
 	border-top: 1px solid #30363d;
-	padding-top: 16px;
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
+	background: #0d1117;
+	border-radius: 0 0 8px 8px;
+	overflow-y: auto;
+	max-height: 480px;
 }
 
-.properties-panel h3 {
-	margin: 0;
-	font-size: 0.95rem;
-	color: #fff;
-}
+.properties-panel h3 { margin: 0 0 16px 0; font-size: 0.95rem; color: #fff; }
 
-.prop-group {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-}
+.prop-group { margin-bottom: 16px; }
+.prop-group label { display: block; font-size: 0.8rem; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; }
 
-.prop-group label {
-	font-size: 0.75rem;
-	color: #8b949e;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-}
-
-.prop-row {
-	display: flex;
-	font-size: 0.85rem;
-	color: #c9d1d9;
-}
+.prop-row { display: flex; gap: 16px; font-family: monospace; color: #c9d1d9; }
 
 .coord-item {
 	display: flex;
 	justify-content: space-between;
-}
-
-.--danger-btn {
-	color: #f85149 !important;
-	border-color: rgba(248, 81, 73, 0.4) !important;
-}
-
-.--danger-btn:hover {
-	background: rgba(248, 81, 73, 0.15) !important;
+	width: 100%;
+	padding: 2px 0;
+	border-bottom: 1px solid rgba(255,255,255,0.02);
 }
 
 .toolbar-divider {
 	color: #30363d;
 	margin: 0 4px;
+	user-select: none;
+}
+.--danger-btn {
+	color: #f85149 !important;
+	border-color: rgba(248, 81, 73, 0.4) !important;
+}
+.--danger-btn:hover {
+	background: rgba(248, 81, 73, 0.15) !important;
+	border-color: #f85149 !important;
+	color: #ff7b72 !important;
+}
+
+/* Phase 19A: Smart Snapping visual guidelines */
+.smart-guide {
+	position: absolute;
+	background: none;
+	pointer-events: none;
+	z-index: 99;
+}
+.smart-guide.--vertical {
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	border-left: 1px dashed rgba(0, 229, 255, 0.8);
+}
+.smart-guide.--horizontal {
+	left: 0;
+	right: 0;
+	height: 1px;
+	border-top: 1px dashed rgba(0, 229, 255, 0.8);
+}
+.smart-guide-label {
+	position: absolute;
+	background: rgba(13, 17, 23, 0.9);
+	color: #00e5ff;
+	font-size: 0.6rem;
+	padding: 2px 6px;
+	border-radius: 3px;
+	border: 1px solid rgba(0, 229, 255, 0.35);
+	white-space: nowrap;
+	font-family: monospace;
+	z-index: 100;
+}
+.smart-guide.--vertical .smart-guide-label {
+	top: 12px;
+	left: 6px;
+}
+.smart-guide.--horizontal .smart-guide-label {
+	left: 12px;
+	top: 6px;
 }
 </style>
