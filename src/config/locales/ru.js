@@ -248,4 +248,11 @@ export default {
   "— None / Optional —": "— Не требуется / Опционально —",
   "— Select OBS Scene —": "— Выберите сцену OBS —",
   "Optional camera or break scene to switch to during commercial or analyst breaks.": "Опциональная сцена для переключения на камеру кастера во время пауз или аналитики.",
+  "💬 Mobile Text": "💬 Текст с телефона",
+  "Show/Hide Live Text from Mobile Phone": "Показать/скрыть предпросмотр текста с телефона",
+  "PHONE ON-AIR": "ТЕКСТ С ТЕЛЕФОНА",
+  "Mobile Ticker / Banner": "Плашка текста / Баннер",
+  "Live Phone Text Stream": "Трансляция текста с телефона",
+  "Type text or send from mobile...": "Введите текст или отправьте с телефона...",
+  "🚀 Send to Stream": "🚀 Отправить в эфир",
 };

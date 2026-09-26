@@ -1,6 +1,9 @@
 export default {
 	computed: {
 		isVisible() {
+			// Real-time mobile ticker from phone
+			if (this.$opts['branding.ticker'] && this.$opts['branding.ticker'].trim() !== '') return true
+
 			// Manual toggle from config
 			if (this.$opts['promotion.visible']) return true
 
@@ -19,13 +22,17 @@ export default {
 		},
 
 		title() {
+			if (this.$opts['branding.ticker'] && this.$opts['branding.ticker'].trim() !== '') {
+				return this.$opts['promotion.title'] || '📢 ПРЯМОЙ ЭФИР'
+			}
 			return this.$opts['promotion.title'] || ''
 		},
 
 		subtitle() {
+			if (this.$opts['branding.ticker'] && this.$opts['branding.ticker'].trim() !== '') {
+				return this.$opts['branding.ticker']
+			}
 			return this.$opts['promotion.subtitle'] || ''
 		}
 	}
 }
-
-

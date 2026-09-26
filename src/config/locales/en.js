@@ -890,4 +890,11 @@ export default {
   "— None / Optional —": "— None / Optional —",
   "— Select OBS Scene —": "— Select OBS Scene —",
   "Optional camera or break scene to switch to during commercial or analyst breaks.": "Optional camera or break scene to switch to during commercial or analyst breaks.",
+  "💬 Mobile Text": "💬 Mobile Text",
+  "Show/Hide Live Text from Mobile Phone": "Show/Hide Live Text from Mobile Phone",
+  "PHONE ON-AIR": "PHONE ON-AIR",
+  "Mobile Ticker / Banner": "Mobile Ticker / Banner",
+  "Live Phone Text Stream": "Live Phone Text Stream",
+  "Type text or send from mobile...": "Type text or send from mobile...",
+  "🚀 Send to Stream": "🚀 Send to Stream",
 };
