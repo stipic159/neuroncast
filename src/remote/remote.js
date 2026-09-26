@@ -1,5 +1,13 @@
 const { createApp } = window.Vue
 
+const PRESET_TICKERS = [
+	{ label: '⏸️ Тех. пауза', text: '⏸️ ТЕХНИЧЕСКАЯ ПАУЗА / TECHNICAL TIMEOUT' },
+	{ label: '☕ Перерыв', text: '☕ ТАКТИЧЕСКИЙ ПЕРЕРЫВ' },
+	{ label: '🔥 Матч-поинт', text: '🔥 MATCH POINT / РЕШАЮЩИЙ РАУНД' },
+	{ label: '🗺️ Смена карты', text: '🗺️ СЛЕДУЮЩАЯ КАРТА: ' },
+	{ label: '📢 Стрим', text: '📢 Подписывайтесь на канал и ставьте лайки!' },
+]
+
 const RemoteApp = {
 	template: `
 		<div class="remote-app">
@@ -20,6 +28,27 @@ const RemoteApp = {
 				</div>
 			</header>
 
+			<!-- Live Match Telemetry Widget -->
+			<section class="match-widget">
+				<div class="match-widget-header">
+					<span>{{ matchMapName }} · {{ matchRoundText }}</span>
+					<span :class="['match-badge-phase', { '--bomb': isBombActive }]">
+						{{ phaseBadgeText }}
+					</span>
+				</div>
+				<div class="match-scoreboard">
+					<div class="team-box --ct">
+						<span class="team-name">{{ ctTeamName }}</span>
+						<span class="team-score">{{ ctScore }}</span>
+					</div>
+					<span class="score-divider">VS</span>
+					<div class="team-box --t">
+						<span class="team-name">{{ tTeamName }}</span>
+						<span class="team-score">{{ tScore }}</span>
+					</div>
+				</div>
+			</section>
+
 			<!-- Hero Controls: Cough / Mute & Replay Buffer -->
 			<section class="hero-controls">
 				<button 
@@ -31,10 +60,10 @@ const RemoteApp = {
 				</button>
 
 				<button 
-					class="btn-hero --replay"
+					:class="['btn-hero', replaySaved ? '--replay-saved' : '--replay']"
 					@click="saveReplay"
 				>
-					<span class="icon">📼</span>
+					<span class="icon">{{ replaySaved ? '✅' : '📼' }}</span>
 					<span>{{ replaySaved ? 'REPLAY SAVED!' : 'SAVE REPLAY' }}</span>
 				</button>
 			</section>
@@ -61,13 +90,13 @@ const RemoteApp = {
 				</div>
 			</section>
 
-			<!-- HUD Overlay Scenes (Code-automated) -->
+			<!-- HUD Overlay Scenes (Automated engine) -->
 			<section class="remote-section">
 				<div class="section-title">
 					<span>HUD Overlay Display</span>
 					<span style="font-size: 0.7rem; color: #58a6ff;">{{ currentHudScene }}</span>
 				</div>
-				<div class="button-grid-2">
+				<div class="button-grid-3">
 					<button 
 						:class="['btn-tap', { '--active': currentHudScene === 'default' }]"
 						@click="setHudScene('default')"
@@ -78,7 +107,7 @@ const RemoteApp = {
 						:class="['btn-tap', { '--active': currentHudScene === 'radar' }]"
 						@click="setHudScene('radar')"
 					>
-						🗺️ Full Radar
+						🗺️ Radar
 					</button>
 					<button 
 						:class="['btn-tap', { '--active': currentHudScene === 'intro' }]"
@@ -86,11 +115,19 @@ const RemoteApp = {
 					>
 						📋 Match Info
 					</button>
+				</div>
+				<div class="button-grid-2">
+					<button 
+						:class="['btn-tap', { '--active': currentHudScene === 'halftime' }]"
+						@click="setHudScene('halftime')"
+					>
+						⏸️ Break / Half
+					</button>
 					<button 
 						:class="['btn-tap', { '--active': currentHudScene === 'fulltime' }]"
 						@click="setHudScene('fulltime')"
 					>
-						🏆 Post Match
+						🏆 Post-Match
 					</button>
 				</div>
 			</section>
@@ -128,20 +165,36 @@ const RemoteApp = {
 				</div>
 			</section>
 
-			<!-- Lower Third Ticker -->
+			<!-- Lower Third Ticker & Quick Presets -->
 			<section class="remote-section">
 				<div class="section-title">
 					<span>Lower Third Ticker</span>
+					<span v-if="activeTicker" style="font-size: 0.7rem; color: #2ecc71;">LIVE ON-AIR</span>
 				</div>
+				
+				<!-- Quick Preset Chips -->
+				<div class="presets-scroll">
+					<button 
+						v-for="(p, i) in presets" 
+						:key="i" 
+						class="chip-btn"
+						@click="applyPreset(p)"
+					>
+						{{ p.label }}
+					</button>
+				</div>
+
+				<!-- Custom input row -->
 				<div class="ticker-box">
 					<input 
 						type="text" 
 						class="ticker-input" 
 						v-model="tickerText" 
-						placeholder="e.g. s1mple 14-2 on de_mirage..."
+						placeholder="Текст плашки на экране стрима..."
 						@keyup.enter="sendTicker"
 					/>
 					<button class="btn-send" @click="sendTicker">SEND</button>
+					<button v-if="activeTicker" class="btn-clear-ticker" @click="clearTicker">CLEAR</button>
 				</div>
 			</section>
 		</div>
@@ -153,6 +206,7 @@ const RemoteApp = {
 			wakeLock: null,
 			replaySaved: false,
 			tickerText: '',
+			presets: PRESET_TICKERS,
 			obs: {
 				connected: false,
 				currentScene: '',
@@ -161,6 +215,7 @@ const RemoteApp = {
 				intermissionSceneName: '',
 			},
 			options: {},
+			gsi: {},
 		}
 	},
 	computed: {
@@ -173,6 +228,42 @@ const RemoteApp = {
 		promotionActive() {
 			return !!this.options['promotion.visible']
 		},
+		activeTicker() {
+			return this.options['branding.ticker'] || ''
+		},
+		matchMapName() {
+			const raw = this.gsi?.map?.name || 'CS2 Match'
+			return raw.replace('de_', '').toUpperCase()
+		},
+		matchRoundText() {
+			const r = this.gsi?.map?.round ?? 0
+			return `Round ${r + 1}`
+		},
+		ctTeamName() {
+			return this.gsi?.map?.team_ct?.name || 'COUNTER-TERRORISTS'
+		},
+		tTeamName() {
+			return this.gsi?.map?.team_t?.name || 'TERRORISTS'
+		},
+		ctScore() {
+			return this.gsi?.map?.team_ct?.score ?? 0
+		},
+		tScore() {
+			return this.gsi?.map?.team_t?.score ?? 0
+		},
+		isBombActive() {
+			const b = this.gsi?.bomb?.state
+			return b === 'planted' || b === 'defusing'
+		},
+		phaseBadgeText() {
+			if (this.gsi?.bomb?.state === 'defusing') return 'DEFUSING ⏳'
+			if (this.gsi?.bomb?.state === 'planted') return 'BOMB PLANTED 💣'
+			const p = this.gsi?.round?.phase
+			if (p === 'freezetime') return 'FREEZETIME'
+			if (p === 'over') return 'ROUND OVER'
+			if (p === 'live') return 'LIVE'
+			return 'WARMUP'
+		},
 	},
 	mounted() {
 		this.initWakeLock()
@@ -182,9 +273,11 @@ const RemoteApp = {
 	},
 	methods: {
 		// Haptic vibration feedback
-		vibrate(ms = 40) {
+		vibrate(pattern = 40) {
 			if (navigator.vibrate) {
-				navigator.vibrate(ms)
+				try {
+					navigator.vibrate(pattern)
+				} catch (_) {}
 			}
 		},
 
@@ -227,8 +320,13 @@ const RemoteApp = {
 					const data = JSON.parse(msg.data)
 					if (data.event === 'static_data' && data.body?.options) {
 						this.options = { ...this.options, ...data.body.options }
+					} else if (data.event === 'state' && data.body) {
+						if (data.body.options) this.options = { ...this.options, ...data.body.options }
+						if (data.body.gsiState) this.gsi = data.body.gsiState
 					} else if (data.options) {
 						this.options = { ...this.options, ...data.options }
+					} else if (data.gsiState) {
+						this.gsi = data.gsiState
 					} else if (data.event === 'obs:status' && data.body) {
 						this.obs = { ...this.obs, ...data.body }
 					}
@@ -310,13 +408,30 @@ const RemoteApp = {
 			}
 		},
 
+		applyPreset(preset) {
+			this.vibrate(35)
+			let text = preset.text
+			if (preset.label.includes('Смена карты') && this.matchMapName) {
+				text = `🗺️ СЛЕДУЮЩАЯ КАРТА: ${this.matchMapName}`
+			}
+			this.tickerText = text
+			this.sendTicker()
+		},
+
 		sendTicker() {
 			if (!this.tickerText) return
-			this.vibrate(40)
+			this.vibrate(45)
 			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: this.tickerText } }))
 			}
+		},
+
+		clearTicker() {
+			this.vibrate(30)
 			this.tickerText = ''
+			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: '' } }))
+			}
 		},
 	},
 }
