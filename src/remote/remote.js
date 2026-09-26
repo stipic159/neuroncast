@@ -149,7 +149,21 @@ const RemoteApp = {
 				<section class="remote-section">
 					<div class="section-title">
 						<span>HUD Overlay Display</span>
-						<span style="font-size: 0.7rem; color: #58a6ff;">{{ currentHudScene }}</span>
+						<div class="format-toggle-group">
+							<span style="font-size: 0.65rem; color: #8b949e; margin-right: 2px;">FORMAT:</span>
+							<button 
+								:class="['btn-format-toggle', { '--active': (options['match.bestOf'] || 1) == 1 }]"
+								@click="setMatchFormat(1)"
+							>
+								BO1
+							</button>
+							<button 
+								:class="['btn-format-toggle', { '--active': (options['match.bestOf'] || 1) == 3 }]"
+								@click="setMatchFormat(3)"
+							>
+								BO3
+							</button>
+						</div>
 					</div>
 					<div class="button-grid-3">
 						<button 
@@ -703,9 +717,18 @@ const RemoteApp = {
 
 		setHudScene(id) {
 			this.vibrate(35)
-			this.options['match.activeScene'] = id
+			const next = this.currentHudScene === id ? 'default' : id
+			this.options['match.activeScene'] = next
 			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'match.activeScene', value: id } }))
+				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'match.activeScene', value: next } }))
+			}
+		},
+
+		setMatchFormat(bo) {
+			this.vibrate(35)
+			this.options['match.bestOf'] = bo
+			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'match.bestOf', value: bo } }))
 			}
 		},
 

@@ -127,7 +127,7 @@ export const getKomplettligaenBundle = async (matchId, teamId = null) => {
 	
 	if (!matchId) {
 		return {
-			match: getMatchFallback(matchId),
+			match: null,
 			table: getTableFallback(),
 			teamGames: getTeamGamesFallback(),
 			stale: false,

@@ -89,7 +89,34 @@ export default {
 		},
 
 		komplettligaenMatch() {
-			return this.komplettligaen?.data?.match
+			const m = this.komplettligaen?.data?.match
+			if (!m || m.id === 'fallback-match' || !this.komplettligaen?.config?.matchId) {
+				return null
+			}
+			return m
+		},
+
+		matchBestOf() {
+			if (this.$opts?.['match.bestOf']) return Number(this.$opts['match.bestOf'])
+			if (this.komplettligaenMatch?.bestOf) return Number(this.komplettligaenMatch.bestOf)
+			if (this.$opts?.['branding.seriesBestOf']) return Number(this.$opts['branding.seriesBestOf'])
+			if (this.$opts?.['series.maps.2.name']) return 3
+			return 1
+		},
+
+		matchFormatLabel() {
+			return `BEST OF ${this.matchBestOf}`
+		},
+
+		breakStatusText() {
+			const phase = this.$round?.phase || this.$gsiState?.round?.phase
+			const bomb = this.$round?.bomb || this.$gsiState?.round?.bomb
+			if (phase === 'over' || phase === 'intermission') return 'HALFTIME BREAK'
+			if (bomb === 'defused' || bomb === 'exploded') return 'ROUND BREAK'
+			const roundNum = (this.$map?.round ?? 0) + 1
+			if (roundNum <= 12) return `FIRST HALF · ROUND ${roundNum}`
+			if (roundNum <= 24) return `SECOND HALF · ROUND ${roundNum}`
+			return `OVERTIME · ROUND ${roundNum}`
 		},
 
 		komplettligaenTableRows() {
@@ -160,8 +187,24 @@ export default {
 		},
 
 		gsiCtPlayers() {
-			return (this.$players || [])
-				.filter((p) => p.side === 3 || p.team === 'CT')
+			const source = (this.$players && this.$players.length) 
+				? this.$players 
+				: Object.entries(this.$gsiState?.allplayers || {}).map(([steamId, p]) => ({
+					steam64Id: steamId,
+					steamId,
+					name: p.name || 'Player',
+					team: (p.team || '').toUpperCase(),
+					side: (p.team || '').toUpperCase() === 'CT' ? 3 : 2,
+					kills: p.match_stats?.kills ?? 0,
+					assists: p.match_stats?.assists ?? 0,
+					deaths: p.match_stats?.deaths ?? 0,
+					mvps: p.match_stats?.mvps ?? 0,
+					score: p.match_stats?.score ?? 0,
+					adr: 0,
+				}))
+
+			return source
+				.filter((p) => p.side === 3 || String(p.team || '').toUpperCase() === 'CT')
 				.map((p) => ({
 					...p,
 					displayName: this.getPlayerName(p),
@@ -171,14 +214,40 @@ export default {
 		},
 
 		gsiTPlayers() {
-			return (this.$players || [])
-				.filter((p) => p.side === 2 || p.team === 'T')
+			const source = (this.$players && this.$players.length) 
+				? this.$players 
+				: Object.entries(this.$gsiState?.allplayers || {}).map(([steamId, p]) => ({
+					steam64Id: steamId,
+					steamId,
+					name: p.name || 'Player',
+					team: (p.team || '').toUpperCase(),
+					side: (p.team || '').toUpperCase() === 'CT' ? 3 : 2,
+					kills: p.match_stats?.kills ?? 0,
+					assists: p.match_stats?.assists ?? 0,
+					deaths: p.match_stats?.deaths ?? 0,
+					mvps: p.match_stats?.mvps ?? 0,
+					score: p.match_stats?.score ?? 0,
+					adr: 0,
+				}))
+
+			return source
+				.filter((p) => p.side === 2 || String(p.team || '').toUpperCase() === 'T')
 				.map((p) => ({
 					...p,
 					displayName: this.getPlayerName(p),
 					kd: this.calculateKD(p.kills, p.deaths),
 				}))
 				.sort((a, b) => (b.kills - a.kills) || (a.deaths - b.deaths))
+		},
+
+		gsiMatchMvp() {
+			const all = [...this.gsiCtPlayers, ...this.gsiTPlayers]
+			if (!all.length) return null
+			return all.slice().sort((a, b) => {
+				const aScore = (a.kills * 2) + (a.assists * 1) - (a.deaths * 0.5) + ((a.adr || 0) * 0.1) + ((a.mvps || 0) * 3)
+				const bScore = (b.kills * 2) + (b.assists * 1) - (b.deaths * 0.5) + ((b.adr || 0) * 0.1) + ((b.mvps || 0) * 3)
+				return bScore - aScore
+			})[0]
 		},
 
 		gsiMatchWinner() {
@@ -190,13 +259,13 @@ export default {
 			if (ct >= 13 && (ct - t) >= 2) return 'CT'
 			if (t >= 13 && (t - ct) >= 2) return 'T'
 			if (this.$round?.winningSide) return this.$round.winningSide
-			return null
+			return ct > t ? 'CT' : (t > ct ? 'T' : null)
 		},
 
 		gsiWinnerName() {
 			if (this.gsiMatchWinner === 'CT') return this.gsiCtTeam.name
 			if (this.gsiMatchWinner === 'T') return this.gsiTTeam.name
-			return 'MATCH IN PROGRESS'
+			return ''
 		},
 
 		hasObserverData() {

@@ -946,3 +946,27 @@ body {
 	height: 100%;
 	border: none;
 }
+
+.format-toggle-group {
+	display: flex;
+	gap: 4px;
+	align-items: center;
+}
+
+.btn-format-toggle {
+	background: #21262d;
+	border: 1px solid #30363d;
+	color: #8b949e;
+	font-size: 0.65rem;
+	font-weight: 800;
+	padding: 2px 7px;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.btn-format-toggle.--active {
+	background: rgba(88, 166, 255, 0.2);
+	border-color: #58a6ff;
+	color: #58a6ff;
+}

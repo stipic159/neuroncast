@@ -73,7 +73,7 @@
 						</article>
 
 						<div class="kl-score">
-							<small>Map Score</small>
+							<small>{{ matchFormatLabel }}</small>
 							<div class="kl-series-score">
 								<span>{{ gsiCtTeam.score }}</span>
 								<b>-</b>
@@ -88,6 +88,35 @@
 						<article class="kl-team away">
 							<img v-if="gsiTTeam.logo" :src="gsiTTeam.logo" alt="">
 							<h2>{{ gsiTTeam.name }}</h2>
+						</article>
+					</div>
+
+					<div class="kl-waiting-bottom kl-result-bottom" style="margin-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.15); padding: 12px 16px;">
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ gsiCtTeam.name }}</h2><span>Roster &amp; Stats (CT)</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">ADR</th></tr></thead>
+								<tbody>
+									<tr v-for="p in gsiCtPlayers" :key="p.steam64Id || p.steamId">
+										<td class="player-cell">{{ p.displayName }} <span v-if="p.mvps" class="mvp-star">★{{ p.mvps }}</span></td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ p.kd }}</td><td class="rating">{{ p.adr || '-' }}</td>
+									</tr>
+									<tr v-if="!gsiCtPlayers.length"><td colspan="6" class="empty">Waiting for players...</td></tr>
+								</tbody>
+							</table>
+						</article>
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ gsiTTeam.name }}</h2><span>Roster &amp; Stats (T)</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">ADR</th></tr></thead>
+								<tbody>
+									<tr v-for="p in gsiTPlayers" :key="p.steam64Id || p.steamId">
+										<td class="player-cell">{{ p.displayName }} <span v-if="p.mvps" class="mvp-star">★{{ p.mvps }}</span></td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ p.kd }}</td><td class="rating">{{ p.adr || '-' }}</td>
+									</tr>
+									<tr v-if="!gsiTPlayers.length"><td colspan="6" class="empty">Waiting for players...</td></tr>
+								</tbody>
+							</table>
 						</article>
 					</div>
 					</section>
@@ -174,13 +203,13 @@
 							<h1>{{ gsiCtTeam.name }}</h1>
 						</article>
 						<div class="kl-waiting-score">
-							<small>Half Score</small>
+							<small>{{ matchFormatLabel }}</small>
 							<div class="kl-waiting-series">
 								<span>{{ gsiCtTeam.score }}</span>
 								<b>-</b>
 								<span>{{ gsiTTeam.score }}</span>
 							</div>
-							<strong>HALFTIME BREAK</strong>
+							<strong>{{ breakStatusText }}</strong>
 						</div>
 						<article class="kl-waiting-team">
 							<img v-if="gsiTTeam.logo" :src="gsiTTeam.logo" alt="">
@@ -333,7 +362,7 @@
 				</div>
 			</main>
 
-			<div v-if="isLoadingKomplettligaen && !komplettligaenMatch" class="kl-loading">
+			<div v-if="isLoadingKomplettligaen && komplettligaen?.config?.matchId && !komplettligaenMatch" class="kl-loading">
 				<div class="kl-spinner"></div>
 				<div class="kl-loading-text">Fetching live data...</div>
 			</div>
@@ -356,18 +385,25 @@
 							<h1>{{ gsiCtTeam.name }}</h1>
 						</article>
 						<div class="kl-waiting-score">
-							<small>Final Score</small>
+							<small>{{ matchFormatLabel }}</small>
 							<div class="kl-waiting-series">
 								<span :class="{ 'kl-winner-score': gsiMatchWinner === 'CT' }">{{ gsiCtTeam.score }}</span>
 								<b>-</b>
 								<span :class="{ 'kl-winner-score': gsiMatchWinner === 'T' }">{{ gsiTTeam.score }}</span>
 							</div>
-							<strong class="kl-winner-label">🏆 {{ gsiWinnerName }}</strong>
+							<strong v-if="gsiWinnerName" class="kl-winner-label">🏆 {{ gsiWinnerName }} WINS</strong>
+							<strong v-else class="kl-winner-label">MATCH FINISHED</strong>
 						</div>
 						<article :class="['kl-waiting-team', { 'kl-winner': gsiMatchWinner === 'T' }]">
 							<img v-if="gsiTTeam.logo" :src="gsiTTeam.logo" alt="">
 							<h1>{{ gsiTTeam.name }}</h1>
 						</article>
+					</div>
+					<div v-if="gsiMatchMvp" class="kl-mvp-banner">
+						<span class="mvp-star">★</span>
+						<span class="mvp-title">MATCH MVP:</span>
+						<strong class="mvp-name">{{ gsiMatchMvp.displayName }}</strong>
+						<span class="mvp-stats">({{ gsiMatchMvp.kills }} Kills · {{ gsiMatchMvp.deaths }} Deaths · {{ gsiMatchMvp.kd }} K/D · {{ gsiMatchMvp.adr || 0 }} ADR)</span>
 					</div>
 					</section>
 
