@@ -8,12 +8,28 @@ export default {
 		'player',
 	],
 
+	data() {
+		return {
+			frozenDeathPosition: null,
+		}
+	},
+
 	computed: {
 		levels,
 		radarConfig,
 
 		position() {
-			return this.player.position
+			if (this.frozenDeathPosition) {
+				return this.frozenDeathPosition
+			}
+
+			const pos = this.player?.position
+			if (Array.isArray(pos) && pos.length >= 3 && (pos[0] !== 0 || pos[1] !== 0)) {
+				this.frozenDeathPosition = [...pos]
+				return this.frozenDeathPosition
+			}
+
+			return pos || [0, 0, 0]
 		},
 
 		colorClass() {
@@ -43,11 +59,20 @@ export default {
 		},
 	},
 
+	watch: {
+		'player.steam64Id'() {
+			this.frozenDeathPosition = null
+		},
+		'player.isAlive'(isAlive) {
+			if (isAlive) {
+				this.frozenDeathPosition = null
+			}
+		}
+	},
+
 	methods: {
 		getLevel,
 		offsetX,
 		offsetY,
 	},
 }
-
-

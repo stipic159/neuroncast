@@ -4,10 +4,8 @@
 	left: 0;
 
 	transform: translate(-50%, -50%);
-	transition: 
-		left 0.15s linear, 
-		top 0.15s linear, 
-		transform 0.15s linear;
+	/* Disabled transition so death markers appear instantly at death location without sliding/floating */
+	transition: none;
 }
 
 .dead-player:not(.--default-level) {
@@ -26,5 +24,3 @@ img.--ct {
 img.--t {
 	filter: url(#terrorists-fill-from-white-filter);
 }
-
-
