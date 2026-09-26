@@ -30,6 +30,7 @@ class ObsManager {
 		this.connected = false
 		this.connecting = false
 		this.lastError = null
+		this.lastLoggedError = null
 		this.reconnectTimer = null
 		this.scenes = []
 		this.currentScene = ''
@@ -43,8 +44,8 @@ class ObsManager {
 	async init() {
 		await this.loadConfig()
 		if (this.config.enabled) {
-			this.connect().catch((err) => {
-				console.warn('[OBS] Initial connection attempt deferred:', err.message)
+			this.connect({ silent: true }).catch(() => {
+				// Suppress initial background rejection
 			})
 		}
 	}
@@ -81,7 +82,7 @@ class ObsManager {
 		// Reconnect if connection parameters changed or newly enabled
 		if (this.config.enabled) {
 			if (!this.connected && !this.connecting) {
-				await this.connect()
+				await this.connect({ silent: true }).catch(() => {})
 			}
 		} else if (this.connected) {
 			await this.disconnect()
@@ -90,9 +91,13 @@ class ObsManager {
 
 	setupEventHandlers() {
 		this.obs.on('ConnectionClosed', () => {
+			const wasConnected = this.connected
 			this.connected = false
 			this.connecting = false
 			this.notifyState()
+			if (wasConnected) {
+				console.info('[OBS] Disconnected from OBS Studio. Reconnecting in background...')
+			}
 			this.scheduleReconnect()
 		})
 
@@ -126,7 +131,7 @@ class ObsManager {
 		})
 	}
 
-	async connect() {
+	async connect({ silent = false } = {}) {
 		if (this.connecting || this.connected) return
 
 		this.connecting = true
@@ -143,6 +148,7 @@ class ObsManager {
 			this.connected = true
 			this.connecting = false
 			this.lastError = null
+			this.lastLoggedError = null
 			console.info(`[OBS] Successfully connected to OBS Studio WebSocket at ${url}`)
 
 			await this.refreshScenes()
@@ -153,10 +159,19 @@ class ObsManager {
 			this.connected = false
 			this.connecting = false
 			this.lastError = err?.message || 'Failed to connect to OBS'
-			console.warn(`[OBS] Connection failed: ${this.lastError}`)
+
+			// Log only when error state changes or when explicitly requested by manual click
+			if (!silent || this.lastLoggedError !== this.lastError) {
+				this.lastLoggedError = this.lastError
+				console.warn(`[OBS] Connection to OBS (${url}) unavailable: ${this.lastError}`)
+			}
+
 			this.notifyState()
 			this.scheduleReconnect()
-			throw err
+
+			if (!silent) {
+				throw err
+			}
 		}
 	}
 
@@ -185,9 +200,9 @@ class ObsManager {
 			this.reconnectTimer = null
 			if (this.config.enabled && !this.connected && !this.connecting) {
 				try {
-					await this.connect()
+					await this.connect({ silent: true })
 				} catch (_) {
-					// reconnect handler will re-schedule
+					// silently handled
 				}
 			}
 		}, this.config.reconnectIntervalMs || 5000)
