@@ -131,7 +131,7 @@ const RemoteApp = {
 					</div>
 					<div class="button-grid-2">
 						<button 
-							:class="['btn-tap', { '--active': obs.currentScene === obs.mainSceneName }] Ancients"
+							:class="['btn-tap', { '--active': obs.currentScene === obs.mainSceneName }]"
 							@click="switchObsScene('main')"
 						>
 							🎮 Main Game
