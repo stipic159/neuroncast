@@ -1,6 +1,6 @@
 import { OBSWebSocket } from 'obs-websocket-js'
-import { readJson, writeJson } from './helpers/json-file.js'
-import { userspaceDirectory } from './helpers/paths.js'
+import { readJson, writeJson } from '../helpers/json-file.js'
+import { userspaceDirectory } from '../helpers/paths.js'
 import { join } from 'path'
 
 const CONFIG_FILE = join(userspaceDirectory, 'obs.json')
