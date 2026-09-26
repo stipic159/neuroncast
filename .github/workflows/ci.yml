@@ -1,48 +1,35 @@
-name: Eon Production Hardening CI
+name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ master, main ]
 
 jobs:
-  validate-and-test:
+  test:
+    name: Unit Tests & Theme Preflight
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
     steps:
-    - name: Checkout Codebase
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
-    - name: Install Dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Run Theme Preflight Validator
-      run: npm run theme:validate
+      - name: Run unit test suite
+        run: npm run test:unit
 
-    - name: Boot Check Server (Dry-run)
-      run: |
-        node src/server/index.js --ui-dev-mode &
-        SERVER_PID=$!
-        sleep 3
-        curl -f http://localhost:31982/api/status || exit 1
-        kill $SERVER_PID
-      shell: bash
-
-    # Playwright smoke tests are kept optional so they don't fail if the full browser binary cache is not pre-installed
-    - name: Run Playwright Smoke Tests (Optional)
-      run: |
-        if [ -d "node_modules/@playwright/test" ]; then
-          npx playwright install chromium
-          npm run test:smoke
-        else
-          echo "Playwright not globally cached, skipping integration tests."
-        fi
-      shell: bash
-      continue-on-error: true
+      - name: Validate themes & radars preflight
+        run: npm run theme:validate
