@@ -25,7 +25,7 @@ const WEAPON_MAP = {
 	weapon_mac10: 'MAC-10',
 	weapon_galilar: 'Galil AR',
 	weapon_famas: 'FAMAS',
-	weapon_ssg08: 'Scout (SSG)',
+	weapon_ssg08: 'Scout',
 	weapon_sg556: 'SG 553',
 	weapon_aug: 'AUG',
 	weapon_knife: 'Нож',
@@ -86,7 +86,7 @@ const RemoteApp = {
 					:class="['tab-nav-btn', { '--active': activeTab === 'observer' }]"
 					@click="switchTab('observer')"
 				>
-					👥 ОБСЕРВЕР (1-0)
+					👥 ОБСЕРВЕР + РАДАР
 					<span v-if="aliveCountText" class="tab-badge-alive">{{ aliveCountText }}</span>
 				</button>
 				<button 
@@ -266,13 +266,34 @@ const RemoteApp = {
 				</section>
 			</div>
 
-			<!-- TAB 2: OBSERVER & PLAYERS VIEW (1-0 SLOTS) -->
+			<!-- TAB 2: OBSERVER & PLAYERS VIEW (1-0 SLOTS + INTEGRATED RADAR) -->
 			<div v-show="activeTab === 'observer'" class="tab-content observer-tab">
-				<div class="observer-hint">
-					💡 <b>Клавиши переключения:</b> Нажимайте соответствующую цифру <b>1..0</b> на клавиатуре в CS2.
+				<div class="observer-controls-bar">
+					<div class="observer-hint-text">
+						💡 Клавиши <b>1..0</b> в CS2
+					</div>
+					<div class="observer-actions-group">
+						<button 
+							:class="['btn-obs-toggle', { '--active': observerShowRadar }]"
+							@click="observerShowRadar = !observerShowRadar"
+						>
+							🗺️ {{ observerShowRadar ? 'Радар' : 'Без радара' }}
+						</button>
+						<button 
+							:class="['btn-obs-toggle', { '--active': observerLayout === '2col' }]"
+							@click="observerLayout = observerLayout === '2col' ? '1col' : '2col'"
+						>
+							{{ observerLayout === '2col' ? '📱 2 Колонки' : '📜 1 Колонка' }}
+						</button>
+					</div>
 				</div>
 
-				<div class="teams-container">
+				<!-- Integrated Mini Radar Card -->
+				<div v-if="observerShowRadar" class="observer-radar-box">
+					<iframe src="/radar/?embedded=1" class="observer-radar-frame"></iframe>
+				</div>
+
+				<div :class="['teams-container', { '--grid-2col': observerLayout === '2col' }]">
 					<!-- CT Team Column -->
 					<div class="observer-team-column --ct">
 						<div class="team-header-bar --ct">
@@ -296,9 +317,8 @@ const RemoteApp = {
 							<div class="player-info-col">
 								<div class="player-top-row">
 									<span class="player-name-text">{{ p.name }}</span>
-									<span v-if="p.isSpectated" class="spectated-pill">🎥 КАМЕРА</span>
-									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)">⭐ В ЭФИР</button>
-									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)">⭐ В ЭФИР</button>
+									<span v-if="p.isSpectated" class="spectated-pill">🎥</span>
+									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)" title="В эфир">⭐ В ЭФИР</button>
 									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
 									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
 								</div>
@@ -342,7 +362,8 @@ const RemoteApp = {
 							<div class="player-info-col">
 								<div class="player-top-row">
 									<span class="player-name-text">{{ p.name }}</span>
-									<span v-if="p.isSpectated" class="spectated-pill">🎥 КАМЕРА</span>
+									<span v-if="p.isSpectated" class="spectated-pill">🎥</span>
+									<button class="btn-spotlight" @click.stop="triggerSpotlight(p)" title="В эфир">⭐ В ЭФИР</button>
 									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
 									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
 								</div>
@@ -499,11 +520,11 @@ const RemoteApp = {
 
 			const ct = parsed
 				.filter(p => p.team === 'CT')
-				.sort((a, b) => Number(a.slot) - Number(b.slot))
+				.sort((a, b) => a.rawSlot - b.rawSlot)
 
 			const t = parsed
 				.filter(p => p.team === 'T')
-				.sort((a, b) => Number(a.slot) - Number(b.slot))
+				.sort((a, b) => a.rawSlot - b.rawSlot)
 
 			return { ct, t, all: parsed }
 		},

@@ -834,3 +834,119 @@ body {
 	background: rgba(241, 196, 15, 0.4);
 	transform: scale(0.95);
 }
+
+/* Observer Controls Header Bar */
+.observer-controls-bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: #161b22;
+	border: 1px solid #30363d;
+	border-radius: 10px;
+	padding: 6px 10px;
+	gap: 8px;
+}
+
+.observer-hint-text {
+	font-size: 0.72rem;
+	color: #8b949e;
+}
+
+.observer-hint-text b {
+	color: #58a6ff;
+}
+
+.observer-actions-group {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.btn-obs-toggle {
+	background: #21262d;
+	border: 1px solid #30363d;
+	color: #c9d1d9;
+	font-size: 0.68rem;
+	font-weight: 700;
+	padding: 4px 8px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.btn-obs-toggle.--active {
+	background: rgba(88, 166, 255, 0.2);
+	border-color: rgba(88, 166, 255, 0.5);
+	color: #58a6ff;
+}
+
+/* Observer Radar Box */
+.observer-radar-box {
+	width: 100%;
+	height: 200px;
+	border-radius: 10px;
+	overflow: hidden;
+	background: #0b0e14;
+	border: 1px solid #30363d;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+	position: relative;
+}
+
+.observer-radar-frame {
+	width: 100%;
+	height: 100%;
+	border: none;
+	display: block;
+}
+
+/* 2-column layout for teams (fits radar + 10 players on 1 mobile screen) */
+.teams-container.--grid-2col {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+.teams-container.--grid-2col .player-card {
+	padding: 5px 6px;
+	gap: 6px;
+}
+
+.teams-container.--grid-2col .slot-badge {
+	width: 28px;
+	height: 28px;
+	min-width: 28px;
+	font-size: 0.92rem;
+	border-radius: 6px;
+}
+
+.teams-container.--grid-2col .player-name-text {
+	max-width: 60px;
+	font-size: 0.72rem;
+}
+
+.teams-container.--grid-2col .btn-spotlight {
+	font-size: 0.55rem;
+	padding: 1px 3px;
+	margin-left: 2px;
+}
+
+.teams-container.--grid-2col .hp-text {
+	font-size: 0.65rem;
+}
+
+.teams-container.--grid-2col .dead-pill {
+	font-size: 0.58rem;
+}
+
+.teams-container.--grid-2col .player-bottom-row {
+	font-size: 0.6rem;
+}
+
+.teams-container.--grid-2col .team-header-bar {
+	padding: 4px 8px;
+	font-size: 0.72rem;
+}
+
+.teams-container.--grid-2col .team-score-badge {
+	font-size: 0.85rem;
+}
