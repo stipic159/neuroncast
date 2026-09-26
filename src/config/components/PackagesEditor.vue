@@ -12,12 +12,12 @@
 
 				<div class="field-group">
 					<label class="field-label">{{ $t("Package Name") }} <span class="required">*</span></label>
-					<input v-model="captureData.name" type="text" class="field-input" :placeholder="$t(&quot;e.g. Komplettligaen Spring 2027&quot;)" autofocus>
+					<input v-model="captureData.name" type="text" class="field-input" :placeholder="$t('e.g. Komplettligaen Spring 2027')" autofocus>
 				</div>
 
 				<div class="field-group">
 					<label class="field-label">{{ $t("Description") }}</label>
-					<input v-model="captureData.description" type="text" class="field-input" :placeholder="$t(&quot;Optional operator note&quot;)">
+					<input v-model="captureData.description" type="text" class="field-input" :placeholder="$t('Optional operator note')">
 				</div>
 
 				<div class="section-divider">{{ $t("References") }}</div>
@@ -136,7 +136,7 @@
 					<div class="card-header">
 						<h3>{{ $t("Event Packages") }}</h3>
 						<div class="header-btns">
-							<button class="btn-sm --secondary" @click="openCapture" :title="$t(&quot;Snapshot current broadcast setup&quot;)">{{ $t("Capture") }}</button>
+							<button class="btn-sm --secondary" @click="openCapture" :title="$t('Snapshot current broadcast setup')">{{ $t("Capture") }}</button>
 							<button class="btn-sm" @click="startCreate">{{ $t("+ New") }}</button>
 						</div>
 					</div>
@@ -155,7 +155,7 @@
 						@click="selectPackage(pkg)"
 					>
 						<div class="pkg-item-name">
-							<span v-if="isActivePackage(pkg.id)" class="active-dot" :title="$t(&quot;Currently active&quot;)"></span>
+							<span v-if="isActivePackage(pkg.id)" class="active-dot" :title="$t('Currently active')"></span>
 							{{ pkg.name }}
 						</div>
 						<div class="pkg-item-meta">
@@ -197,24 +197,24 @@
 
 					<div class="field-group">
 						<label class="field-label">{{ $t("Name") }} <span class="required">*</span></label>
-						<input v-model="editData.name" type="text" class="field-input" :placeholder="$t(&quot;e.g. Komplettligaen Spring 2027&quot;)" autofocus>
+						<input v-model="editData.name" type="text" class="field-input" :placeholder="$t('e.g. Komplettligaen Spring 2027')" autofocus>
 					</div>
 
 					<div class="field-group">
 						<label class="field-label">{{ $t("Description") }}</label>
-						<input v-model="editData.description" type="text" class="field-input" :placeholder="$t(&quot;Optional operator note&quot;)">
+						<input v-model="editData.description" type="text" class="field-input" :placeholder="$t('Optional operator note')">
 					</div>
 
 					<div class="section-divider">{{ $t("Branding") }}</div>
 
 					<div class="field-group">
 						<label class="field-label">{{ $t("Title") }}</label>
-						<input v-model="editData.branding.title" type="text" class="field-input" :placeholder="$t(&quot;Event name shown in HUD badge&quot;)">
+						<input v-model="editData.branding.title" type="text" class="field-input" :placeholder="$t('Event name shown in HUD badge')">
 					</div>
 
 					<div class="field-group">
 						<label class="field-label">{{ $t("Subtitle") }}</label>
-						<input v-model="editData.branding.subtitle" type="text" class="field-input" :placeholder="$t(&quot;Season, date, or stage&quot;)">
+						<input v-model="editData.branding.subtitle" type="text" class="field-input" :placeholder="$t('Season, date, or stage')">
 					</div>
 
 					<div class="field-group">
@@ -247,11 +247,11 @@
 					<div class="field-row-2">
 						<div class="field-group">
 							<label class="field-label">{{ $t("Rotation interval (ms)") }}</label>
-							<input v-model.number="editData.sponsors.rotationInterval" type="number" min="500" step="500" class="field-input" :placeholder="$t(&quot;e.g. 8000&quot;)">
+							<input v-model.number="editData.sponsors.rotationInterval" type="number" min="500" step="500" class="field-input" :placeholder="$t('e.g. 8000')">
 						</div>
 						<div class="field-group">
 							<label class="field-label">{{ $t("Panel title") }}</label>
-							<input v-model="editData.sponsors.title" type="text" class="field-input" :placeholder="$t(&quot;Official Partners&quot;)">
+							<input v-model="editData.sponsors.title" type="text" class="field-input" :placeholder="$t('Official Partners')">
 						</div>
 					</div>
 

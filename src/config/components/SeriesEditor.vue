@@ -30,7 +30,7 @@
 
 				<label>
 					<span>{{ $t("Picked by") }}</span>
-					<input v-model="state.options[`series.maps.${mapNumber}.pickTeam`]" type="text" :placeholder="$t(&quot;Team name&quot;)">
+					<input v-model="state.options[`series.maps.${mapNumber}.pickTeam`]" type="text" :placeholder="$t('Team name')">
 				</label>
 
 				<div class="score-grid">

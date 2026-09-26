@@ -313,7 +313,7 @@
 						<div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px;">
 							<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
 								<h3 style="font-size: 0.9rem; font-weight: 600; color: #adbac7; margin: 0; text-transform: uppercase;">{{ $t("Create Match Session") }}</h3>
-								<button class="btn-ghost" style="padding: 3px 8px; font-size: 0.72rem;" @click="autofillFromMatch" :disabled="sessionLoading || !komplettligaen.matchId" :title="$t(&quot;Fill from configured KL match&quot;)">{{ $t("Fill from KL Match") }}</button>
+								<button class="btn-ghost" style="padding: 3px 8px; font-size: 0.72rem;" @click="autofillFromMatch" :disabled="sessionLoading || !komplettligaen.matchId" :title="$t('Fill from configured KL match')">{{ $t("Fill from KL Match") }}</button>
 							</div>
 							<div class="session-form">
 								<div class="form-row">
@@ -342,7 +342,7 @@
 								</div>
 								<div>
 									<label style="display: block; font-size: 0.75rem; color: #8b949e; margin-bottom: 4px;">{{ $t("External Match ID") }}</label>
-									<input v-model="sessionForm.externalMatchId" class="text-input" style="padding: 8px;" :placeholder="$t(&quot;Optional&quot;)">
+									<input v-model="sessionForm.externalMatchId" class="text-input" style="padding: 8px;" :placeholder="$t('Optional')">
 								</div>
 								<button class="btn-promo" style="padding: 10px; margin-top: 4px;" @click="createNewSession" :disabled="sessionLoading">{{ $t("Start Session") }}</button>
 							</div>

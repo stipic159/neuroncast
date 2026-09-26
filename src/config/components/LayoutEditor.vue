@@ -8,14 +8,14 @@
 						<option value="">{{ $t("-- Active Canvas (Live) --") }}</option>
 						<option v-for="p in presets" :key="p.id" :value="p.id">{{ p.name }}</option>
 					</select>
-					<button class="btn-secondary" :title="$t(&quot;Save current layout as a new preset&quot;)" @click="saveNewPreset">{{ $t("💾 Save As...") }}</button>
-					<button v-if="activePreset && currentPresetIsCustom" class="btn-secondary" :title="$t(&quot;Save changes to active preset&quot;)" @click="saveActivePresetChanges">{{ $t("💾 Save Changes") }}</button>
-					<button v-if="activePreset" class="btn-secondary" :title="$t(&quot;Duplicate active preset&quot;)" @click="duplicatePreset">{{ $t("👥 Duplicate") }}</button>
-					<button v-if="activePreset && currentPresetIsCustom" class="btn-secondary --danger-btn" :title="$t(&quot;Delete custom preset&quot;)" @click="deletePreset">{{ $t("🗑️ Delete") }}</button>
-					<button v-if="activePreset" class="btn-secondary" :title="$t(&quot;Apply preset coordinates to live HUD&quot;)" @click="applyPreset">{{ $t("🚀 Apply Live") }}</button>
+					<button class="btn-secondary" :title="$t('Save current layout as a new preset')" @click="saveNewPreset">{{ $t("💾 Save As...") }}</button>
+					<button v-if="activePreset && currentPresetIsCustom" class="btn-secondary" :title="$t('Save changes to active preset')" @click="saveActivePresetChanges">{{ $t("💾 Save Changes") }}</button>
+					<button v-if="activePreset" class="btn-secondary" :title="$t('Duplicate active preset')" @click="duplicatePreset">{{ $t("👥 Duplicate") }}</button>
+					<button v-if="activePreset && currentPresetIsCustom" class="btn-secondary --danger-btn" :title="$t('Delete custom preset')" @click="deletePreset">{{ $t("🗑️ Delete") }}</button>
+					<button v-if="activePreset" class="btn-secondary" :title="$t('Apply preset coordinates to live HUD')" @click="applyPreset">{{ $t("🚀 Apply Live") }}</button>
 					<span class="toolbar-divider">|</span>
-					<button v-if="activePreset" class="btn-secondary" :title="$t(&quot;Export active preset as JSON&quot;)" @click="exportPreset">{{ $t("📤 Export") }}</button>
-					<label class="btn-secondary" :title="$t(&quot;Import preset from JSON&quot;)" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
+					<button v-if="activePreset" class="btn-secondary" :title="$t('Export active preset as JSON')" @click="exportPreset">{{ $t("📤 Export") }}</button>
+					<label class="btn-secondary" :title="$t('Import preset from JSON')" style="cursor: pointer; margin: 0; display: inline-flex; align-items: center; gap: 4px;">
 						{{ $t("📥 Import") }}
 						<input type="file" accept=".json" @change="importPreset" style="display: none;">
 					</label>
@@ -25,31 +25,31 @@
 			<div class="header-right">
 				<!-- High-Fidelity Workbench Toggles -->
 				<div class="workbench-toggles">
-					<label class="toggle-control" :title="$t(&quot;Show/Hide CS2 Gameplay Screenshot&quot;)">
+					<label class="toggle-control" :title="$t('Show/Hide CS2 Gameplay Screenshot')">
 						<input type="checkbox" v-model="showBgImage">
 						<span>{{ $t("🖼️ Background") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t(&quot;Show/Hide Technical Alignment Grid&quot;)">
+					<label class="toggle-control" :title="$t('Show/Hide Technical Alignment Grid')">
 						<input type="checkbox" v-model="showGrid">
 						<span>{{ $t("📐 Grid") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t(&quot;Show/Hide Center Crosshairs&quot;)">
+					<label class="toggle-control" :title="$t('Show/Hide Center Crosshairs')">
 						<input type="checkbox" v-model="showCenterLines">
 						<span>{{ $t("🎯 Center Lines") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t(&quot;Show/Hide 10% TV Safe Area Outline&quot;)">
+					<label class="toggle-control" :title="$t('Show/Hide 10% TV Safe Area Outline')">
 						<input type="checkbox" v-model="showSafeArea">
 						<span>{{ $t("🛡️ Safe Area") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t(&quot;Enable/Disable Snapping to Grid&quot;)">
+					<label class="toggle-control" :title="$t('Enable/Disable Snapping to Grid')">
 						<input type="checkbox" v-model="snapEnabled">
 						<span>{{ $t("🧲 Snap") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t(&quot;Enable/Disable Composition Smart Snapping &amp; Guides&quot;)">
+					<label class="toggle-control" :title="$t('Enable/Disable Composition Smart Snapping & Guides')">
 						<input type="checkbox" v-model="smartGuidesEnabled">
 						<span>{{ $t("🧲 Smart Guides") }}</span>
 					</label>
-					<label class="toggle-control" :title="$t(&quot;Show/Hide Live HUD Reference Iframe&quot;)">
+					<label class="toggle-control" :title="$t('Show/Hide Live HUD Reference Iframe')">
 						<input type="checkbox" v-model="showLiveHUDReference">
 						<span>{{ $t("📺 Live HUD Reference") }}</span>
 					</label>
@@ -79,7 +79,7 @@
 						v-if="showBgImage" 
 						src="https://csprofile.com/Images/Blog/best-cs2-screenshots/Screenshot_without_HUD.webp" 
 						class="hud-screenshot-bg" 
-						:alt="$t(&quot;CS2 Gameplay&quot;)"
+						:alt="$t('CS2 Gameplay')"
 					/>
 					
 					<!-- Live HUD Overlay Frame -->
@@ -258,8 +258,8 @@
 					>
 						<span class="el-name">{{ $text(el.def.label) }}</span>
 						<div style="display: flex; align-items: center; gap: 8px;">
-							<span v-if="el.visible && getCollidingElements(el).length > 0" :title="$t(&quot;Collision detected&quot;)" style="font-size: 0.75rem;">💥</span>
-							<span v-else-if="el.visible && showSafeArea && checkOutsideSafe(el)" :title="$t(&quot;Outside Safe Area&quot;)" style="font-size: 0.75rem;">⚠️</span>
+							<span v-if="el.visible && getCollidingElements(el).length > 0" :title="$t('Collision detected')" style="font-size: 0.75rem;">💥</span>
+							<span v-else-if="el.visible && showSafeArea && checkOutsideSafe(el)" :title="$t('Outside Safe Area')" style="font-size: 0.75rem;">⚠️</span>
 							<button
 								v-if="el.def.visibleKey"
 								class="btn-icon"

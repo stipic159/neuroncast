@@ -9,19 +9,19 @@
 			<div class="force-grid">
 				<label>
 					<span>{{ $t("Left roster team name") }}</span>
-					<input v-model="state.options['teams.leftTeamName']" type="text" :placeholder="$t(&quot;Use GSI team name&quot;)">
+					<input v-model="state.options['teams.leftTeamName']" type="text" :placeholder="$t('Use GSI team name')">
 				</label>
 				<label>
 					<span>{{ $t("Right roster team name") }}</span>
-					<input v-model="state.options['teams.rightTeamName']" type="text" :placeholder="$t(&quot;Use GSI team name&quot;)">
+					<input v-model="state.options['teams.rightTeamName']" type="text" :placeholder="$t('Use GSI team name')">
 				</label>
 				<button class="btn-primary" @click="saveForcedNames">{{ $t("Save team names") }}</button>
 			</div>
 		</section>
 
 		<OverridePanel
-			:title="$t(&quot;Team Name Overrides&quot;)"
-			:description="$t(&quot;Replace a team name when at least one listed SteamID64 is on that roster.&quot;)"
+			:title="$t('Team Name Overrides')"
+			:description="$t('Replace a team name when at least one listed SteamID64 is on that roster.')"
 			value-key="teams.teamNameOverrides"
 			type="team"
 			:rows="rows['teams.teamNameOverrides']"
@@ -32,11 +32,11 @@
 		/>
 
 		<OverridePanel
-			:title="$t(&quot;Player Name Overrides&quot;)"
-			:description="$t(&quot;Replace the name shown for an individual player.&quot;)"
+			:title="$t('Player Name Overrides')"
+			:description="$t('Replace the name shown for an individual player.')"
 			value-key="teams.playerNameOverrides"
 			type="player"
-			:value-placeholder="$t(&quot;Display name&quot;)"
+			:value-placeholder="$t('Display name')"
 			:rows="rows['teams.playerNameOverrides']"
 			:draft="drafts['teams.playerNameOverrides']"
 			@add="addRow('teams.playerNameOverrides')"
@@ -45,11 +45,11 @@
 		/>
 
 		<OverridePanel
-			:title="$t(&quot;Player Subtitles&quot;)"
-			:description="$t(&quot;Show a short line under a player name, such as a real name or role.&quot;)"
+			:title="$t('Player Subtitles')"
+			:description="$t('Show a short line under a player name, such as a real name or role.')"
 			value-key="teams.playerSubtitleOverrides"
 			type="player"
-			:value-placeholder="$t(&quot;Subtitle, real name, or role&quot;)"
+			:value-placeholder="$t('Subtitle, real name, or role')"
 			:rows="rows['teams.playerSubtitleOverrides']"
 			:draft="drafts['teams.playerSubtitleOverrides']"
 			@add="addRow('teams.playerSubtitleOverrides')"
@@ -58,8 +58,8 @@
 		/>
 
 		<OverridePanel
-			:title="$t(&quot;Hidden Players&quot;)"
-			:description="$t(&quot;Hide coaches, observers, or unwanted entries by exact player name or SteamID64.&quot;)"
+			:title="$t('Hidden Players')"
+			:description="$t('Hide coaches, observers, or unwanted entries by exact player name or SteamID64.')"
 			value-key="teams.hiddenPlayers"
 			type="hidden"
 			:rows="rows['teams.hiddenPlayers']"
@@ -104,11 +104,11 @@ const OverridePanel = {
 			<div v-if="rows.length" class="override-list">
 				<div v-for="(row, index) in rows" :key="index" class="override-row">
 					<template v-if="type === 'team'">
-						<input v-model="row.steamIds" type="text" :placeholder="$t(&quot;SteamID64 values, separated by spaces or commas&quot;)">
-						<input v-model="row.name" type="text" :placeholder="$t(&quot;Team name&quot;)">
+						<input v-model="row.steamIds" type="text" :placeholder="$t('SteamID64 values, separated by spaces or commas')">
+						<input v-model="row.name" type="text" :placeholder="$t('Team name')">
 					</template>
 					<template v-else-if="type === 'hidden'">
-						<input class="wide" v-model="row.value" type="text" :placeholder="$t(&quot;Exact player name or SteamID64&quot;)">
+						<input class="wide" v-model="row.value" type="text" :placeholder="$t('Exact player name or SteamID64')">
 					</template>
 					<template v-else>
 						<input v-model="row.steamId" type="text" placeholder="SteamID64">
@@ -122,11 +122,11 @@ const OverridePanel = {
 
 			<div class="override-row --draft">
 				<template v-if="type === 'team'">
-					<input v-model="draft.steamIds" type="text" :placeholder="$t(&quot;SteamID64 values&quot;)">
-					<input v-model="draft.name" type="text" :placeholder="$t(&quot;Team name&quot;)">
+					<input v-model="draft.steamIds" type="text" :placeholder="$t('SteamID64 values')">
+					<input v-model="draft.name" type="text" :placeholder="$t('Team name')">
 				</template>
 				<template v-else-if="type === 'hidden'">
-					<input class="wide" v-model="draft.value" type="text" :placeholder="$t(&quot;Exact player name or SteamID64&quot;)">
+					<input class="wide" v-model="draft.value" type="text" :placeholder="$t('Exact player name or SteamID64')">
 				</template>
 				<template v-else>
 					<input v-model="draft.steamId" type="text" placeholder="SteamID64">

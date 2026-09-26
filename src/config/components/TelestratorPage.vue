@@ -27,7 +27,7 @@
 			<iframe
 				src="/hud/?transparent"
 				class="eon-tele-hud"
-				:title="$t(&quot;HUD preview&quot;)"
+				:title="$t('HUD preview')"
 				@load="hudLoaded = true"
 			></iframe>
 			<canvas

@@ -20,7 +20,7 @@
 
 				<label>
 					<span>{{ $t("Label") }}</span>
-					<input v-model="state.options[`sponsors.${slot}.title`]" type="text" :placeholder="$t(&quot;Sponsor label&quot;)">
+					<input v-model="state.options[`sponsors.${slot}.title`]" type="text" :placeholder="$t('Sponsor label')">
 				</label>
 
 				<div class="image-list">

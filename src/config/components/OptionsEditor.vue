@@ -104,7 +104,7 @@
 								</button>
 							</div>
 							<div class="image-input-row">
-								<input v-model="state.options['theme.typography.primaryFont']" type="text" :placeholder="$t(&quot;Custom Font Name&quot;)" @change="saveOption('theme.typography.primaryFont')">
+								<input v-model="state.options['theme.typography.primaryFont']" type="text" :placeholder="$t('Custom Font Name')" @change="saveOption('theme.typography.primaryFont')">
 								<button class="btn-secondary" @click="triggerUpload('theme.typography.customFontUrl')">{{ $t("Upload font") }}</button>
 								<input ref="upload-theme.typography.customFontUrl" type="file" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,font/ttf,font/otf" class="hidden-file" @change="onFontSelected">
 							</div>
@@ -167,7 +167,7 @@
 				</header>
 
 				<div v-if="state.showAdvancedSettings" class="advanced-area">
-					<input v-model="searchQuery" class="search-input" type="text" :placeholder="$t(&quot;Search advanced settings...&quot;)">
+					<input v-model="searchQuery" class="search-input" type="text" :placeholder="$t('Search advanced settings...')">
 
 					<div class="advanced-list">
 						<div v-for="opt in searchedAdvancedOptions" :key="opt.key" class="advanced-row">

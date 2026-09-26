@@ -82,3 +82,83 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.eon-main {
+	grid-column: 2;
+	grid-row: 3;
+	min-width: 0;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	background: var(--eon-bg);
+}
+
+.eon-main::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.eon-main::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.eon-main::-webkit-scrollbar-thumb {
+	background: var(--eon-bd);
+	border-radius: 3px;
+}
+
+.eon-main::-webkit-scrollbar-thumb:hover {
+	background: var(--eon-bd2);
+}
+
+.eon-main-inner {
+	min-height: 100%;
+	padding: var(--eon-pg-pad-y) var(--eon-pg-pad-x);
+	box-sizing: border-box;
+}
+
+.eon-missing {
+	padding: 32px;
+	text-align: center;
+	color: var(--eon-tx3);
+	font-family: var(--eon-font-mono);
+}
+
+.eon-caster-alerts {
+	position: fixed;
+	bottom: 24px;
+	right: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	z-index: 1000;
+	pointer-events: none;
+}
+
+.eon-alert {
+	padding: 10px 16px;
+	border-radius: var(--eon-rad-btn);
+	font-size: var(--eon-fs-body);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+	pointer-events: auto;
+}
+
+.eon-alert.--info {
+	background: var(--eon-s3);
+	border: 1px solid var(--eon-bd);
+	color: var(--eon-tx);
+}
+
+.eon-alert.--warn {
+	background: var(--eon-ambd);
+	border: 1px solid var(--eon-amb);
+	color: var(--eon-amb);
+}
+
+.eon-alert.--error {
+	background: var(--eon-redd);
+	border: 1px solid var(--eon-red);
+	color: var(--eon-red);
+}
+</style>
