@@ -1,4 +1,6 @@
-const { createApp } = window.Vue
+import * as Vue from '/dependencies/vue.js'
+
+const { createApp } = Vue
 
 const PRESET_TICKERS = [
 	{ label: '⏸️ Тех. пауза', text: '⏸️ ТЕХНИЧЕСКАЯ ПАУЗА / TECHNICAL TIMEOUT' },
