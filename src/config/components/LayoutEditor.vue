@@ -1507,7 +1507,8 @@ export default {
 	border-color: rgba(52, 152, 219, 0.45);
 }
 
-.hud-el.--hidden { opacity: 0.15; pointer-events: none; }
+.hud-el.--hidden { opacity: 0.35; }
+.hud-el.--hidden:hover, .hud-el.--hidden.--active { opacity: 0.95; }
 
 .hud-el.--active { 
 	border-color: #3498db; 
