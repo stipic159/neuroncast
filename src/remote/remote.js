@@ -3,11 +3,14 @@ import * as Vue from '/dependencies/vue.js'
 const { createApp } = Vue
 
 const PRESET_TICKERS = [
-	{ label: '⏸️ Тех. пауза', text: '⏸️ ТЕХНИЧЕСКАЯ ПАУЗА / TECHNICAL TIMEOUT' },
-	{ label: '☕ Перерыв', text: '☕ ТАКТИЧЕСКИЙ ПЕРЕРЫВ' },
-	{ label: '🔥 Матч-поинт', text: '🔥 MATCH POINT / РЕШАЮЩИЙ РАУНД' },
-	{ label: '🗺️ Смена карты', text: '🗺️ СЛЕДУЮЩАЯ КАРТА: ' },
-	{ label: '📢 Стрим', text: '📢 Подписывайтесь на канал и ставьте лайки!' },
+	{ label: '💜 Follow Twitch', text: '💜 ЖМИ FOLLOW НА КАНАЛ! СПАСИБО ЗА ПОДДЕРЖКУ!' },
+	{ label: '💬 Команды чата', text: '💬 КОМАНДЫ В ЧАТЕ: !score !bracket !rules' },
+	{ label: '📢 Telegram & Discord', text: '📢 СЕТКА И АНОНСЫ В НАШЕМ TELEGRAM & DISCORD' },
+	{ label: '🎙️ Кастер на связи', text: '🎙️ НА МИКРОФОНЕ ВАШ КОММЕНТАТОР · ПРИЯТНОГО ПРОСМОТРА!' },
+	{ label: '🎁 Розыгрыш в чате', text: '🎁 РОЗЫГРЫШ СКИНОВ СРЕДИ ЗРИТЕЛЕЙ В ЧАТЕ TWITCH!' },
+	{ label: '⚔️ Формат BO3', text: '⚔️ МАТЧ СЕРИИ BEST OF 3 · ИГРА НА ВЫЛЕТ' },
+	{ label: '☕ Перерыв 5 мин', text: '☕ ПЕРЕРЫВ МЕЖДУ КАРТАМИ · СКОРО ПРОДОЛЖИМ!' },
+	{ label: '🚨 Тех. пауза', text: '🚨 ТЕХНИЧЕСКАЯ ЗАДЕРЖКА НА СЕРВЕРЕ · СКОРО ВЕРНЁМСЯ!' },
 ]
 
 const RemoteApp = {
@@ -162,20 +165,32 @@ const RemoteApp = {
 						:class="['btn-tap', { '--active': promotionActive }]"
 						@click="togglePromotion"
 					>
-						📣 {{ promotionActive ? 'Hide Promo' : 'Show Promo' }}
+						📢 {{ promotionActive ? 'Hide Promo' : 'Show Promo' }}
 					</button>
 				</div>
 			</section>
 
-			<!-- Lower Third Ticker & Quick Presets -->
+			<!-- Lower Third Ticker & Twitch Presets -->
 			<section class="remote-section">
 				<div class="section-title">
-					<span>Lower Third Ticker</span>
-					<span v-if="activeTicker" style="font-size: 0.7rem; color: #2ecc71;">LIVE ON-AIR</span>
+					<span>💬 Текст на экран (Twitch / Lower Third)</span>
+					<span v-if="activeTicker" class="badge-live-ticker">● В ЭФИРЕ</span>
 				</div>
 				
-				<!-- Quick Preset Chips -->
-				<div class="presets-scroll">
+				<!-- Live on-air active display & 1-tap clear button -->
+				<div v-if="activeTicker" class="ticker-live-status">
+					<div class="status-top">
+						<span class="live-dot"></span>
+						<span class="live-label">СЕЙЧАС В ЭФИРЕ:</span>
+					</div>
+					<div class="live-text">{{ activeTicker }}</div>
+					<button class="btn-clear-large" @click="clearTicker">
+						🗑️ Снять с эфира / Очистить
+					</button>
+				</div>
+
+				<!-- Quick Twitch Preset Chips Grid -->
+				<div class="presets-grid">
 					<button 
 						v-for="(p, i) in presets" 
 						:key="i" 
@@ -192,11 +207,11 @@ const RemoteApp = {
 						type="text" 
 						class="ticker-input" 
 						v-model="tickerText" 
-						placeholder="Текст плашки на экране стрима..."
+						placeholder="Свой текст на экран стрима..."
 						@keyup.enter="sendTicker"
 					/>
-					<button class="btn-send" @click="sendTicker">SEND</button>
-					<button v-if="activeTicker" class="btn-clear-ticker" @click="clearTicker">CLEAR</button>
+					<button class="btn-send" @click="sendTicker">🚀 В ЭФИР</button>
+					<button v-if="activeTicker || tickerText" class="btn-clear-ticker" @click="clearTicker">🗑️</button>
 				</div>
 			</section>
 		</div>
@@ -254,17 +269,18 @@ const RemoteApp = {
 			return this.gsi?.map?.team_t?.score ?? 0
 		},
 		isBombActive() {
-			const b = this.gsi?.bomb?.state
-			return b === 'planted' || b === 'defusing'
+			const phase = this.gsi?.round?.bomb
+			return phase === 'planted' || phase === 'defusing'
 		},
 		phaseBadgeText() {
-			if (this.gsi?.bomb?.state === 'defusing') return 'DEFUSING ⏳'
-			if (this.gsi?.bomb?.state === 'planted') return 'BOMB PLANTED 💣'
-			const p = this.gsi?.round?.phase
-			if (p === 'freezetime') return 'FREEZETIME'
-			if (p === 'over') return 'ROUND OVER'
-			if (p === 'live') return 'LIVE'
-			return 'WARMUP'
+			const phase = this.gsi?.round?.phase
+			const bomb = this.gsi?.round?.bomb
+			if (bomb === 'defusing') return 'DEFUSING'
+			if (bomb === 'planted') return 'BOMB PLANTED'
+			if (phase === 'freezetime') return 'FREEZETIME'
+			if (phase === 'live') return 'LIVE'
+			if (phase === 'over') return 'ROUND OVER'
+			return 'MATCH READY'
 		},
 	},
 	mounted() {
@@ -412,27 +428,27 @@ const RemoteApp = {
 
 		applyPreset(preset) {
 			this.vibrate(35)
-			let text = preset.text
-			if (preset.label.includes('Смена карты') && this.matchMapName) {
-				text = `🗺️ СЛЕДУЮЩАЯ КАРТА: ${this.matchMapName}`
-			}
-			this.tickerText = text
+			this.tickerText = preset.text
 			this.sendTicker()
 		},
 
 		sendTicker() {
 			if (!this.tickerText) return
 			this.vibrate(45)
+			this.options['branding.ticker'] = this.tickerText
 			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: this.tickerText } }))
 			}
 		},
 
 		clearTicker() {
-			this.vibrate(30)
+			this.vibrate([30, 40])
 			this.tickerText = ''
+			this.options['branding.ticker'] = ''
+			this.options['promotion.visible'] = false
 			if (this.socket && this.socket.readyState === WebSocket.OPEN) {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: '' } }))
+				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'promotion.visible', value: false } }))
 			}
 		},
 	},
