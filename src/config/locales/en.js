@@ -833,5 +833,12 @@ export default {
   "Save Error: {error}": "Save Error: {error}",
   "Delete Error: {error}": "Delete Error: {error}",
   "Apply Error: {error}": "Apply Error: {error}",
-  "Import Error: {error}": "Import Error: {error}"
-}
+  "Import Error: {error}": "Import Error: {error}",
+  "Match Platforms Hub": "Match Platforms Hub",
+  "Select external tournament or matchmaking providers to sync rosters, match metadata, and bracket statistics.": "Select external tournament or matchmaking providers to sync rosters, match metadata, and bracket statistics.",
+  "Manual / Standalone": "Manual / Standalone",
+  "Connect to fastcup.net matches to pull team rosters, player avatars, and veto stages directly into HUD.": "Connect to fastcup.net matches to pull team rosters, player avatars, and veto stages directly into HUD.",
+  "Standalone Tournament Operation": "Standalone Tournament Operation",
+  "No external platform sync active. Team names, logos, rosters, and match format are configured manually in Setup > Teams & Players and Series & Maps.": "No external platform sync active. Team names, logos, rosters, and match format are configured manually in Setup > Teams & Players and Series & Maps.",
+  "Match Platforms": "Match Platforms",
+};

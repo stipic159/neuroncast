@@ -75,52 +75,6 @@
 				</div>
 			</div>
 
-			<div class="card">
-				<div class="card-header">
-					<h2>{{ $t("Komplettligaen Match") }}</h2>
-				</div>
-				<div class="override-group">
-					<label>{{ $t("GG Arena Match ID") }}</label>
-					<input v-model="komplettligaen.matchId" class="text-input" placeholder="256437">
-				</div>
-				<div class="button-row" style="margin-top: 12px;">
-					<button class="btn-promo" @click="saveKomplettligaen" :disabled="komplettligaenLoading">{{ $t("Save Match") }}</button>
-					<button class="btn-win --clear" @click="refreshKomplettligaen" :disabled="komplettligaenLoading">{{ $t("Refresh Data") }}</button>
-					<button class="btn-win --clear" @click="testKomplettligaen" :disabled="komplettligaenLoading || !komplettligaen.matchId">{{ $t("Test") }}</button>
-				</div>
-				<div class="kl-status" :class="{ '--error': komplettligaenError }">{{ $text(komplettligaenStatus) }}</div>
-
-				<!-- Cache Diagnostics (Phase 13) -->
-				<div v-if="cacheStatus" class="cache-diagnostics" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #2d333b; font-size: 0.8rem; color: #8b949e; line-height: 1.4;">
-					<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-						<h3 style="font-size: 0.85rem; font-weight: 600; color: #adbac7; margin: 0; text-transform: uppercase;">{{ $t("Cache Health") }}</h3>
-						<button class="btn-ghost" style="padding: 2px 8px; font-size: 0.75rem;" @click="resetCache" :disabled="komplettligaenLoading">{{ $t("Reset Cache") }}</button>
-					</div>
-					<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-						<span>{{ $t("Local Cache:") }}</span>
-						<strong :style="{ color: cacheStatus.exists ? '#2ecc71' : '#e74c3c' }">{{ $text(cacheStatus.exists ? 'Available' : 'Missing') }}</strong>
-					</div>
-					<div v-if="cacheStatus.exists">
-						<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-							<span>{{ $t("Last Updated:") }}</span>
-							<strong>{{ formatTime(cacheStatus.savedAt) }}</strong>
-						</div>
-						<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-							<span>{{ $t("Source Endpoint:") }}</span>
-							<strong style="font-family: monospace;">{{ cacheStatus.source }}</strong>
-						</div>
-						<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-							<span>{{ $t("Stale Status:") }}</span>
-							<strong :style="{ color: cacheStatus.stale ? '#e67e22' : '#2ecc71' }">{{ $text(cacheStatus.stale ? 'Stale (' + cacheStatus.ageMinutes + ' min)' : 'Fresh') }}</strong>
-						</div>
-					</div>
-					<div v-if="cacheStatus.fetchFailureReason" style="margin-top: 8px; color: #e74c3c;">
-						<span>{{ $t("Last Failure Reason:") }}</span>
-						<div style="background: rgba(231, 76, 60, 0.1); border: 1px solid rgba(231, 76, 60, 0.2); padding: 6px; border-radius: 4px; margin-top: 4px; font-family: monospace; white-space: pre-wrap; font-size: 0.75rem;">{{ $text(cacheStatus.fetchFailureReason) }}</div>
-					</div>
-				</div>
-			</div>
-
 			<!-- Manual Overrides -->
 			<div class="card">
 				<div class="card-header">

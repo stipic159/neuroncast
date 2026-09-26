@@ -23,6 +23,7 @@ export const NAV_GROUPS = [
 		id: 'setup',
 		labelKey: 'Setup',
 		items: [
+			{ id: 'platforms',     labelKey: 'Match Platforms', icon: 'platforms', componentKey: 'PlatformsPage' },
 			{ id: 'series-maps',   labelKey: 'Series & Maps',   icon: 'series',   componentKey: 'SeriesEditor' },
 			{ id: 'match-rules',   labelKey: 'Match Rules',     icon: 'rules',    componentKey: 'MatchRulesEditor' },
 			{ id: 'teams-players', labelKey: 'Teams & Players', icon: 'teams',    componentKey: 'TeamsEditor' },
@@ -83,13 +84,14 @@ export const migrateLegacyCategory = (raw) => {
 /*
  * SVG path data per icon name. Stroke-based; renders inside the standard
  * 24x24 viewBox at 2px stroke. Existing icon vocabulary preserved; new
- * icons added for the new pages (telestrator, theme, diagnostics).
+ * icons added for the new pages (telestrator, theme, diagnostics, platforms).
  */
 export const ICON_PATHS = {
 	live:        ['M6 12h12', 'M12 6v12', 'M8.5 8.5h7v7h-7z'],
 	director:    ['M4 8h12v10H4z', 'M16 11l5-3v8l-5-3', 'M4 5l3 3', 'M9 4l3 4'],
 	telestrator: ['M4 4h16v12H4z', 'M4 20h16', 'M9 9l4 4', 'M13 9l-4 4'],
 	layout:      ['M4 5h16v14H4z', 'M4 10h16', 'M10 10v9'],
+	platforms:   ['M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z', 'M9 12h6', 'M12 9v6'],
 	series:      ['M7 5h10', 'M7 12h10', 'M7 19h10', 'M4 5h.01', 'M4 12h.01', 'M4 19h.01'],
 	rules:       ['M7 4h10l3 3v13H7z', 'M17 4v4h4', 'M10 12h7', 'M10 16h5'],
 	teams:       ['M8 11a4 4 0 1 1 8 0', 'M3 20a7 7 0 0 1 14 0', 'M18 14a5 5 0 0 1 3 5'],
