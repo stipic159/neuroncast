@@ -15,6 +15,7 @@ import { registerGsiRoutes } from './gsi.js'
 import { registerDiagnosticsRoutes } from './diagnostics.js'
 import { registerHudRoutes, concatStaticFileFromThemeTreeRecursively } from './hud.js'
 import { registerKomplettligaenRoutes } from './komplettligaen.js'
+import { registerFastcupRoutes, startFastcupPolling } from './fastcup.js'
 import { registerLicensesRoutes } from './licenses.js'
 import { registerRadarRoutes } from './radar.js'
 import { registerVersionRoutes } from './version.js'
@@ -108,11 +109,13 @@ const run = async () => {
 	registerGsiRoutes(router, websocket)
 	registerHudRoutes(router)
 	registerKomplettligaenRoutes(router, websocket)
+	registerFastcupRoutes(router, websocket)
 	registerLicensesRoutes(router)
 	registerRadarRoutes(router)
 	registerVersionRoutes(router)
 	registerSessionRoutes(router)
 	registerObsRoutes(router, websocket)
+	startFastcupPolling(websocket)
 
 	app.use(router.routes())
 	app.use(router.allowedMethods())
