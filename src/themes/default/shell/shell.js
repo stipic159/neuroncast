@@ -141,6 +141,62 @@ export default {
 			return `BO${match.bestOf || 3}`
 		},
 
+		gsiCtTeam() {
+			return {
+				name: this.resolvedTeamIdentities?.CT?.final?.name || this.$map?.team_ct?.name || 'Counter-Terrorists',
+				score: this.$map?.team_ct?.score ?? 0,
+				logo: this.resolvedTeamIdentities?.CT?.final?.logo || getTeamLogoPath(this.$map?.team_ct?.name),
+			}
+		},
+
+		gsiTTeam() {
+			return {
+				name: this.resolvedTeamIdentities?.T?.final?.name || this.$map?.team_t?.name || 'Terrorists',
+				score: this.$map?.team_t?.score ?? 0,
+				logo: this.resolvedTeamIdentities?.T?.final?.logo || getTeamLogoPath(this.$map?.team_t?.name),
+			}
+		},
+
+		gsiCtPlayers() {
+			return (this.$players || [])
+				.filter((p) => p.side === 3 || p.team === 'CT')
+				.map((p) => ({
+					...p,
+					displayName: this.getPlayerName(p),
+					kd: this.calculateKD(p.kills, p.deaths),
+				}))
+				.sort((a, b) => (b.kills - a.kills) || (a.deaths - b.deaths))
+		},
+
+		gsiTPlayers() {
+			return (this.$players || [])
+				.filter((p) => p.side === 2 || p.team === 'T')
+				.map((p) => ({
+					...p,
+					displayName: this.getPlayerName(p),
+					kd: this.calculateKD(p.kills, p.deaths),
+				}))
+				.sort((a, b) => (b.kills - a.kills) || (a.deaths - b.deaths))
+		},
+
+		gsiMatchWinner() {
+			const forced = this.$opts?.['preferences.celebration.forceWinner']
+			if (forced === 'team2') return 'CT'
+			if (forced === 'team1') return 'T'
+			const ct = this.gsiCtTeam.score
+			const t = this.gsiTTeam.score
+			if (ct >= 13 && (ct - t) >= 2) return 'CT'
+			if (t >= 13 && (t - ct) >= 2) return 'T'
+			if (this.$round?.winningSide) return this.$round.winningSide
+			return null
+		},
+
+		gsiWinnerName() {
+			if (this.gsiMatchWinner === 'CT') return this.gsiCtTeam.name
+			if (this.gsiMatchWinner === 'T') return this.gsiTTeam.name
+			return 'MATCH IN PROGRESS'
+		},
+
 		hasObserverData() {
 			return this.$players?.length > 0
 		},

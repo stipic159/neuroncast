@@ -13,6 +13,26 @@ const PRESET_TICKERS = [
 	{ label: '🚨 Тех. пауза', text: '🚨 ТЕХНИЧЕСКАЯ ЗАДЕРЖКА НА СЕРВЕРЕ · СКОРО ВЕРНЁМСЯ!' },
 ]
 
+const WEAPON_MAP = {
+	weapon_ak47: 'AK-47',
+	weapon_m4a1: 'M4A4',
+	weapon_m4a1_silencer: 'M4A1-S',
+	weapon_awp: 'AWP',
+	weapon_deagle: 'Deagle',
+	weapon_usp_silencer: 'USP-S',
+	weapon_glock: 'Glock',
+	weapon_mp9: 'MP9',
+	weapon_mac10: 'MAC-10',
+	weapon_galilar: 'Galil AR',
+	weapon_famas: 'FAMAS',
+	weapon_ssg08: 'Scout (SSG)',
+	weapon_sg556: 'SG 553',
+	weapon_aug: 'AUG',
+	weapon_knife: 'Нож',
+	weapon_c4: '💣 C4 Bomb',
+	weapon_taser: 'Zeus x27',
+}
+
 const RemoteApp = {
 	template: `
 		<div class="remote-app">
@@ -33,7 +53,7 @@ const RemoteApp = {
 				</div>
 			</header>
 
-			<!-- Live Match Telemetry Widget -->
+			<!-- Live Match Telemetry Widget (Real-time synced) -->
 			<section class="match-widget">
 				<div class="match-widget-header">
 					<span>{{ matchMapName }} · {{ matchRoundText }}</span>
@@ -54,170 +74,306 @@ const RemoteApp = {
 				</div>
 			</section>
 
-			<!-- Hero Controls: Cough / Mute & Replay Buffer -->
-			<section class="hero-controls">
+			<!-- Mobile Tabs Navigation -->
+			<nav class="remote-tabs">
 				<button 
-					:class="['btn-hero', obs.micMuted ? '--mic-muted' : '--mic-live']"
-					@click="toggleCasterMic"
+					:class="['tab-nav-btn', { '--active': activeTab === 'broadcast' }]"
+					@click="switchTab('broadcast')"
 				>
-					<span class="icon">{{ obs.micMuted ? '🔇' : '🎙️' }}</span>
-					<span>{{ obs.micMuted ? 'MIC MUTED (COUGH)' : 'MIC LIVE' }}</span>
+					📺 ЭФИР & СЦЕНЫ
 				</button>
-
 				<button 
-					:class="['btn-hero', replaySaved ? '--replay-saved' : '--replay']"
-					@click="saveReplay"
+					:class="['tab-nav-btn', { '--active': activeTab === 'observer' }]"
+					@click="switchTab('observer')"
 				>
-					<span class="icon">{{ replaySaved ? '✅' : '📼' }}</span>
-					<span>{{ replaySaved ? 'REPLAY SAVED!' : 'SAVE REPLAY' }}</span>
+					👥 ОБСЕРВЕР (1-0)
+					<span v-if="aliveCountText" class="tab-badge-alive">{{ aliveCountText }}</span>
 				</button>
-			</section>
+				<button 
+					:class="['tab-nav-btn', { '--active': activeTab === 'radar' }]"
+					@click="switchTab('radar')"
+				>
+					🗺️ РАДАР
+				</button>
+			</nav>
 
-			<!-- Quick OBS Switcher (if Intermission/Caster scene is configured) -->
-			<section v-if="obs.intermissionSceneName" class="remote-section">
-				<div class="section-title">
-					<span>OBS Scene Switch</span>
-					<span style="font-size: 0.7rem; color: #58a6ff;">{{ obs.currentScene || 'Active' }}</span>
-				</div>
-				<div class="button-grid-2">
+			<!-- TAB 1: BROADCAST & SCENES -->
+			<div v-show="activeTab === 'broadcast'" class="tab-content">
+				<!-- Hero Controls: Cough / Mute & Replay Buffer -->
+				<section class="hero-controls">
 					<button 
-						:class="['btn-tap', { '--active': obs.currentScene === obs.mainSceneName }]"
-						@click="switchObsScene('main')"
+						:class="['btn-hero', obs.micMuted ? '--mic-muted' : '--mic-live']"
+						@click="toggleCasterMic"
 					>
-						🎮 Main Game
+						<span class="icon">{{ obs.micMuted ? '🔇' : '🎙️' }}</span>
+						<span>{{ obs.micMuted ? 'MIC MUTED (COUGH)' : 'MIC LIVE' }}</span>
 					</button>
-					<button 
-						:class="['btn-tap', { '--active': obs.currentScene === obs.intermissionSceneName }]"
-						@click="switchObsScene('intermission')"
-					>
-						🎙️ Caster Cam
-					</button>
-				</div>
-			</section>
 
-			<!-- HUD Overlay Scenes (Automated engine) -->
-			<section class="remote-section">
-				<div class="section-title">
-					<span>HUD Overlay Display</span>
-					<span style="font-size: 0.7rem; color: #58a6ff;">{{ currentHudScene }}</span>
-				</div>
-				<div class="button-grid-3">
 					<button 
-						:class="['btn-tap', { '--active': currentHudScene === 'default' }]"
-						@click="setHudScene('default')"
+						:class="['btn-hero', replaySaved ? '--replay-saved' : '--replay']"
+						@click="saveReplay"
 					>
-						📊 Live HUD
+						<span class="icon">{{ replaySaved ? '✅' : '📼' }}</span>
+						<span>{{ replaySaved ? 'REPLAY SAVED!' : 'SAVE REPLAY' }}</span>
 					</button>
-					<button 
-						:class="['btn-tap', { '--active': currentHudScene === 'radar' }]"
-						@click="setHudScene('radar')"
-					>
-						🗺️ Radar
-					</button>
-					<button 
-						:class="['btn-tap', { '--active': currentHudScene === 'intro' }]"
-						@click="setHudScene('intro')"
-					>
-						📋 Match Info
-					</button>
-				</div>
-				<div class="button-grid-2">
-					<button 
-						:class="['btn-tap', { '--active': currentHudScene === 'halftime' }]"
-						@click="setHudScene('halftime')"
-					>
-						⏸️ Break / Half
-					</button>
-					<button 
-						:class="['btn-tap', { '--active': currentHudScene === 'fulltime' }]"
-						@click="setHudScene('fulltime')"
-					>
-						🏆 Post-Match
-					</button>
-				</div>
-			</section>
+				</section>
 
-			<!-- Quick Win Celebration & Overrides -->
-			<section class="remote-section">
-				<div class="section-title">
-					<span>Round Overrides</span>
+				<!-- Replay Buffer Status Notice -->
+				<div v-if="obs.connected && !obs.replayBufferActive" class="replay-warning-card">
+					💡 <b>Replay Buffer в OBS не запущен.</b> Включите буфер повтора в OBS («Настройки -> Вывод -> Буфер повтора»), чтобы сохранять клипы.
 				</div>
-				<div class="button-grid-2">
-					<button 
-						:class="['btn-tap --team-ct', { '--active': celebrationWinner === 'team2' }]"
-						@click="setWinner('team2')"
-					>
-						🛡️ CT Round Won
-					</button>
-					<button 
-						:class="['btn-tap --team-t', { '--active': celebrationWinner === 'team1' }]"
-						@click="setWinner('team1')"
-					>
-						💣 T Round Won
-					</button>
-					<button 
-						:class="['btn-tap', { '--active': celebrationWinner === 'none' }]"
-						@click="setWinner('none')"
-					>
-						⚙️ Auto Win
-					</button>
-					<button 
-						:class="['btn-tap', { '--active': promotionActive }]"
-						@click="togglePromotion"
-					>
-						📢 {{ promotionActive ? 'Hide Promo' : 'Show Promo' }}
-					</button>
-				</div>
-			</section>
 
-			<!-- Lower Third Ticker & Twitch Presets -->
-			<section class="remote-section">
-				<div class="section-title">
-					<span>💬 Текст на экран (Twitch / Lower Third)</span>
-					<span v-if="activeTicker" class="badge-live-ticker">● В ЭФИРЕ</span>
-				</div>
-				
-				<!-- Live on-air active display & 1-tap clear button -->
-				<div v-if="activeTicker" class="ticker-live-status">
-					<div class="status-top">
-						<span class="live-dot"></span>
-						<span class="live-label">СЕЙЧАС В ЭФИРЕ:</span>
+				<!-- Quick OBS Switcher -->
+				<section v-if="obs.intermissionSceneName" class="remote-section">
+					<div class="section-title">
+						<span>OBS Scene Switch</span>
+						<span style="font-size: 0.7rem; color: #58a6ff;">{{ obs.currentScene || 'Active' }}</span>
 					</div>
-					<div class="live-text">{{ activeTicker }}</div>
-					<button class="btn-clear-large" @click="clearTicker">
-						🗑️ Снять с эфира / Очистить
-					</button>
+					<div class="button-grid-2">
+						<button 
+							:class="['btn-tap', { '--active': obs.currentScene === obs.mainSceneName }] Ancients"
+							@click="switchObsScene('main')"
+						>
+							🎮 Main Game
+						</button>
+						<button 
+							:class="['btn-tap', { '--active': obs.currentScene === obs.intermissionSceneName }]"
+							@click="switchObsScene('intermission')"
+						>
+							🎙️ Caster Cam
+						</button>
+					</div>
+				</section>
+
+				<!-- HUD Overlay Scenes (Automated engine) -->
+				<section class="remote-section">
+					<div class="section-title">
+						<span>HUD Overlay Display</span>
+						<span style="font-size: 0.7rem; color: #58a6ff;">{{ currentHudScene }}</span>
+					</div>
+					<div class="button-grid-3">
+						<button 
+							:class="['btn-tap', { '--active': currentHudScene === 'default' }]"
+							@click="setHudScene('default')"
+						>
+							📊 Live HUD
+						</button>
+						<button 
+							:class="['btn-tap', { '--active': currentHudScene === 'radar' }]"
+							@click="setHudScene('radar')"
+						>
+							🗺️ Radar
+						</button>
+						<button 
+							:class="['btn-tap', { '--active': currentHudScene === 'intro' }]"
+							@click="setHudScene('intro')"
+						>
+							📋 Match Info
+						</button>
+					</div>
+					<div class="button-grid-2">
+						<button 
+							:class="['btn-tap', { '--active': currentHudScene === 'halftime' }]"
+							@click="setHudScene('halftime')"
+						>
+							⏸️ Break / Half
+						</button>
+						<button 
+							:class="['btn-tap', { '--active': currentHudScene === 'fulltime' }]"
+							@click="setHudScene('fulltime')"
+						>
+							🏆 Post-Match
+						</button>
+					</div>
+				</section>
+
+				<!-- Quick Win Celebration & Overrides -->
+				<section class="remote-section">
+					<div class="section-title">
+						<span>Round Overrides</span>
+					</div>
+					<div class="button-grid-2">
+						<button 
+							:class="['btn-tap --team-ct', { '--active': celebrationWinner === 'team2' }]"
+							@click="setWinner('team2')"
+						>
+							🛡️ CT Round Won
+						</button>
+						<button 
+							:class="['btn-tap --team-t', { '--active': celebrationWinner === 'team1' }]"
+							@click="setWinner('team1')"
+						>
+							💣 T Round Won
+						</button>
+						<button 
+							:class="['btn-tap', { '--active': celebrationWinner === 'none' }]"
+							@click="setWinner('none')"
+						>
+							⚙️ Auto Win
+						</button>
+						<button 
+							:class="['btn-tap', { '--active': promotionActive }]"
+							@click="togglePromotion"
+						>
+							📢 {{ promotionActive ? 'Hide Promo' : 'Show Promo' }}
+						</button>
+					</div>
+				</section>
+
+				<!-- Lower Third Ticker & Twitch Presets -->
+				<section class="remote-section">
+					<div class="section-title">
+						<span>💬 Текст на экран (Twitch / Lower Third)</span>
+						<span v-if="activeTicker" class="badge-live-ticker">● В ЭФИРЕ</span>
+					</div>
+					
+					<!-- Live on-air active display & 1-tap clear button -->
+					<div v-if="activeTicker" class="ticker-live-status">
+						<div class="status-top">
+							<span class="live-dot"></span>
+							<span class="live-label">СЕЙЧАС В ЭФИРЕ:</span>
+						</div>
+						<div class="live-text">{{ activeTicker }}</div>
+						<button class="btn-clear-large" @click="clearTicker">
+							🗑️ Снять с эфира / Очистить
+						</button>
+					</div>
+
+					<!-- Quick Twitch Preset Chips Grid -->
+					<div class="presets-grid">
+						<button 
+							v-for="(p, i) in presets" 
+							:key="i" 
+							class="chip-btn"
+							@click="applyPreset(p)"
+						>
+							{{ p.label }}
+						</button>
+					</div>
+
+					<!-- Custom input row -->
+					<div class="ticker-box">
+						<input 
+							type="text" 
+							class="ticker-input" 
+							v-model="tickerText" 
+							placeholder="Свой текст на экран стрима..."
+							@keyup.enter="sendTicker"
+						/>
+						<button class="btn-send" @click="sendTicker">🚀 В ЭФИР</button>
+						<button v-if="activeTicker || tickerText" class="btn-clear-ticker" @click="clearTicker">🗑️</button>
+					</div>
+				</section>
+			</div>
+
+			<!-- TAB 2: OBSERVER & PLAYERS VIEW (1-0 SLOTS) -->
+			<div v-show="activeTab === 'observer'" class="tab-content observer-tab">
+				<div class="observer-hint">
+					💡 <b>Клавиши переключения:</b> Нажимайте соответствующую цифру <b>1..0</b> на клавиатуре в CS2.
 				</div>
 
-				<!-- Quick Twitch Preset Chips Grid -->
-				<div class="presets-grid">
-					<button 
-						v-for="(p, i) in presets" 
-						:key="i" 
-						class="chip-btn"
-						@click="applyPreset(p)"
-					>
-						{{ p.label }}
-					</button>
-				</div>
+				<div class="teams-container">
+					<!-- CT Team Column -->
+					<div class="observer-team-column --ct">
+						<div class="team-header-bar --ct">
+							<span class="team-title-text">{{ ctTeamName }} (CT)</span>
+							<span class="team-score-badge">{{ ctScore }}</span>
+						</div>
 
-				<!-- Custom input row -->
-				<div class="ticker-box">
-					<input 
-						type="text" 
-						class="ticker-input" 
-						v-model="tickerText" 
-						placeholder="Свой текст на экран стрима..."
-						@keyup.enter="sendTicker"
-					/>
-					<button class="btn-send" @click="sendTicker">🚀 В ЭФИР</button>
-					<button v-if="activeTicker || tickerText" class="btn-clear-ticker" @click="clearTicker">🗑️</button>
+						<div v-if="observerPlayers.ct.length === 0" class="no-players">
+							Ожидание игроков за CT...
+						</div>
+
+						<div 
+							v-for="p in observerPlayers.ct" 
+							:key="p.steamid"
+							:class="['player-card', { '--dead': p.isDead, '--spectated': p.isSpectated }]"
+							@click="vibrate(30)"
+						>
+							<div class="slot-badge --ct">
+								{{ p.slot }}
+							</div>
+							<div class="player-info-col">
+								<div class="player-top-row">
+									<span class="player-name-text">{{ p.name }}</span>
+									<span v-if="p.isSpectated" class="spectated-pill">🎥 КАМЕРА</span>
+									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
+									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
+								</div>
+								<!-- HP bar -->
+								<div class="hp-bar-track">
+									<div 
+										class="hp-bar-fill" 
+										:class="getHpClass(p.health)"
+										:style="{ width: p.isDead ? '0%' : p.health + '%' }"
+									></div>
+								</div>
+								<div class="player-bottom-row">
+									<span class="weapon-text">{{ p.activeWeapon || '—' }} <span v-if="p.ammoClip !== null" class="ammo">({{ p.ammoClip }})</span></span>
+									<span v-if="p.defusekit" class="kit-icon" title="Defuse Kit">🛡️ KIT</span>
+									<span class="kda-text">{{ p.kills }}/{{ p.deaths }}/{{ p.assists }}</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- T Team Column -->
+					<div class="observer-team-column --t">
+						<div class="team-header-bar --t">
+							<span class="team-title-text">{{ tTeamName }} (T)</span>
+							<span class="team-score-badge">{{ tScore }}</span>
+						</div>
+
+						<div v-if="observerPlayers.t.length === 0" class="no-players">
+							Ожидание игроков за T...
+						</div>
+
+						<div 
+							v-for="p in observerPlayers.t" 
+							:key="p.steamid"
+							:class="['player-card', { '--dead': p.isDead, '--spectated': p.isSpectated }]"
+							@click="vibrate(30)"
+						>
+							<div class="slot-badge --t">
+								{{ p.slot }}
+							</div>
+							<div class="player-info-col">
+								<div class="player-top-row">
+									<span class="player-name-text">{{ p.name }}</span>
+									<span v-if="p.isSpectated" class="spectated-pill">🎥 КАМЕРА</span>
+									<span v-if="p.isDead" class="dead-pill">💀 DEAD</span>
+									<span v-else class="hp-text" :class="getHpClass(p.health)">{{ p.health }} HP</span>
+								</div>
+								<!-- HP bar -->
+								<div class="hp-bar-track">
+									<div 
+										class="hp-bar-fill" 
+										:class="getHpClass(p.health)"
+										:style="{ width: p.isDead ? '0%' : p.health + '%' }"
+									></div>
+								</div>
+								<div class="player-bottom-row">
+									<span class="weapon-text">{{ p.activeWeapon || '—' }} <span v-if="p.ammoClip !== null" class="ammo">({{ p.ammoClip }})</span></span>
+									<span v-if="p.hasBomb" class="bomb-icon" title="C4 Bomb">💣 C4</span>
+									<span class="kda-text">{{ p.kills }}/{{ p.deaths }}/{{ p.assists }}</span>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
-			</section>
+			</div>
+
+			<!-- TAB 3: RADAR -->
+			<div v-show="activeTab === 'radar'" class="tab-content radar-tab">
+				<div class="radar-card">
+					<iframe src="/radar/" class="radar-iframe"></iframe>
+				</div>
+			</div>
 		</div>
 	`,
 	data() {
 		return {
+			activeTab: 'broadcast',
 			connected: false,
 			socket: null,
 			wakeLock: null,
@@ -230,9 +386,11 @@ const RemoteApp = {
 				micMuted: false,
 				mainSceneName: '',
 				intermissionSceneName: '',
+				replayBufferActive: false,
 			},
 			options: {},
 			gsi: {},
+			additionalState: {},
 		}
 	},
 	computed: {
@@ -282,6 +440,77 @@ const RemoteApp = {
 			if (phase === 'over') return 'ROUND OVER'
 			return 'MATCH READY'
 		},
+		observerPlayers() {
+			const all = this.gsi?.allplayers || {}
+			const spectatedSteamId = this.gsi?.player?.steamid || ''
+			const lastSlots = this.additionalState?.lastKnownPlayerObserverSlot || {}
+
+			const parsed = Object.entries(all).map(([steamid, p], idx) => {
+				let slot = p.observer_slot
+				if (slot === null || slot === undefined) {
+					slot = lastSlots[steamid]
+				}
+				if (slot === undefined || slot === null) {
+					slot = idx + 1
+				}
+
+				// Active weapon resolving
+				let activeWeapon = ''
+				let ammoClip = null
+				let hasBomb = false
+
+				for (const w of Object.values(p.weapons || {})) {
+					if (w.name === 'weapon_c4') hasBomb = true
+					if (w.state === 'active') {
+						activeWeapon = this.formatWeaponName(w.name)
+						ammoClip = w.ammo_clip !== undefined ? w.ammo_clip : null
+					}
+				}
+
+				if (!activeWeapon) {
+					const nonKnife = Object.values(p.weapons || {}).find(w => w.name !== 'weapon_knife' && w.name !== 'weapon_c4')
+					if (nonKnife) {
+						activeWeapon = this.formatWeaponName(nonKnife.name)
+						ammoClip = nonKnife.ammo_clip !== undefined ? nonKnife.ammo_clip : null
+					}
+				}
+
+				return {
+					steamid,
+					name: p.name || 'Player',
+					team: (p.team || 'CT').toUpperCase(),
+					slot: String(slot),
+					health: p.state?.health ?? 0,
+					isDead: (p.state?.health ?? 0) === 0,
+					armor: p.state?.armor ?? 0,
+					helmet: !!p.state?.helmet,
+					defusekit: !!p.state?.defusekit,
+					hasBomb,
+					activeWeapon,
+					ammoClip,
+					kills: p.match_stats?.kills ?? 0,
+					deaths: p.match_stats?.deaths ?? 0,
+					assists: p.match_stats?.assists ?? 0,
+					isSpectated: spectatedSteamId === steamid,
+				}
+			})
+
+			const ct = parsed
+				.filter(p => p.team === 'CT')
+				.sort((a, b) => Number(a.slot) - Number(b.slot))
+
+			const t = parsed
+				.filter(p => p.team === 'T')
+				.sort((a, b) => Number(a.slot) - Number(b.slot))
+
+			return { ct, t, all: parsed }
+		},
+		aliveCountText() {
+			const ctAlive = this.observerPlayers.ct.filter(p => !p.isDead).length
+			const tAlive = this.observerPlayers.t.filter(p => !p.isDead).length
+			if (ctAlive === 0 && tAlive === 0) return ''
+			return `${ctAlive}v${tAlive}`
+		},
 	},
 	mounted() {
 		this.initWakeLock()
@@ -290,6 +519,19 @@ const RemoteApp = {
 		setInterval(() => this.fetchObsStatus(), 3000)
 	},
 	methods: {
+		switchTab(tab) {
+			this.vibrate(25)
+			this.activeTab = tab
+		},
+		formatWeaponName(name) {
+			if (!name) return ''
+			return WEAPON_MAP[name] || name.replace('weapon_', '').toUpperCase()
+		},
+		getHpClass(hp) {
+			if (hp > 50) return '--hp-high'
+			if (hp > 20) return '--hp-mid'
+			return '--hp-low'
+		},
 		// Haptic vibration feedback
 		vibrate(pattern = 40) {
 			if (navigator.vibrate) {
@@ -341,6 +583,11 @@ const RemoteApp = {
 					} else if (data.event === 'state' && data.body) {
 						if (data.body.options) this.options = { ...this.options, ...data.body.options }
 						if (data.body.gsiState) this.gsi = data.body.gsiState
+						if (data.body.additionalState) this.additionalState = data.body.additionalState
+					} else if (data.event === 'gsi_update' && data.body) {
+						// Real-time 20Hz update without needing page reload
+						if (data.body.gsiState) this.gsi = data.body.gsiState
+						if (data.body.additionalState) this.additionalState = data.body.additionalState
 					} else if (data.options) {
 						this.options = { ...this.options, ...data.options }
 					} else if (data.gsiState) {

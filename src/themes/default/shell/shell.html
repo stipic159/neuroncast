@@ -54,7 +54,45 @@
 					</section>
 				</div>
 			</main>
-			<div v-else-if="!komplettligaenMatch" class="kl-empty"><div class="kl-eyebrow">Komplettligaen</div><div class="intro-map">Set a GG Arena match ID in Live Control</div></div>
+
+			<!-- Universal GSI Match Intro Fallback -->
+			<main v-else class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-match-overlay">
+					<section class="kl-match-card">
+					<header class="kl-match-meta">
+						<span>{{ $opts['branding.tournamentName'] || 'CS2 Match' }}</span>
+						<strong>{{ $map.formattedName || $map.name || 'CURRENT MAP' }}</strong>
+					</header>
+
+					<div class="kl-scoreboard">
+						<article class="kl-team home">
+							<img v-if="gsiCtTeam.logo" :src="gsiCtTeam.logo" alt="">
+							<h2>{{ gsiCtTeam.name }}</h2>
+						</article>
+
+						<div class="kl-score">
+							<small>Map Score</small>
+							<div class="kl-series-score">
+								<span>{{ gsiCtTeam.score }}</span>
+								<b>-</b>
+								<span>{{ gsiTTeam.score }}</span>
+							</div>
+							<strong>
+								<span>{{ $map.formattedName || $map.name || 'MAP' }}</span>
+								<span v-if="$map.round !== undefined"> | Round {{ ($map.round || 0) + 1 }}</span>
+							</strong>
+						</div>
+
+						<article class="kl-team away">
+							<img v-if="gsiTTeam.logo" :src="gsiTTeam.logo" alt="">
+							<h2>{{ gsiTTeam.name }}</h2>
+						</article>
+					</div>
+					</section>
+					</section>
+				</div>
+			</main>
 		</div>
 
 		<!-- Scene: Halftime / Over Scoreboard -->
@@ -120,7 +158,69 @@
 					</section>
 					</div>
 			</main>
-			<WaitingIdle v-if="komplettligaenView === 'waiting'" />
+			<!-- GSI Halftime / Break Player Statistics Fallback -->
+			<main v-if="!komplettligaenMatch && komplettligaenView === 'waiting'" class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-waiting-scene">
+					<section class="kl-waiting-match">
+					<header class="kl-match-meta">
+						<span>{{ $opts['branding.tournamentName'] || 'CS2 Match' }} · Break</span>
+						<strong>{{ $map.formattedName || $map.name || 'CURRENT MAP' }}</strong>
+					</header>
+					<div class="kl-waiting-scoreboard">
+						<article class="kl-waiting-team">
+							<img v-if="gsiCtTeam.logo" :src="gsiCtTeam.logo" alt="">
+							<h1>{{ gsiCtTeam.name }}</h1>
+						</article>
+						<div class="kl-waiting-score">
+							<small>Half Score</small>
+							<div class="kl-waiting-series">
+								<span>{{ gsiCtTeam.score }}</span>
+								<b>-</b>
+								<span>{{ gsiTTeam.score }}</span>
+							</div>
+							<strong>HALFTIME BREAK</strong>
+						</div>
+						<article class="kl-waiting-team">
+							<img v-if="gsiTTeam.logo" :src="gsiTTeam.logo" alt="">
+							<h1>{{ gsiTTeam.name }}</h1>
+						</article>
+					</div>
+					</section>
+
+					<section class="kl-waiting-bottom kl-result-bottom">
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ gsiCtTeam.name }}</h2><span>Player stats (CT)</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">ADR</th></tr></thead>
+								<tbody>
+									<tr v-for="p in gsiCtPlayers" :key="p.steam64Id || p.steamId">
+										<td class="player-cell">{{ p.displayName }} <span v-if="p.mvps" class="mvp-star">★{{ p.mvps }}</span></td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ p.kd }}</td><td class="rating">{{ p.adr || '-' }}</td>
+									</tr>
+									<tr v-if="!gsiCtPlayers.length"><td colspan="6" class="empty">Waiting for players...</td></tr>
+								</tbody>
+							</table>
+						</article>
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ gsiTTeam.name }}</h2><span>Player stats (T)</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">ADR</th></tr></thead>
+								<tbody>
+									<tr v-for="p in gsiTPlayers" :key="p.steam64Id || p.steamId">
+										<td class="player-cell">{{ p.displayName }} <span v-if="p.mvps" class="mvp-star">★{{ p.mvps }}</span></td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ p.kd }}</td><td class="rating">{{ p.adr || '-' }}</td>
+									</tr>
+									<tr v-if="!gsiTPlayers.length"><td colspan="6" class="empty">Waiting for players...</td></tr>
+								</tbody>
+							</table>
+						</article>
+					</section>
+					</section>
+				</div>
+			</main>
+
+			<WaitingIdle v-if="komplettligaenView === 'waiting' && komplettligaenMatch" />
 
 			<main v-if="komplettligaenMatch && komplettligaenView === 'result'" class="kl-scene-frame">
 				<div class="kl-scene-gutter">
@@ -240,9 +340,71 @@
 				<div class="kl-spinner --subtle"></div>
 				<span>Refreshing...</span>
 			</div>
-			<div v-else-if="!komplettligaenMatch && komplettligaenView !== 'table'" class="kl-empty">
+<!-- GSI Post-Match / Fulltime Player Statistics Fallback -->
+			<main v-if="!komplettligaenMatch && (komplettligaenView === 'result' || komplettligaenView === 'fulltime')" class="kl-scene-frame">
+				<div class="kl-scene-gutter">
+					<section class="kl-waiting-scene">
+					<section class="kl-waiting-match">
+					<header class="kl-match-meta">
+						<span>{{ $opts['branding.tournamentName'] || 'CS2 Match' }} · Post-Match</span>
+						<strong>{{ $map.formattedName || $map.name || 'FINISHED MAP' }}</strong>
+					</header>
+					<div class="kl-waiting-scoreboard">
+						<article :class="['kl-waiting-team', { 'kl-winner': gsiMatchWinner === 'CT' }]">
+							<img v-if="gsiCtTeam.logo" :src="gsiCtTeam.logo" alt="">
+							<h1>{{ gsiCtTeam.name }}</h1>
+						</article>
+						<div class="kl-waiting-score">
+							<small>Final Score</small>
+							<div class="kl-waiting-series">
+								<span :class="{ 'kl-winner-score': gsiMatchWinner === 'CT' }">{{ gsiCtTeam.score }}</span>
+								<b>-</b>
+								<span :class="{ 'kl-winner-score': gsiMatchWinner === 'T' }">{{ gsiTTeam.score }}</span>
+							</div>
+							<strong class="kl-winner-label">🏆 {{ gsiWinnerName }}</strong>
+						</div>
+						<article :class="['kl-waiting-team', { 'kl-winner': gsiMatchWinner === 'T' }]">
+							<img v-if="gsiTTeam.logo" :src="gsiTTeam.logo" alt="">
+							<h1>{{ gsiTTeam.name }}</h1>
+						</article>
+					</div>
+					</section>
+
+					<section class="kl-waiting-bottom kl-result-bottom">
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ gsiCtTeam.name }}</h2><span>Final Stats (CT)</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">ADR</th></tr></thead>
+								<tbody>
+									<tr v-for="p in gsiCtPlayers" :key="p.steam64Id || p.steamId">
+										<td class="player-cell">{{ p.displayName }} <span v-if="p.mvps" class="mvp-star">★{{ p.mvps }}</span></td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ p.kd }}</td><td class="rating">{{ p.adr || '-' }}</td>
+									</tr>
+									<tr v-if="!gsiCtPlayers.length"><td colspan="6" class="empty">No players stats available</td></tr>
+								</tbody>
+							</table>
+						</article>
+						<article class="kl-stats-team">
+							<header class="kl-panel-head"><h2>{{ gsiTTeam.name }}</h2><span>Final Stats (T)</span></header>
+							<table>
+								<thead><tr><th class="player-cell">Player</th><th>K</th><th>A</th><th>D</th><th>K/D</th><th class="rating">ADR</th></tr></thead>
+								<tbody>
+									<tr v-for="p in gsiTPlayers" :key="p.steam64Id || p.steamId">
+										<td class="player-cell">{{ p.displayName }} <span v-if="p.mvps" class="mvp-star">★{{ p.mvps }}</span></td>
+										<td>{{ p.kills }}</td><td>{{ p.assists }}</td><td>{{ p.deaths }}</td><td>{{ p.kd }}</td><td class="rating">{{ p.adr || '-' }}</td>
+									</tr>
+									<tr v-if="!gsiTPlayers.length"><td colspan="6" class="empty">No players stats available</td></tr>
+								</tbody>
+							</table>
+						</article>
+					</section>
+					</section>
+				</div>
+			</main>
+
+			<div v-else-if="!komplettligaenMatch && komplettligaenView === 'table'" class="kl-empty">
 				<div class="scoreboard-meta">KOMPLETTLIGAEN</div>
-				<div class="intro-map">No match loaded</div>
+				<div class="intro-map">No tournament table loaded</div>
 			</div>
 		</div>
 

@@ -1490,3 +1490,10 @@ body {
 	opacity: 0;
 	transform: scale(0.95);
 }
+
+.mvp-star {
+	color: #f1c40f;
+	font-size: 0.85em;
+	margin-left: 4px;
+	font-weight: 700;
+}

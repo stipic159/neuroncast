@@ -42,6 +42,14 @@ const run = async () => {
 	const app = new Koa()
 	const server = http.createServer(app.callback())
 
+	// Suppress expected client premature close & abort errors (e.g. video Range requests from OBS / browser)
+	app.on('error', (err) => {
+		if (['ECONNABORTED', 'ECONNRESET', 'EPIPE', 'ECANCELED', 'ERR_STREAM_PREMATURE_CLOSE'].includes(err.code)) {
+			return
+		}
+		console.error('[Server Error]', err.message || err)
+	})
+
 	app.use(KoaCompress())
 
 	app.use(bodyParser({
