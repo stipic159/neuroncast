@@ -50,6 +50,10 @@ const RemoteApp = {
 						<span class="pill-dot"></span>
 						OBS
 					</span>
+					<span :class="['pill', cs2.connected ? '--green' : '--red']" :title="cs2.connected ? 'CS2 NetCon OK' : 'Launch CS2 with -netconport 2121'">
+						<span class="pill-dot"></span>
+						{{ cs2.connected ? 'CS2' : 'CS2 OFF' }}
+					</span>
 				</div>
 			</header>
 
@@ -284,7 +288,7 @@ const RemoteApp = {
 			<div v-show="activeTab === 'observer'" class="tab-content observer-tab">
 				<div class="observer-controls-bar">
 					<div class="observer-hint-text">
-						💡 Клавиши <b>1..0</b> в CS2
+						💡 Нажмите на игрока для переключения камеры в CS2
 					</div>
 					<div class="observer-actions-group">
 						<button 
@@ -439,6 +443,9 @@ const RemoteApp = {
 				intermissionSceneName: '',
 				replayBufferActive: false,
 			},
+			cs2: {
+				connected: false,
+			},
 			options: {},
 			gsi: {},
 			additionalState: {},
@@ -572,6 +579,12 @@ const RemoteApp = {
 		this.initWakeLock()
 		this.connectWebSocket()
 		this.fetchObsStatus()
+		this.fetchCs2Status()
+		setInterval(() => {
+			this.fetchObsStatus()
+			this.fetchCs2Status()
+		}, 3000)
+
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/remote/sw.js').catch(() => {})
 		}
@@ -604,7 +617,13 @@ const RemoteApp = {
 					steamid: player.steamid
 				} : { slot: player }
 
-				await this.sendControlRequest('/api/cs2/spec', payload)
+				const res = await this.sendControlRequest('/api/cs2/spec', payload)
+				if (res.ok) {
+					const data = await res.json()
+					if (data.connected === false) {
+						alert('⚠️ CS2 Console (NetCon) не подключен.\n\nЗапустите CS2 в Steam с параметром запуска:\n-netconport 2121')
+					}
+				}
 			} catch (_) {}
 		},
 		triggerSpotlight(player) {
@@ -661,6 +680,7 @@ const RemoteApp = {
 			this.socket.onopen = () => {
 				this.connected = true
 				this.fetchObsStatus()
+				this.fetchCs2Status()
 			}
 
 			this.socket.onclose = () => {
@@ -703,17 +723,45 @@ const RemoteApp = {
 			} catch (_) {}
 		},
 
+		async fetchCs2Status() {
+			try {
+				const res = await fetch('/api/cs2/status')
+				if (res.ok) {
+					const data = await res.json()
+					if (data.netcon) {
+						this.cs2 = { connected: !!data.netcon.connected }
+					}
+				}
+			} catch (_) {}
+		},
+
 		async sendControlRequest(url, body = {}) {
 			this.vibrate(35)
-			const token = this.getToken()
+			let token = this.getToken()
 			const headers = { 'Content-Type': 'application/json' }
 			if (token) headers['x-neuron-token'] = token
 
-			return fetch(url, {
+			let res = await fetch(url, {
 				method: 'POST',
 				headers,
 				body: JSON.stringify(body),
 			})
+
+			if (res.status === 401) {
+				const input = prompt('🔑 Требуется X-Neuron-Token для управления:')
+				if (input && input.trim()) {
+					token = input.trim()
+					try { localStorage.setItem('neuron_token', token) } catch (_) {}
+					headers['x-neuron-token'] = token
+					res = await fetch(url, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify(body),
+					})
+				}
+			}
+
+			return res
 		},
 
 		async toggleCasterMic() {

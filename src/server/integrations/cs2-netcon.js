@@ -101,52 +101,61 @@ class Cs2Netcon {
 	}
 
 	/**
-	 * Spectates a player by slot number, raw slot index, or SteamID64.
-	 * CS2 NetCon commands executed:
-	 * 1. spec_player_by_accountid <accountId> (if steamid provided)
-	 * 2. spec_player <rawSlot> (0-indexed position: 0..9)
-	 * 3. slot<slot> (1-based spectator key: 1..10 or 0)
+	 * Spectates a player by SteamID64, raw slot index (0..9), or physical slot key (1..10).
+	 * Sends the single best unambiguous command to CS2:
+	 * 1. spec_player_by_accountid <accountId> (if steamid present)
+	 * 2. spec_player <rawSlot> (0-indexed 0..9)
+	 * 3. slot<1..10> (physical key slot)
 	 */
 	specPlayer(target) {
-		const commands = []
+		let command = null
+		let accountId = null
 
 		if (target && typeof target === 'object') {
 			const { slot, rawSlot, steamid } = target
 
 			if (steamid) {
 				try {
-					const accountId = (BigInt(steamid) & 0xFFFFFFFFn).toString()
-					commands.push(`spec_player_by_accountid ${accountId}`)
+					accountId = (BigInt(steamid) & 0xFFFFFFFFn).toString()
+					command = `spec_player_by_accountid ${accountId}`
 				} catch (_) {}
 			}
-			if (rawSlot !== undefined && rawSlot !== null && !isNaN(Number(rawSlot))) {
-				commands.push(`spec_player ${Number(rawSlot)}`)
+			if (!command && rawSlot !== undefined && rawSlot !== null && !isNaN(Number(rawSlot))) {
+				command = `spec_player ${Number(rawSlot)}`
 			}
-			if (slot !== undefined && slot !== null) {
-				commands.push(`slot${String(slot).trim()}`)
+			if (!command && slot !== undefined && slot !== null) {
+				const slotNum = String(slot).trim() === '0' ? '10' : String(slot).trim()
+				command = `slot${slotNum}`
 			}
 		} else if (target !== undefined && target !== null) {
 			const val = String(target).trim()
 			if (/^7656\d{13}$/.test(val)) {
 				try {
-					const accountId = (BigInt(val) & 0xFFFFFFFFn).toString()
-					commands.push(`spec_player_by_accountid ${accountId}`)
+					accountId = (BigInt(val) & 0xFFFFFFFFn).toString()
+					command = `spec_player_by_accountid ${accountId}`
 				} catch (_) {}
 			} else {
-				commands.push(`spec_player ${val}`)
-				commands.push(`slot${val}`)
+				const slotNum = val === '0' ? '10' : val
+				if (!isNaN(Number(slotNum)) && Number(slotNum) >= 1 && Number(slotNum) <= 10) {
+					command = `spec_player ${Number(slotNum) - 1}`
+				} else {
+					command = `slot${slotNum}`
+				}
 			}
 		}
 
-		if (commands.length === 0) return false
+		if (!command) return false
+		
+		// Send primary exact target command
+		const sent = this.sendCommand(command)
 
-		let sentAny = false
-		for (const cmd of commands) {
-			if (this.sendCommand(cmd)) {
-				sentAny = true
-			}
+		// Also send slot command fallback if rawSlot / slot was provided
+		if (target && typeof target === 'object' && target.slot) {
+			const fallbackSlot = String(target.slot).trim() === '0' ? '10' : String(target.slot).trim()
+			this.sendCommand(`slot${fallbackSlot}`)
 		}
-		return sentAny
+
+		return sent
 	}
 
 	getStatus() {
