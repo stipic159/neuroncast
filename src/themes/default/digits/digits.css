@@ -2,6 +2,8 @@
 	display: inline-block;
 	min-width: 1ch;
 	text-align: center;
+	font-family: var(--numeric-font-family, var(--font-family));
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: "tnum" 1, "zero" 1;
+	letter-spacing: 0.02em;
 }
-
-

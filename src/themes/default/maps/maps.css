@@ -7,20 +7,19 @@
 .map-card {
 	flex: 1;
 	min-width: 17.5rem;
-	background: rgba(8, 12, 20, 0.85);
-	backdrop-filter: blur(0.8rem);
-	border: 0.1rem solid rgba(255, 255, 255, 0.12);
+	background: linear-gradient(180deg, rgba(8, 12, 20, 0.95) 0%, rgba(5, 8, 14, 0.98) 100%);
+	border: 0.1rem solid rgba(255, 255, 255, 0.14);
 	border-radius: 0.4rem;
 	overflow: hidden;
 	transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-	box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.4);
+	box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
 }
 
 .map-card.--current {
-	border-color: rgba(var(--counter-terrorists-fill-rgb), 0.6);
+	border-color: rgba(var(--counter-terrorists-fill-rgb), 0.7);
 	box-shadow: 
-		0 0 1.2rem rgba(var(--counter-terrorists-fill-rgb), 0.2),
-		inset 0 0 1.5rem rgba(var(--counter-terrorists-fill-rgb), 0.05);
+		0 0 1.2rem rgba(var(--counter-terrorists-fill-rgb), 0.25),
+		inset 0 0 1.5rem rgba(var(--counter-terrorists-fill-rgb), 0.08);
 	transform: translateY(-0.2rem);
 }
 
@@ -52,6 +51,7 @@
 	left: 0.5rem;
 	background: var(--white);
 	color: var(--black);
+	font-family: var(--nc-font-display, 'Chakra Petch', sans-serif);
 	font-size: 0.75rem;
 	font-weight: 800;
 	padding: 0.15rem 0.45rem;
@@ -69,7 +69,8 @@
 }
 
 .map-name {
-	font-size: 1rem;
+	font-family: var(--nc-font-hud, 'Rajdhani', sans-serif);
+	font-size: 1.05rem;
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -85,7 +86,8 @@
 	font-weight: 800;
 	display: flex;
 	gap: 0.4rem;
-	font-family: 'Quantico', sans-serif;
+	font-family: var(--numeric-font-family, 'Rajdhani', sans-serif);
+	font-variant-numeric: tabular-nums;
 }
 
 .map-score .--winner {
@@ -99,6 +101,7 @@
 }
 
 .map-status {
+	font-family: var(--nc-font-display, 'Chakra Petch', sans-serif);
 	font-size: 0.8rem;
 	font-weight: 800;
 	color: var(--white-40);

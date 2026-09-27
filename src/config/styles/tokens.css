@@ -1,37 +1,104 @@
 /*
- * NeuronCast design tokens — Phase 24+
+ * NeuronCast Design Tokens 3.0 — Broadcast Revamp
  *
- * Parallel to legacy :root variables in src/config/index.css.
- * Legacy variables (--accent, --panel-background, --text-*) remain
- * intact so existing scoped page styles render unchanged.
- *
- * Phase 24+ surfaces consume these --eon-* variables exclusively.
+ * Fully local esports broadcast styling system:
+ * - Local fonts (Rajdhani, Chakra Petch, JetBrains Mono)
+ * - Safe chamfer polygons & balanced -12deg slant
+ * - Broadcast-safe dense gradient surfaces (OBS safe, 240+ FPS friendly, no transparent blur halos)
+ * - High-contrast tournament palettes (CT / T / Alerts)
  */
 
 :root {
-	/* Surfaces */
+	/* =========================================================================
+	   1. Geometrical Slopes & Chamfers (Design Tokens 3.0)
+	   ========================================================================= */
+	--nc-skew-angle:          -12deg;
+	--nc-skew-angle-reverse:  12deg;
+	--nc-chamfer-sm:          4px;
+	--nc-chamfer-md:          8px;
+	--nc-chamfer-lg:          14px;
+
+	/* Zero-overflow clipping polygons */
+	--nc-clip-chamfer-left:   polygon(var(--nc-chamfer-md) 0%, 100% 0%, 100% 100%, 0% 100%, 0% var(--nc-chamfer-md));
+	--nc-clip-chamfer-right:  polygon(0% 0%, calc(100% - var(--nc-chamfer-md)) 0%, 100% var(--nc-chamfer-md), 100% 100%, 0% 100%);
+	--nc-clip-skew-panel:     polygon(14px 0%, 100% 0%, calc(100% - 14px) 100%, 0% 100%);
+
+	/* Radii */
+	--nc-rad-xs:   2px;
+	--nc-rad-sm:   4px;
+	--nc-rad-md:   8px;
+	--nc-rad-pill: 9999px;
+
+	/* 4px Baseline Spacing */
+	--nc-space-1: 4px;
+	--nc-space-2: 8px;
+	--nc-space-3: 12px;
+	--nc-space-4: 16px;
+	--nc-space-5: 20px;
+	--nc-space-6: 24px;
+
+	/* =========================================================================
+	   2. Surfaces & Colors (Dense OBS Gradient Grade — No Heavy Blur)
+	   ========================================================================= */
+	--nc-bg-canvas:       #05070a;
+	--nc-surface-dense:   linear-gradient(180deg, rgba(8, 12, 18, 0.95) 0%, rgba(5, 7, 10, 0.98) 100%);
+	--nc-surface-card:    linear-gradient(90deg, rgba(10, 14, 22, 0.94) 0%, rgba(14, 18, 28, 0.92) 100%);
+	--nc-surface-panel:   rgba(10, 14, 22, 0.96);
+	--nc-surface-elevated: #161b24;
+	--nc-border-subtle:   rgba(255, 255, 255, 0.08);
+	--nc-border-high:     rgba(255, 255, 255, 0.22);
+	--nc-border-accent:   rgba(99, 102, 241, 0.4);
+
+	/* Faction: Counter-Terrorists */
+	--nc-ct-primary:      #3b9cff;
+	--nc-ct-vibrant:      #60b5ff;
+	--nc-ct-gradient:     linear-gradient(135deg, #1a62d4 0%, #0d3882 100%);
+	--nc-ct-glow:         rgba(59, 156, 255, 0.45);
+	--nc-ct-bg-tint:      rgba(30, 90, 180, 0.22);
+
+	/* Faction: Terrorists */
+	--nc-t-primary:       #e59318;
+	--nc-t-vibrant:       #ffb84d;
+	--nc-t-gradient:      linear-gradient(135deg, #c46d05 0%, #733c00 100%);
+	--nc-t-glow:          rgba(229, 147, 24, 0.45);
+	--nc-t-bg-tint:       rgba(196, 109, 5, 0.22);
+
+	/* Semantic Alerts */
+	--nc-danger:          #ff334b;
+	--nc-danger-glow:     rgba(255, 51, 75, 0.6);
+	--nc-warning:         #ffb300;
+	--nc-success:         #10e078;
+	--nc-bomb-active:     #ff2a2a;
+
+	/* =========================================================================
+	   3. Typography & Numerical Calibration (Strict Offline Local Fonts)
+	   ========================================================================= */
+	--nc-font-display:    'Chakra Petch', 'Space Grotesk', system-ui, sans-serif;
+	--nc-font-hud:        'Rajdhani', 'Space Grotesk', -apple-system, sans-serif;
+	--nc-font-mono:       'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+	--nc-font-numeric-settings: "tnum" 1, "zero" 1, "cv01" 1;
+
+	/* =========================================================================
+	   4. Backward-Compatible Tokens (--eon-*)
+	   ========================================================================= */
 	--eon-bg:   #09090c;
 	--eon-s1:   #101013;
 	--eon-s2:   #17171b;
 	--eon-s3:   #1e1e24;
 	--eon-s4:   #252530;
 
-	/* Borders */
 	--eon-bd:   #28282f;
 	--eon-bd2:  #373744;
 
-	/* Text */
 	--eon-tx:   #dddde8;
 	--eon-tx2:  #888898;
 	--eon-tx3:  #484858;
 	--eon-tx4:  #303040;
 
-	/* Accent (indigo) */
 	--eon-acc:  #6366f1;
 	--eon-accl: #818cf8;
 	--eon-accd: rgba(99, 102, 241, 0.14);
 
-	/* Semantic */
 	--eon-red:  #f87171;
 	--eon-redd: rgba(248, 113, 113, 0.12);
 	--eon-amb:  #f59e0b;
@@ -41,11 +108,9 @@
 	--eon-blu:  #60a5fa;
 	--eon-blud: rgba(96, 165, 250, 0.12);
 
-	/* Typography */
-	--eon-font-primary: 'Space Grotesk', 'Noto Sans', system-ui, sans-serif;
-	--eon-font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+	--eon-font-primary: var(--nc-font-hud);
+	--eon-font-mono:    var(--nc-font-mono);
 
-	/* Type scale */
 	--eon-fs-micro:  9px;
 	--eon-fs-status: 10px;
 	--eon-fs-notes:  11px;
@@ -55,7 +120,6 @@
 	--eon-fs-base:   14px;
 	--eon-fs-h1:     20px;
 
-	/* Spacing */
 	--eon-pg-pad-y:   24px;
 	--eon-pg-pad-x:   28px;
 	--eon-card-pad-y: 16px;
@@ -64,7 +128,6 @@
 	--eon-row-gap:    10px;
 	--eon-label-mb:   10px;
 
-	/* Radii */
 	--eon-rad-card:   6px;
 	--eon-rad-input:  3px;
 	--eon-rad-btn-sm: 3px;
@@ -72,10 +135,16 @@
 	--eon-rad-chip:   2px;
 	--eon-rad-toggle: 8px;
 
-	/* Borders */
 	--eon-bw-card-accent: 3px;
 
-	/* Shadows */
 	--eon-shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4);
 	--eon-shadow-selected: 0 0 0 2px rgba(99, 102, 241, 0.4);
+}
+
+/* Tabular number helper */
+.nc-num, [data-numeric] {
+	font-family: var(--nc-font-hud);
+	font-feature-settings: var(--nc-font-numeric-settings);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.02em;
 }

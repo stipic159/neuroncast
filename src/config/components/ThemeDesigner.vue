@@ -336,7 +336,13 @@
 							
 							<div class="form-group">
 								<label>{{ $t("Primary Font Family") }}</label>
-								<input v-model="activeTheme.tokens['theme.typography.primaryFont']" class="text-input" :placeholder="$t(&quot;e.g. 'Quantico', 'Outfit', 'Arial Narrow'&quot;)">
+								<div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+									<button type="button" class="btn-win --clear" style="padding: 4px 8px; font-size: 0.75rem;" @click="activeTheme.tokens['theme.typography.primaryFont'] = 'Rajdhani'">Rajdhani (Default HUD)</button>
+									<button type="button" class="btn-win --clear" style="padding: 4px 8px; font-size: 0.75rem;" @click="activeTheme.tokens['theme.typography.primaryFont'] = 'Chakra Petch'">Chakra Petch (Cyber Display)</button>
+									<button type="button" class="btn-win --clear" style="padding: 4px 8px; font-size: 0.75rem;" @click="activeTheme.tokens['theme.typography.primaryFont'] = 'Quantico'">Quantico</button>
+									<button type="button" class="btn-win --clear" style="padding: 4px 8px; font-size: 0.75rem;" @click="activeTheme.tokens['theme.typography.primaryFont'] = 'JetBrains Mono'">JetBrains Mono</button>
+								</div>
+								<input v-model="activeTheme.tokens['theme.typography.primaryFont']" class="text-input" :placeholder="$t(&quot;e.g. 'Rajdhani', 'Chakra Petch', 'Quantico'&quot;)">
 							</div>
 
 							<div class="form-group" style="margin-top: 16px;">
@@ -476,7 +482,7 @@ export default {
 				'--panel-radius': radius,
 				'--panel-skew': skew,
 				'--accent-color': event.accentColor || '#3498db',
-				'--primary-font': tokens['theme.typography.primaryFont'] || 'Quantico'
+				'--primary-font': tokens['theme.typography.primaryFont'] || 'Rajdhani'
 			}
 		}
 	},

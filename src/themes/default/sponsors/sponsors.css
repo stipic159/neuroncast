@@ -15,10 +15,9 @@
 	align-items: center;
 	justify-content: center;
 	gap: 0.35rem;
-	background: rgba(8, 10, 14, 0.72);
+	background: linear-gradient(180deg, rgba(8, 12, 18, 0.95) 0%, rgba(5, 7, 10, 0.98) 100%);
 	border: 0.1rem solid rgba(255, 255, 255, 0.16);
-	box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.28);
-	backdrop-filter: blur(0.55rem);
+	box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.4);
 	pointer-events: auto;
 	text-decoration: none;
 }
@@ -46,6 +45,7 @@
 	max-width: 100%;
 	overflow: hidden;
 	color: var(--white-90);
+	font-family: var(--nc-font-display, 'Chakra Petch', sans-serif);
 	font-size: 0.8rem;
 	font-weight: 700;
 	letter-spacing: 0.08em;
@@ -85,5 +85,3 @@
 .sponsor-slot img {
 	max-height: calc(var(--style-sponsors-height, var(--lan66-sponsor-height, var(--sponsor-panel-height))) - 1rem);
 }
-
-

@@ -2,10 +2,10 @@
 	width: 100%;
 	height: auto;
 	padding: 1.2rem;
-	background: rgba(0, 0, 0, 0.4);
-	border: 0.1rem solid rgba(255, 255, 255, 0.1);
-	border-radius: 1rem;
-	backdrop-filter: blur(1rem);
+	background: linear-gradient(180deg, rgba(8, 12, 18, 0.95) 0%, rgba(5, 7, 10, 0.98) 100%);
+	border: 0.1rem solid rgba(255, 255, 255, 0.14);
+	border-radius: 0.6rem;
+	box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.5);
 }
 
 .win-prob-graph__header {
@@ -16,6 +16,7 @@
 }
 
 .win-prob-graph__title {
+	font-family: var(--nc-font-display, 'Chakra Petch', sans-serif);
 	font-size: 0.75rem;
 	font-weight: 800;
 	text-transform: uppercase;
@@ -26,6 +27,7 @@
 .win-prob-graph__value {
 	font-size: 1.4rem;
 	font-weight: 900;
+	font-family: var(--numeric-font-family, var(--font-family));
 	font-variant-numeric: tabular-nums;
 }
 
@@ -77,5 +79,3 @@
 	color: var(--white-40);
 	letter-spacing: 0.1em;
 }
-
-

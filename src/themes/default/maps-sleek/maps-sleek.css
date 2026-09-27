@@ -12,13 +12,12 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	background: rgba(12, 16, 24, 0.82);
-	backdrop-filter: blur(0.6rem);
+	background: linear-gradient(180deg, rgba(12, 16, 24, 0.95) 0%, rgba(8, 10, 16, 0.98) 100%);
 	border-radius: 0.3rem;
 	overflow: hidden;
-	box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.45);
+	box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.5);
 	transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-	border: 0.1rem solid rgba(255, 255, 255, 0.1);
+	border: 0.1rem solid rgba(255, 255, 255, 0.12);
 }
 
 .maps-sleek__row.--current {
@@ -26,7 +25,7 @@
 		0 0 1.5rem rgba(var(--counter-terrorists-fill-rgb), 0.25),
 		0 0.5rem 2rem rgba(0, 0, 0, 0.6);
 	z-index: 2;
-	border-color: rgba(var(--counter-terrorists-fill-rgb), 0.5);
+	border-color: rgba(var(--counter-terrorists-fill-rgb), 0.6);
 }
 
 .maps-sleek__row.--finished {
@@ -42,8 +41,9 @@
 	justify-content: center;
 	position: relative;
 	z-index: 1;
-	font-family: 'Quantico', sans-serif;
+	font-family: var(--numeric-font-family, 'Rajdhani', sans-serif);
 	font-weight: 800;
+	font-variant-numeric: tabular-nums;
 	transition: background 0.3s ease;
 }
 
@@ -95,6 +95,7 @@
 
 /* Status text (LIVE / TBD) */
 .maps-sleek__status {
+	font-family: var(--nc-font-display, 'Chakra Petch', sans-serif);
 	font-size: 0.5rem;
 	letter-spacing: 0.12em;
 	opacity: 0.7;
@@ -113,7 +114,8 @@
 }
 
 .maps-sleek__name {
-	font-size: 0.65rem;
+	font-family: var(--nc-font-hud, 'Rajdhani', sans-serif);
+	font-size: 0.72rem;
 	font-weight: 800;
 	text-transform: uppercase;
 	letter-spacing: 0.12em;
@@ -125,7 +127,7 @@
 }
 
 .maps-sleek__row.--current .maps-sleek__name {
-	font-size: 0.7rem;
+	font-size: 0.75rem;
 	color: var(--white);
 }
 

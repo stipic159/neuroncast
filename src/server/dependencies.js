@@ -12,6 +12,13 @@ export const registerDependencyRoutes = (router) => {
 	serveFontsourceFont(router, 'quantico')
 	serveFontsourceFont(router, 'space-grotesk')
 	serveFontsourceFont(router, 'jetbrains-mono')
+	serveFontsourceFont(router, 'rajdhani')
+	serveFontsourceFont(router, 'chakra-petch')
+
+	router.get(/^\/assets\/fonts\/(.*)/, async (context) => {
+		const rel = context.path.replace(/^\/assets\/fonts\//, '')
+		await send(context, rel, { root: `${builtinRootDirectory}/src/assets/fonts` })
+	})
 
 	router.get('/dependencies/vue3-sfc-loader-options.js', sendStaticFile('src/assets/vue3-sfc-loader-options.js'))
 }

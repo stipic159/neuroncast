@@ -5,8 +5,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background: rgba(0, 0, 0, 0.85);
-	backdrop-filter: blur(0.5rem);
+	background: linear-gradient(180deg, rgba(6, 8, 14, 0.96) 0%, rgba(2, 3, 6, 0.98) 100%);
 	pointer-events: all;
 	animation: fade-overlay 0.5s ease forwards;
 }
@@ -24,6 +23,7 @@
 }
 
 .winner-label {
+	font-family: var(--nc-font-display, 'Chakra Petch', sans-serif);
 	font-size: 1.5rem;
 	font-weight: 700;
 	letter-spacing: 0.4em;
@@ -32,10 +32,11 @@
 }
 
 .team-name {
+	font-family: var(--nc-font-hud, 'Rajdhani', sans-serif);
 	font-size: 6rem;
 	font-weight: 900;
 	line-height: 1;
-	letter-spacing: -0.02em;
+	letter-spacing: 0.02em;
 	margin-bottom: 1.5rem;
 	filter: drop-shadow(0 0 2rem rgba(255, 255, 255, 0.2));
 }
@@ -50,6 +51,8 @@
 	font-size: 3rem;
 	font-weight: 700;
 	color: var(--white-90);
+	font-family: var(--numeric-font-family, var(--font-family));
+	font-variant-numeric: tabular-nums;
 }
 
 .series-score {
@@ -57,6 +60,8 @@
 	font-weight: 600;
 	color: rgba(255, 255, 255, 0.5);
 	letter-spacing: 0.1em;
+	font-family: var(--numeric-font-family, var(--font-family));
+	font-variant-numeric: tabular-nums;
 }
 
 /* Explosion Effects */
@@ -138,5 +143,3 @@
 		transform: rotate(inherit) translateX(120rem) scale(2);
 	}
 }
-
-

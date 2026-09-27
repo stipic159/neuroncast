@@ -35,10 +35,9 @@
 		linear-gradient(135deg, rgba(var(--red-rgb), 0.1), rgba(var(--green-rgb), 0.05)),
 		rgba(8, 10, 14, 0.94);
 	border: 0.1rem solid rgba(var(--white-rgb), 0.12);
-	box-shadow: 
+	box-shadow:
 		inset 0 0.1rem 0 rgba(255, 255, 255, 0.04),
 		0 1.5rem 3.5rem rgba(0, 0, 0, 0.45);
-	backdrop-filter: blur(2rem);
 	padding: var(--promotion-panel-padding, 1.5rem);
 	overflow: hidden;
 }

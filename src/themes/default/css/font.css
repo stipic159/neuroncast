@@ -1,3 +1,5 @@
+@import '/assets/fonts/fonts.css';
+
 @import '/dependencies/quantico/400.css';
 @import '/dependencies/quantico/400-italic.css';
 @import '/dependencies/quantico/700.css';
@@ -21,5 +23,3 @@
 @import '/dependencies/noto-sans/800-italic.css';
 @import '/dependencies/noto-sans/900.css';
 @import '/dependencies/noto-sans/900-italic.css';
-
-

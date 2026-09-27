@@ -1,11 +1,96 @@
 /**
  * Static read-only Event Visual Presets for NeuronCast
+ * Optimized for local fonts (Rajdhani, Chakra Petch) & OBS hardware-accelerated rendering
  */
 export const EVENT_THEME_PRESETS = [
 	{
+		id: 'major-clean',
+		name: 'Major Clean',
+		description: 'ESL & BLAST Major standard: deep carbon gradients, balanced 12° geometry, and Rajdhani typography.',
+		event: {
+			name: 'NeuronCast Major 2026',
+			subtitle: 'Grand Championship Broadcast',
+			logo: '/hud/img/branding/logo-ubg.png',
+			accentColor: '#388bfd'
+		},
+		tokens: {
+			'theme.colors.ctFill': '25, 106, 232',
+			'theme.colors.ctBorder': '91, 166, 255',
+			'theme.colors.ctText': '156, 204, 255',
+			'theme.colors.tFill': '232, 137, 22',
+			'theme.colors.tBorder': '255, 181, 71',
+			'theme.colors.tText': '255, 214, 138',
+			'theme.colors.red': '240, 49, 37',
+			'theme.colors.green': '56, 148, 107',
+			'theme.materials.panelFill': 'rgba(8, 12, 18, 0.95)',
+			'theme.materials.panelBorder': 'rgba(255, 255, 255, 0.16)',
+			'theme.shapes.radius': '2px',
+			'theme.shapes.skewAngle': '12deg',
+			'theme.shapes.skewComplement': '168deg',
+			'theme.typography.primaryFont': 'Rajdhani',
+			'theme.typography.customFontUrl': ''
+		}
+	},
+	{
+		id: 'aggressive-lan',
+		name: 'Aggressive LAN',
+		description: 'High-octane arena visual identity: saturated CT sapphire & T magma amber, sharp borders, bold slants.',
+		event: {
+			name: 'NeuronCast Arena LAN',
+			subtitle: 'Stage 1 Masters',
+			logo: '/hud/img/branding/logo-ubg.png',
+			accentColor: '#ff5a00'
+		},
+		tokens: {
+			'theme.colors.ctFill': '16, 88, 220',
+			'theme.colors.ctBorder': '52, 152, 255',
+			'theme.colors.ctText': '190, 225, 255',
+			'theme.colors.tFill': '255, 80, 0',
+			'theme.colors.tBorder': '255, 155, 0',
+			'theme.colors.tText': '255, 220, 180',
+			'theme.colors.red': '245, 34, 45',
+			'theme.colors.green': '46, 204, 113',
+			'theme.materials.panelFill': 'rgba(10, 12, 16, 0.96)',
+			'theme.materials.panelBorder': 'rgba(255, 90, 0, 0.35)',
+			'theme.shapes.radius': '0px',
+			'theme.shapes.skewAngle': '14deg',
+			'theme.shapes.skewComplement': '166deg',
+			'theme.typography.primaryFont': 'Rajdhani',
+			'theme.typography.customFontUrl': ''
+		}
+	},
+	{
+		id: 'minimal',
+		name: 'Minimal Clean',
+		description: 'Frosted subtle borders, zero slash distortion, maximum in-game viewing area for pure tactical focus.',
+		event: {
+			name: 'NeuronCast Studio',
+			subtitle: 'Pro League Stream',
+			logo: '/hud/img/branding/logo-ubg.png',
+			accentColor: '#8b949e'
+		},
+		tokens: {
+			'theme.colors.ctFill': '45, 110, 195',
+			'theme.colors.ctBorder': '70, 140, 230',
+			'theme.colors.ctText': '230, 240, 255',
+			'theme.colors.tFill': '210, 120, 25',
+			'theme.colors.tBorder': '240, 150, 45',
+			'theme.colors.tText': '255, 240, 225',
+			'theme.colors.red': '235, 60, 60',
+			'theme.colors.green': '50, 180, 110',
+			'theme.materials.panelFill': 'rgba(12, 16, 22, 0.92)',
+			'theme.materials.panelBorder': 'rgba(255, 255, 255, 0.1)',
+			'theme.shapes.radius': '4px',
+			'theme.shapes.skewAngle': '0deg',
+			'theme.shapes.skewComplement': '180deg',
+			'theme.typography.primaryFont': 'Rajdhani',
+			'theme.typography.customFontUrl': ''
+		}
+	},
+	{
 		id: 'dark-broadcast',
 		name: 'Dark Broadcast',
-		description: 'High-contrast dark mode slate theme with sharp edges and standard color configurations.',
+		description: 'High-contrast dark mode slate theme with sharp edges and standard tournament color configurations.',
 		event: {
 			name: 'NeuronCast Championship 2026',
 			subtitle: 'LIVE Broadcast HUD',
@@ -21,68 +106,12 @@ export const EVENT_THEME_PRESETS = [
 			'theme.colors.tText': '255, 214, 138',
 			'theme.colors.red': '240, 49, 37',
 			'theme.colors.green': '56, 148, 107',
-			'theme.materials.panelFill': 'rgba(13, 17, 23, 0.95)',
-			'theme.materials.panelBorder': 'rgba(255, 255, 255, 0.12)',
+			'theme.materials.panelFill': 'rgba(8, 12, 18, 0.95)',
+			'theme.materials.panelBorder': 'rgba(255, 255, 255, 0.14)',
 			'theme.shapes.radius': '0px',
-			'theme.shapes.skewAngle': '20deg',
-			'theme.shapes.skewComplement': '160deg',
-			'theme.typography.primaryFont': 'Quantico',
-			'theme.typography.customFontUrl': ''
-		}
-	},
-	{
-		id: 'nordic-blue',
-		name: 'Nordic Blue',
-		description: 'Ice cool steel-blue accents, rounded corner slants, and translucent panel grids.',
-		event: {
-			name: 'NeuronCast Winter Cup',
-			subtitle: 'Ice & Steel Division',
-			logo: '/hud/img/branding/logo-ubg.png',
-			accentColor: '#3498db'
-		},
-		tokens: {
-			'theme.colors.ctFill': '41, 128, 185',
-			'theme.colors.ctBorder': '135, 206, 250',
-			'theme.colors.ctText': '224, 247, 250',
-			'theme.colors.tFill': '211, 84, 0',
-			'theme.colors.tBorder': '244, 208, 63',
-			'theme.colors.tText': '253, 235, 208',
-			'theme.colors.red': '231, 76, 60',
-			'theme.colors.green': '46, 204, 113',
-			'theme.materials.panelFill': 'rgba(17, 24, 39, 0.88)',
-			'theme.materials.panelBorder': 'rgba(52, 152, 219, 0.3)',
-			'theme.shapes.radius': '6px',
-			'theme.shapes.skewAngle': '20deg',
-			'theme.shapes.skewComplement': '160deg',
-			'theme.typography.primaryFont': 'Quantico',
-			'theme.typography.customFontUrl': ''
-		}
-	},
-	{
-		id: 'lan-orange',
-		name: 'LAN Orange',
-		description: 'Electric navy blue, aggressive slash panels, and glowing local tournament orange highlights.',
-		event: {
-			name: 'NeuronCast LAN Arena',
-			subtitle: 'Local Area Network Tournament',
-			logo: '/hud/img/branding/logo-ubg.png',
-			accentColor: '#ff5a00'
-		},
-		tokens: {
-			'theme.colors.ctFill': '15, 32, 67',
-			'theme.colors.ctBorder': '52, 152, 219',
-			'theme.colors.ctText': '173, 216, 230',
-			'theme.colors.tFill': '255, 90, 0',
-			'theme.colors.tBorder': '255, 165, 0',
-			'theme.colors.tText': '255, 222, 173',
-			'theme.colors.red': '220, 20, 60',
-			'theme.colors.green': '46, 204, 113',
-			'theme.materials.panelFill': 'rgba(10, 10, 15, 0.95)',
-			'theme.materials.panelBorder': 'rgba(255, 90, 0, 0.25)',
-			'theme.shapes.radius': '0px',
-			'theme.shapes.skewAngle': '25deg',
-			'theme.shapes.skewComplement': '155deg',
-			'theme.typography.primaryFont': 'Quantico',
+			'theme.shapes.skewAngle': '12deg',
+			'theme.shapes.skewComplement': '168deg',
+			'theme.typography.primaryFont': 'Rajdhani',
 			'theme.typography.customFontUrl': ''
 		}
 	},
@@ -105,40 +134,12 @@ export const EVENT_THEME_PRESETS = [
 			'theme.colors.tText': '225, 210, 200',
 			'theme.colors.red': '194, 24, 71',
 			'theme.colors.green': '30, 130, 76',
-			'theme.materials.panelFill': 'rgba(18, 18, 18, 0.98)',
-			'theme.materials.panelBorder': 'rgba(212, 175, 55, 0.4)',
-			'theme.shapes.radius': '0px',
+			'theme.materials.panelFill': 'rgba(12, 14, 18, 0.98)',
+			'theme.materials.panelBorder': 'rgba(212, 175, 55, 0.45)',
+			'theme.shapes.radius': '2px',
 			'theme.shapes.skewAngle': '0deg',
 			'theme.shapes.skewComplement': '180deg',
-			'theme.typography.primaryFont': 'Quantico',
-			'theme.typography.customFontUrl': ''
-		}
-	},
-	{
-		id: 'minimal-clean',
-		name: 'Minimal Clean',
-		description: 'Frosted borderless cards, elegant curved corners, and zero slash angle adjustments.',
-		event: {
-			name: 'Minimal League',
-			subtitle: 'Clean View Overlays',
-			logo: '/hud/img/branding/logo-ubg.png',
-			accentColor: '#7f8c8d'
-		},
-		tokens: {
-			'theme.colors.ctFill': '52, 152, 219',
-			'theme.colors.ctBorder': '41, 128, 185',
-			'theme.colors.ctText': '255, 255, 255',
-			'theme.colors.tFill': '230, 126, 34',
-			'theme.colors.tBorder': '211, 84, 0',
-			'theme.colors.tText': '255, 255, 255',
-			'theme.colors.red': '231, 76, 60',
-			'theme.colors.green': '46, 204, 113',
-			'theme.materials.panelFill': 'rgba(255, 255, 255, 0.08)',
-			'theme.materials.panelBorder': 'rgba(255, 255, 255, 0.15)',
-			'theme.shapes.radius': '10px',
-			'theme.shapes.skewAngle': '0deg',
-			'theme.shapes.skewComplement': '180deg',
-			'theme.typography.primaryFont': 'Arial Narrow',
+			'theme.typography.primaryFont': 'Rajdhani',
 			'theme.typography.customFontUrl': ''
 		}
 	},
@@ -161,40 +162,12 @@ export const EVENT_THEME_PRESETS = [
 			'theme.colors.tText': '230, 255, 255',
 			'theme.colors.red': '255, 75, 75',
 			'theme.colors.green': '50, 255, 150',
-			'theme.materials.panelFill': 'rgba(18, 10, 28, 0.94)',
-			'theme.materials.panelBorder': 'rgba(255, 0, 127, 0.3)',
-			'theme.shapes.radius': '4px',
-			'theme.shapes.skewAngle': '-15deg',
-			'theme.shapes.skewComplement': '195deg',
-			'theme.typography.primaryFont': 'Quantico',
-			'theme.typography.customFontUrl': ''
-		}
-	},
-	{
-		id: 'local-club',
-		name: 'Local Club',
-		description: 'Community sports grass-greens, raw charcoal surfaces, and classic thick bevel shapes.',
-		event: {
-			name: 'NeuronCast Local Club Cup',
-			subtitle: 'Grassroots Championship',
-			logo: '/hud/img/branding/logo-ubg.png',
-			accentColor: '#2ecc71'
-		},
-		tokens: {
-			'theme.colors.ctFill': '41, 128, 185',
-			'theme.colors.ctBorder': '52, 152, 219',
-			'theme.colors.ctText': '224, 240, 250',
-			'theme.colors.tFill': '39, 174, 96',
-			'theme.colors.tBorder': '46, 204, 113',
-			'theme.colors.tText': '220, 245, 230',
-			'theme.colors.red': '192, 57, 43',
-			'theme.colors.green': '39, 174, 96',
-			'theme.materials.panelFill': 'rgba(33, 37, 41, 0.97)',
-			'theme.materials.panelBorder': 'rgba(255, 255, 255, 0.1)',
+			'theme.materials.panelFill': 'rgba(14, 8, 22, 0.96)',
+			'theme.materials.panelBorder': 'rgba(255, 0, 127, 0.35)',
 			'theme.shapes.radius': '3px',
-			'theme.shapes.skewAngle': '12deg',
-			'theme.shapes.skewComplement': '168deg',
-			'theme.typography.primaryFont': 'Quantico',
+			'theme.shapes.skewAngle': '-12deg',
+			'theme.shapes.skewComplement': '192deg',
+			'theme.typography.primaryFont': 'Chakra Petch',
 			'theme.typography.customFontUrl': ''
 		}
 	}

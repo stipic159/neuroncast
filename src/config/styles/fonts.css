@@ -2,15 +2,13 @@
  * Self-hosted fonts for the NeuronCast operator SPA.
  *
  * Served locally from node_modules/@fontsource/<font>/ via the
- * `serveFontsourceFont` route in src/server/dependencies.js.
- *
- * Upstream @fontsource CSS already declares font-display: swap and
- * unicode-range per subset, so only the active text's subset is fetched.
- * Latin-only operator text means non-Latin subsets are parsed but
- * never trigger network requests.
+ * `serveFontsourceFont` route in src/server/dependencies.js and local /assets/fonts/.
  *
  * No external runtime requests — no fonts.googleapis.com / fonts.gstatic.com.
  */
+
+/* Local Esports Broadcast Fonts (Rajdhani & Chakra Petch) */
+@import url('/assets/fonts/fonts.css');
 
 /* Space Grotesk — 400, 500, 600, 700 */
 @import url('/dependencies/space-grotesk/400.css');

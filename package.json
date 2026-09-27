@@ -24,9 +24,11 @@
     "test:unit": "node --test tests/unit/*.test.mjs"
   },
   "dependencies": {
+    "@fontsource/chakra-petch": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/noto-sans": "^5.2.10",
     "@fontsource/quantico": "^5.2.7",
+    "@fontsource/rajdhani": "^5.3.0",
     "@fontsource/space-grotesk": "^5.2.10",
     "@koa/router": "^14.0.0",
     "koa": "^3.0.1",

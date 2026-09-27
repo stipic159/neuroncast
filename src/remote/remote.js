@@ -36,6 +36,8 @@ const WEAPON_MAP = {
 const RemoteApp = {
 	template: `
 		<div class="remote-app">
+			<!-- Ambient Edge Glow Indicator for peripheral vision -->
+			<div :class="['ambient-edge-alert', { '--mic-muted': obs.micMuted, '--replay-saved': replaySaved }]"></div>
 			<!-- Header -->
 			<header class="remote-header">
 				<div class="remote-logo">

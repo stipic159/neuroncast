@@ -8,9 +8,12 @@
 	min-width: 0;
 	font-weight: 800;
 	white-space: nowrap;
+	font-family: var(--numeric-font-family, var(--font-family));
+	font-variant-numeric: tabular-nums;
 	background:
 		linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.12)),
 		rgba(var(--black-rgb), 0.18);
+	transition: background 0.2s ease, color 0.2s ease;
 }
 
 .hud-viewport.--style-compact .health {
@@ -19,4 +22,19 @@
 	font-size: 1.5rem;
 }
 
+/* Dynamic Low HP Critical Pulse (<20 HP) */
+.health.--low-hp {
+	color: #ff334b !important;
+	animation: nc-low-hp-pulse 0.75s infinite alternate ease-in-out;
+}
 
+@keyframes nc-low-hp-pulse {
+	0% {
+		background: rgba(255, 51, 75, 0.22);
+		text-shadow: 0 0 4px rgba(255, 51, 75, 0.4);
+	}
+	100% {
+		background: rgba(255, 51, 75, 0.65);
+		text-shadow: 0 0 16px rgba(255, 51, 75, 0.95);
+	}
+}
