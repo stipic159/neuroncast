@@ -36,10 +36,8 @@ const run = async () => {
 	await initSettings()
 	const { settings } = await getSettings()
 
-	// Default to loopback only. Exposing the control surface on a shared/venue
-	// network is opt-in via HOST=0.0.0.0 (or settings.host) and should be paired
-	// with the control token below.
-	const host = process.env.HOST || settings.host || '127.0.0.1'
+	// Default to 0.0.0.0 so phone / tablet can access mobile remote over local Wi-Fi.
+	const host = process.env.HOST || settings.host || '0.0.0.0'
 	const port = process.env.PORT || settings.port || 31982
 
 	const app = new Koa()

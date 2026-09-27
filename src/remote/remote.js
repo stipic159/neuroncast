@@ -5,7 +5,7 @@ const { createApp } = Vue
 const PRESET_TICKERS = [
 	{ label: '💜 Follow Twitch', text: '💜 ЖМИ FOLLOW НА КАНАЛ! СПАСИБО ЗА ПОДДЕРЖКУ!' },
 	{ label: '💬 Команды чата', text: '💬 КОМАНДЫ В ЧАТЕ: !score !bracket !rules' },
-	{ label: '📢 Telegram & Discord', text: '📢 СЕТКА И АНОНСЫ В НАШЕМ TELEGRAM & DISCORD' },
+	{ label: '📣 Telegram & Discord', text: '📣 СЕТКА И АНОНСЫ В НАШЕМ TELEGRAM & DISCORD' },
 	{ label: '🎙️ Кастер на связи', text: '🎙️ НА МИКРОФОНЕ ВАШ КОММЕНТАТОР · ПРИЯТНОГО ПРОСМОТРА!' },
 	{ label: '🎁 Розыгрыш в чате', text: '🎁 РОЗЫГРЫШ СКИНОВ СРЕДИ ЗРИТЕЛЕЙ В ЧАТЕ TWITCH!' },
 	{ label: '⚔️ Формат BO3', text: '⚔️ МАТЧ СЕРИИ BEST OF 3 · ИГРА НА ВЫЛЕТ' },
@@ -271,7 +271,7 @@ const RemoteApp = {
 							type="text" 
 							class="ticker-input" 
 							v-model="tickerText" 
-							placeholder="Свой текст на экран стрима..."
+							placeholder="Свой текст на экран стрима..." 
 							@keyup.enter="sendTicker"
 						/>
 						<button class="btn-send" @click="sendTicker">🚀 В ЭФИР</button>
@@ -423,6 +423,8 @@ const RemoteApp = {
 	data() {
 		return {
 			activeTab: 'broadcast',
+			observerLayout: '2col',
+			observerShowRadar: true,
 			connected: false,
 			socket: null,
 			wakeLock: null,
@@ -570,9 +572,21 @@ const RemoteApp = {
 		this.initWakeLock()
 		this.connectWebSocket()
 		this.fetchObsStatus()
-		setInterval(() => this.fetchObsStatus(), 3000)
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/remote/sw.js').catch(() => {})
+		}
 	},
 	methods: {
+		getToken() {
+			const params = new URLSearchParams(window.location.search)
+			let token = params.get('token')
+			if (token) {
+				try { localStorage.setItem('neuron_token', token) } catch (_) {}
+			} else {
+				try { token = localStorage.getItem('neuron_token') || '' } catch (_) {}
+			}
+			return token
+		},
 		switchTab(tab) {
 			this.vibrate(25)
 			this.activeTab = tab
@@ -584,7 +598,7 @@ const RemoteApp = {
 		async specPlayer(slot) {
 			this.vibrate(35)
 			try {
-				await fetch(`/api/cs2/spec/${slot}`, { method: 'POST' })
+				await this.sendControlRequest(`/api/cs2/spec/${slot}`)
 			} catch (_) {}
 		},
 		triggerSpotlight(player) {
@@ -632,8 +646,7 @@ const RemoteApp = {
 
 		connectWebSocket() {
 			const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-			const params = new URLSearchParams(window.location.search)
-			const token = params.get('token') || ''
+			const token = this.getToken()
 			const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : ''
 			const wsUrl = `${proto}//${location.host}/${tokenQuery}`
 
@@ -641,6 +654,7 @@ const RemoteApp = {
 
 			this.socket.onopen = () => {
 				this.connected = true
+				this.fetchObsStatus()
 			}
 
 			this.socket.onclose = () => {
@@ -674,7 +688,9 @@ const RemoteApp = {
 
 		async fetchObsStatus() {
 			try {
-				const res = await fetch('/api/obs/status')
+				const token = this.getToken()
+				const headers = token ? { 'x-neuron-token': token } : {}
+				const res = await fetch('/api/obs/status', { headers })
 				if (res.ok) {
 					this.obs = await res.json()
 				}
@@ -683,8 +699,7 @@ const RemoteApp = {
 
 		async sendControlRequest(url, body = {}) {
 			this.vibrate(35)
-			const params = new URLSearchParams(window.location.search)
-			const token = params.get('token') || ''
+			const token = this.getToken()
 			const headers = { 'Content-Type': 'application/json' }
 			if (token) headers['x-neuron-token'] = token
 
