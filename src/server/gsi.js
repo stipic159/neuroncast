@@ -122,14 +122,16 @@ const recordRawGsiFrame = (body) => {
 	runGsiRetentionPolicy(dir)
 
 	if (!gsiRecordStream) {
-		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })\
+		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 		const stamp = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')
 		const file = path.join(dir, `gsi-${stamp}.jsonl`)
 		gsiRecordStream = fs.createWriteStream(file, { flags: 'a' })
 		console.log(`[GSI] Recording raw replay session -> ${file}`)
 	}
 	const { auth, ...frame } = body
-	gsiRecordStream.write(JSON.stringify({ t: Date.now(), frame }) + '\n')
+	try {
+		gsiRecordStream.write(JSON.stringify({ t: Date.now(), frame }) + '\n')
+	} catch (_) {}
 }
 
 export const lastGsiMeta = {
@@ -154,6 +156,7 @@ const throttleBroadcast = (websocket) => {
 	if (elapsed >= 50) { // 20Hz
 		lastBroadcastTs = now
 		if (broadcastTimer) clearTimeout(broadcastTimer)
+		broadcastTimer = null
 		websocket.broadcastState()
 	} else if (!broadcastTimer) {
 		broadcastTimer = setTimeout(() => {
@@ -161,6 +164,7 @@ const throttleBroadcast = (websocket) => {
 			broadcastTimer = null
 			websocket.broadcastState()
 		}, 50 - elapsed)
+		if (broadcastTimer.unref) broadcastTimer.unref()
 	}
 }
 
@@ -230,7 +234,7 @@ const updateLastKnownBombPlantedCountdown = (body) => {
 }
 
 export const registerGsiRoutes = (router, websocket) => {
-	setInterval(() => {
+	const staleInterval = setInterval(() => {
 		if (isUiDevMode) return
 
 		if (lastGsiMeta.acceptedAtUnixTimestamp === 0) {
@@ -251,6 +255,7 @@ export const registerGsiRoutes = (router, websocket) => {
 			}
 		}
 	}, 1000)
+	if (staleInterval.unref) staleInterval.unref()
 
 	const handleGsiPost = (context) => {
 		const userAgent = context.request.headers['user-agent'] || ''

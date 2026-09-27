@@ -1,15 +1,28 @@
 import fs from 'fs'
-import { writeJsonAtomic } from '../helpers/json-file.js'
 import path from 'path'
 import { userspaceDirectory } from '../helpers/paths.js'
 import { gsiState } from '../state.js'
+import { resetTimelineState } from './timeline-recorder.js'
 
 // We store our sessions in a subfolder "sessions" under userspaceDirectory
 const SESSIONS_DIR = path.resolve(userspaceDirectory, 'sessions')
 
-// Keep activeSessionId in memory
-let activeSessionId = null
+// In-memory cache of the currently active session metadata to avoid blocking disk I/O on GSI ticks
+let activeSessionMeta = null
 let hasScannedActive = false
+
+// In-memory cache for fast O(1) session path lookups (id or slug -> directory path) with LRU bounds
+const MAX_PATH_CACHE = 500
+const sessionPathCache = new Map()
+
+function setPathCache(key, value) {
+	if (!key || !value) return
+	if (sessionPathCache.size >= MAX_PATH_CACHE) {
+		const firstKey = sessionPathCache.keys().next().value
+		sessionPathCache.delete(firstKey)
+	}
+	sessionPathCache.set(key, value)
+}
 
 /**
  * Ensures the sessions directory exists
@@ -29,23 +42,14 @@ function ensureSessionsDir() {
  */
 function sanitizeSlugPart(str) {
 	if (!str) return 'unknown'
-	return str
+	return String(str)
 		.toLowerCase()
 		.replace(/[^a-z0-9_\-]/g, '-') // Replace non-alphanumeric/underscore/hyphen with hyphen
 		.replace(/-+/g, '-')          // Collapse consecutive hyphens
 		.replace(/^-+|-+$/g, '')     // Trim leading/trailing hyphens
 }
 
-// writeJsonAtomic imported from ../helpers/json-file.js
-
 // ── Summary write coalescing ──
-// Every recorded timeline event used to read + atomically rewrite summary.json
-// synchronously on the request thread, which is costly under high-rate GSI
-// ingestion. Instead we keep the active session's summary in memory and flush it
-// on a short debounce. Counters stay accurate (accumulated in memory); on-disk
-// summary.json is at most SUMMARY_FLUSH_MS stale, which is fine for progress
-// telemetry. Pending writes are flushed on session end and process exit so
-// nothing is lost.
 const SUMMARY_FLUSH_MS = 1500
 const summaryCache = new Map()       // sessionId -> summary object (authoritative while cached)
 const summaryDirs = new Map()        // sessionId -> session directory path
@@ -88,20 +92,36 @@ function flushSummary(sessionId) {
 	if (!summary || !sPath) return
 
 	try {
-		writeJsonAtomic(path.join(sPath, 'summary.json'), summary).catch(e => console.warn("[SessionStore] Summary flush failed:", e.message))
+		fs.writeFileSync(path.join(sPath, 'summary.json'), JSON.stringify(summary, null, '\t'), 'utf8')
 	} catch (err) {
 		console.warn(`[SessionStore] Failed to flush summary for ${sessionId}:`, err.message)
 	}
 }
 
-function flushAllSummaries() {
-	for (const sessionId of summaryCache.keys()) {
-		flushSummary(sessionId)
+/**
+ * Synchronous summary flush on process exit to avoid dropped async writes and clear pending timers.
+ */
+function flushAllSummariesSync() {
+	for (const [, timer] of summaryFlushTimers.entries()) {
+		try {
+			clearTimeout(timer)
+		} catch (_) {}
 	}
-}
+	summaryFlushTimers.clear()
 
-// Flush any pending summary writes on process exit (sync writes are safe here).
-process.on('exit', flushAllSummaries)
+	for (const [sessionId, summary] of summaryCache.entries()) {
+		const sPath = summaryDirs.get(sessionId)
+		if (!summary || !sPath) continue
+		try {
+			const targetPath = path.join(sPath, 'summary.json')
+			fs.writeFileSync(targetPath, JSON.stringify(summary, null, '\t'), 'utf8')
+		} catch (err) {
+			console.warn(`[SessionStore] Exit sync flush failed for ${sessionId}:`, err.message)
+		}
+	}
+	summaryCache.clear()
+	summaryDirs.clear()
+}
 
 // ── Non-blocking asynchronous event batch queue ──
 const writeStreams = new Map() // filePath -> fs.WriteStream
@@ -114,8 +134,24 @@ function getOrCreateStream(filePath) {
 	return stream
 }
 
-function flushAllStreams() {
+export function closeStreamsForSession(sessionPath) {
+	if (!sessionPath) return
+	const normalizedSession = path.resolve(sessionPath)
+	const dirBoundary = normalizedSession.endsWith(path.sep) ? normalizedSession : (normalizedSession + path.sep)
+
 	for (const [filePath, stream] of writeStreams.entries()) {
+		const normalizedFile = path.resolve(filePath)
+		if (normalizedFile.startsWith(dirBoundary) || normalizedFile === normalizedSession) {
+			try {
+				stream.end()
+			} catch (_) {}
+			writeStreams.delete(filePath)
+		}
+	}
+}
+
+function flushAllStreams() {
+	for (const [, stream] of writeStreams.entries()) {
 		try {
 			stream.end()
 		} catch (_) {}
@@ -123,25 +159,45 @@ function flushAllStreams() {
 	writeStreams.clear()
 }
 
-process.on('exit', flushAllStreams)
-
+process.on('exit', () => {
+	flushAllSummariesSync()
+	flushAllStreams()
+})
 
 /**
  * Finds a session path on disk by ID or Slug.
- * Returns null if not found.
+ * Protects against directory traversal. Returns null if not found.
  */
 export function getSessionPath(sessionId) {
-	if (!sessionId) return null
+	if (!sessionId || typeof sessionId !== 'string') return null
+	// Prevent path traversal
+	if (sessionId.includes('..') || sessionId.includes('/') || sessionId.includes('\\')) {
+		return null
+	}
+	
+	// Fast memory cache check
+	if (sessionPathCache.has(sessionId)) {
+		const cachedPath = sessionPathCache.get(sessionId)
+		if (fs.existsSync(cachedPath)) {
+			return cachedPath
+		}
+		sessionPathCache.delete(sessionId)
+	}
+
 	ensureSessionsDir()
 	
 	try {
-		// First check if it exists directly as a directory (if slug was passed)
-		const directPath = path.join(SESSIONS_DIR, sessionId)
-		if (fs.existsSync(directPath) && fs.existsSync(path.join(directPath, 'metadata.json'))) {
-			return directPath
+		// First check if it exists directly as a directory (slug match)
+		const directPath = path.resolve(SESSIONS_DIR, sessionId)
+		if (directPath.startsWith(SESSIONS_DIR + path.sep)) {
+			if (fs.existsSync(directPath) && fs.existsSync(path.join(directPath, 'metadata.json'))) {
+				setPathCache(sessionId, directPath)
+				return directPath
+			}
 		}
 		
-		// Otherwise scan all directories to find matching metadata.id
+		// Otherwise scan all directories to find matching metadata.id or slug
+		if (!fs.existsSync(SESSIONS_DIR)) return null
 		const dirs = fs.readdirSync(SESSIONS_DIR)
 		for (const dirName of dirs) {
 			const dirPath = path.join(SESSIONS_DIR, dirName)
@@ -149,6 +205,8 @@ export function getSessionPath(sessionId) {
 			if (fs.existsSync(metaPath)) {
 				try {
 					const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'))
+					if (meta.id) setPathCache(meta.id, dirPath)
+					if (meta.slug) setPathCache(meta.slug, dirPath)
 					if (meta.id === sessionId || meta.slug === sessionId) {
 						return dirPath
 					}
@@ -163,14 +221,22 @@ export function getSessionPath(sessionId) {
 }
 
 /**
- * Creates a new session and sets it as active
+ * Creates a new session and sets it as active.
+ * Closes previous active session if one was running.
  */
 export function createSession(metadata = {}) {
 	ensureSessionsDir()
 	
 	try {
+		// End any existing active session cleanly first
+		const currentActive = getActiveSession()
+		if (currentActive) {
+			endActiveSession()
+		}
+
+		const rawId = metadata.id ? sanitizeSlugPart(metadata.id) : null
 		const shortId = Math.random().toString(36).substring(2, 8)
-		const id = metadata.id || shortId
+		const id = rawId || shortId
 		const dateStr = new Date().toISOString().slice(0, 10)
 		
 		const teamA = sanitizeSlugPart(metadata.teams?.home?.name)
@@ -216,15 +282,20 @@ export function createSession(metadata = {}) {
 			warnings: []
 		}
 		
-		writeJsonAtomic(path.join(sessionDir, 'metadata.json'), finalMetadata)
-		writeJsonAtomic(path.join(sessionDir, 'summary.json'), finalSummary)
-		writeJsonAtomic(path.join(sessionDir, 'maps.json'), [])
-		
-		// Create empty jsonl files
+		// Synchronously write core files so they are available immediately
+		fs.writeFileSync(path.join(sessionDir, 'metadata.json'), JSON.stringify(finalMetadata, null, '\t'), 'utf8')
+		fs.writeFileSync(path.join(sessionDir, 'summary.json'), JSON.stringify(finalSummary, null, '\t'), 'utf8')
+		fs.writeFileSync(path.join(sessionDir, 'maps.json'), '[]', 'utf8')
 		fs.writeFileSync(path.join(sessionDir, 'timeline.jsonl'), '', 'utf8')
 		fs.writeFileSync(path.join(sessionDir, 'snapshots.jsonl'), '', 'utf8')
 		
-		activeSessionId = id
+		// Cache paths and active state immediately
+		setPathCache(id, sessionDir)
+		setPathCache(slug, sessionDir)
+		activeSessionMeta = finalMetadata
+		hasScannedActive = false
+		resetTimelineState(id)
+		
 		console.info(`[SessionStore] Session "${slug}" created successfully.`)
 		
 		// Write session_started timeline event directly
@@ -252,32 +323,21 @@ export function createSession(metadata = {}) {
 
 /**
  * Returns active session metadata.
- * If activeSessionId is not in memory, scans disk for any session marked "active".
- * Picks the most recently created active session.
+ * Uses fast in-memory cache to prevent blocking disk I/O on GSI ingestion loops.
  */
 export function getActiveSession() {
+	if (activeSessionMeta && activeSessionMeta.status === 'active') {
+		return activeSessionMeta
+	}
+	
+	if (hasScannedActive) {
+		return null
+	}
+	
 	ensureSessionsDir()
 	
 	try {
-		// If we have it in memory, read it
-		if (activeSessionId) {
-			const sPath = getSessionPath(activeSessionId)
-			if (sPath) {
-				const meta = JSON.parse(fs.readFileSync(path.join(sPath, 'metadata.json'), 'utf8'))
-				if (meta.status === 'active') {
-					return meta
-				}
-			}
-		}
-		
-		// If we have already scanned once and found nothing active, don't hit the disk again
-		if (hasScannedActive) {
-			return null
-		}
-		
 		hasScannedActive = true
-		
-		// Scan directory for active sessions
 		if (!fs.existsSync(SESSIONS_DIR)) return null
 		const dirs = fs.readdirSync(SESSIONS_DIR)
 		const activeSessions = []
@@ -288,6 +348,8 @@ export function getActiveSession() {
 			if (fs.existsSync(metaPath)) {
 				try {
 					const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'))
+					if (meta.id) setPathCache(meta.id, dirPath)
+					if (meta.slug) setPathCache(meta.slug, dirPath)
 					if (meta.status === 'active') {
 						activeSessions.push(meta)
 					}
@@ -296,10 +358,9 @@ export function getActiveSession() {
 		}
 		
 		if (activeSessions.length > 0) {
-			// Sort by createdAt descending
 			activeSessions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-			activeSessionId = activeSessions[0].id
-			return activeSessions[0]
+			activeSessionMeta = activeSessions[0]
+			return activeSessionMeta
 		}
 	} catch (err) {
 		console.warn('[SessionStore] Failed to get active session:', err)
@@ -309,7 +370,8 @@ export function getActiveSession() {
 }
 
 /**
- * Explicitly sets a session as active
+ * Explicitly sets a session as active.
+ * Closes previous active session if different.
  */
 export function setActiveSession(sessionId) {
 	try {
@@ -321,14 +383,22 @@ export function setActiveSession(sessionId) {
 		const metaPath = path.join(sPath, 'metadata.json')
 		const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'))
 		
-		// If it was ended, we can mark it as active again
+		// If another session was active, end it first
+		if (activeSessionMeta && activeSessionMeta.id !== meta.id) {
+			endActiveSession()
+		}
+
 		if (meta.status !== 'active') {
 			meta.status = 'active'
 			meta.endedAt = null
-			writeJsonAtomic(metaPath, meta)
+			fs.writeFileSync(metaPath, JSON.stringify(meta, null, '\t'), 'utf8')
 		}
 		
-		activeSessionId = meta.id
+		activeSessionMeta = meta
+		hasScannedActive = false
+		setPathCache(meta.id, sPath)
+		setPathCache(meta.slug, sPath)
+		resetTimelineState(meta.id)
 		console.info(`[SessionStore] Session "${meta.slug}" is now active.`)
 		return meta
 	} catch (err) {
@@ -338,7 +408,7 @@ export function setActiveSession(sessionId) {
 }
 
 /**
- * Ends the active session
+ * Ends the active session, flushes summary, writes final snapshot, and closes open streams.
  */
 export function endActiveSession() {
 	try {
@@ -356,8 +426,9 @@ export function endActiveSession() {
 		meta.status = 'ended'
 		meta.endedAt = new Date().toISOString()
 		
-		writeJsonAtomic(metaPath, meta)
-		activeSessionId = null
+		fs.writeFileSync(metaPath, JSON.stringify(meta, null, '\t'), 'utf8')
+		activeSessionMeta = null
+		hasScannedActive = false
 		
 		console.info(`[SessionStore] Session "${meta.slug}" ended.`)
 		
@@ -377,8 +448,10 @@ export function endActiveSession() {
 		}
 		appendTimelineEvent(meta.id, endEvent)
 
-		// Persist any pending summary counters before the session goes inactive.
+		// Persist pending summary counters and clear cached maps for this session
 		flushSummary(meta.id)
+		summaryCache.delete(meta.id)
+		summaryDirs.delete(meta.id)
 
 		// Write end snapshot
 		try {
@@ -392,8 +465,8 @@ export function endActiveSession() {
 					if (!p) continue
 					players.push({
 						steamid,
-						name: p.name,
-						team: p.team,
+						name: p.name || 'Unknown',
+						team: p.team || null,
 						health: p.state?.health ?? 0,
 						money: p.state?.money ?? 0,
 						kills: p.match_stats?.kills ?? 0,
@@ -432,6 +505,10 @@ export function endActiveSession() {
 			console.warn('[SessionStore] Warning: Failed to record end snapshot:', snapErr.message)
 		}
 		
+		// Close file streams for this session
+		closeStreamsForSession(sPath)
+		resetTimelineState(null)
+		
 		return meta
 	} catch (err) {
 		console.warn('[SessionStore] Failed to end active session:', err)
@@ -458,6 +535,8 @@ export function listSessions() {
 			if (fs.existsSync(metaPath)) {
 				try {
 					const metadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'))
+					if (metadata.id) setPathCache(metadata.id, dirPath)
+					if (metadata.slug) setPathCache(metadata.slug, dirPath)
 					let summary = null
 					if (fs.existsSync(summaryPath)) {
 						summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8'))
@@ -487,11 +566,11 @@ export function readSession(sessionId) {
 		if (!sPath) return null
 		
 		const metadata = JSON.parse(fs.readFileSync(path.join(sPath, 'metadata.json'), 'utf8'))
-		// Prefer the in-memory summary when present so reads reflect not-yet-flushed
-		// counters (keyed by both id and slug to cover either lookup form).
 		const summary = summaryCache.get(sessionId)
 			?? summaryCache.get(metadata.id)
-			?? JSON.parse(fs.readFileSync(path.join(sPath, 'summary.json'), 'utf8'))
+			?? (fs.existsSync(path.join(sPath, 'summary.json'))
+				? JSON.parse(fs.readFileSync(path.join(sPath, 'summary.json'), 'utf8'))
+				: null)
 
 		return { metadata, summary }
 	} catch (err) {

@@ -1,17 +1,29 @@
 import { obsManager } from './integrations/obs-manager.js'
 
+let isObsSubscriberRegistered = false
+
 export const registerObsRoutes = (router, websocket) => {
 	// Status & config
 	router.get('/api/obs/status', (context) => {
-		context.body = obsManager.getStatus()
+		try {
+			context.body = obsManager.getStatus()
+		} catch (err) {
+			context.status = 500
+			context.body = { error: err.message }
+		}
 	})
 
 	router.post('/api/obs/config', async (context) => {
-		const body = context.request.body || {}
-		await obsManager.saveConfig(body)
-		context.body = {
-			success: true,
-			status: obsManager.getStatus(),
+		try {
+			const body = context.request.body || {}
+			await obsManager.saveConfig(body)
+			context.body = {
+				success: true,
+				status: obsManager.getStatus(),
+			}
+		} catch (err) {
+			context.status = 500
+			context.body = { success: false, error: err.message }
 		}
 	})
 
@@ -26,8 +38,13 @@ export const registerObsRoutes = (router, websocket) => {
 	})
 
 	router.post('/api/obs/disconnect', async (context) => {
-		await obsManager.disconnect()
-		context.body = { success: true, status: obsManager.getStatus() }
+		try {
+			await obsManager.disconnect()
+			context.body = { success: true, status: obsManager.getStatus() }
+		} catch (err) {
+			context.status = 500
+			context.body = { success: false, error: err.message }
+		}
 	})
 
 	// Scene control
@@ -72,8 +89,11 @@ export const registerObsRoutes = (router, websocket) => {
 		}
 	})
 
-	// Broadcast OBS status updates to connected WebSocket clients
-	obsManager.subscribe((status) => {
-		websocket?.broadcastToWebsockets?.('obs:status', status)
-	})
+	// Broadcast OBS status updates to connected WebSocket clients (singleton listener)
+	if (!isObsSubscriberRegistered) {
+		isObsSubscriberRegistered = true
+		obsManager.subscribe((status) => {
+			websocket?.broadcastToWebsockets?.('obs:status', status)
+		})
+	}
 }

@@ -30,6 +30,8 @@ export const registerHudRoutes = (router) => {
 // changes config/themes (which always triggers a refresh broadcast). This turns
 // a multi-read-per-request hot path into a single map lookup for repeat loads
 // and reconnects.
+// Max cache size bounded to prevent unbounded memory growth on dynamic queries.
+const MAX_THEME_ASSET_CACHE_SIZE = 1000
 const themeAssetCache = new Map()
 
 export const clearThemeAssetCache = () => {
@@ -49,7 +51,13 @@ export const concatStaticFileFromThemeTreeRecursively = async (path, concatTree,
 	}
 
 	const result = await buildConcatFromThemeTree(path, concatTree, themeTree)
-	themeAssetCache.set(cacheKey, result)
+	if (result) {
+		if (themeAssetCache.size >= MAX_THEME_ASSET_CACHE_SIZE) {
+			const firstKey = themeAssetCache.keys().next().value
+			themeAssetCache.delete(firstKey)
+		}
+		themeAssetCache.set(cacheKey, result)
+	}
 	return result
 }
 
@@ -86,35 +94,37 @@ const buildConcatFromThemeTree = async (path, concatTree, themeTree) => {
 	const encoding = textFormats.includes(parsedBuiltinPath.ext) ? 'utf-8' : null
 
 	if (await fileExists(customAppendPath)) {
-		concatTree.unshift(await readFile(customAppendPath, encoding))
-
-		const comment = concatComment(parsedCustomPath, theme, true)
-		if (comment) concatTree.unshift(comment)
+		try {
+			concatTree.unshift(await readFile(customAppendPath, encoding))
+			const comment = concatComment(parsedCustomPath, theme, true)
+			if (comment) concatTree.unshift(comment)
+		} catch (_) {}
 	}
 
 	if (await fileExists(builtinAppendPath)) {
-		concatTree.unshift(await readFile(builtinAppendPath, encoding))
-
-		const comment = concatComment(parsedBuiltinPath, theme, true)
-		if (comment) concatTree.unshift(comment)
+		try {
+			concatTree.unshift(await readFile(builtinAppendPath, encoding))
+			const comment = concatComment(parsedBuiltinPath, theme, true)
+			if (comment) concatTree.unshift(comment)
+		} catch (_) {}
 	}
 
 	if (await fileExists(sanitizedCustomPath)) {
-		concatTree.unshift(await readFile(sanitizedCustomPath, encoding))
-
-		const comment = concatComment(parsedCustomPath, theme, false)
-		if (comment) concatTree.unshift(comment)
-
-		return concatTree
+		try {
+			concatTree.unshift(await readFile(sanitizedCustomPath, encoding))
+			const comment = concatComment(parsedCustomPath, theme, false)
+			if (comment) concatTree.unshift(comment)
+			return concatTree
+		} catch (_) {}
 	}
 
 	if (await fileExists(sanitizedBuiltinPath)) {
-		concatTree.unshift(await readFile(sanitizedBuiltinPath, encoding))
-
-		const comment = concatComment(parsedBuiltinPath, theme, false)
-		if (comment) concatTree.unshift(comment)
-
-		return concatTree
+		try {
+			concatTree.unshift(await readFile(sanitizedBuiltinPath, encoding))
+			const comment = concatComment(parsedBuiltinPath, theme, false)
+			if (comment) concatTree.unshift(comment)
+			return concatTree
+		} catch (_) {}
 	}
 
 	return buildConcatFromThemeTree(path, concatTree, themeTree)

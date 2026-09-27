@@ -1,6 +1,5 @@
 import http from 'http'
 import os from 'os'
-import { parse } from 'url'
 import { join, basename, extname } from 'path'
 
 import bodyParser from 'koa-bodyparser'
@@ -24,6 +23,7 @@ import { registerVersionRoutes } from './version.js'
 import { registerSessionRoutes } from './sessions/session-routes.js'
 import { registerObsRoutes } from './obs-routes.js'
 import { obsManager } from './integrations/obs-manager.js'
+import { cs2Netcon } from './integrations/cs2-netcon.js'
 import { Websocket } from './websocket.js'
 import send from 'koa-send'
 import { builtinRootDirectory } from './helpers/paths.js'
@@ -31,6 +31,22 @@ import { isUiDevMode } from './dev-mode.js'
 import { isAuthorizedControl, getControlToken } from './auth.js'
 
 Error.stackTraceLimit = 64
+
+// Pre-computed roots and static sets
+const ROOT_CONFIG = join(builtinRootDirectory, 'src/config')
+const ROOT_RADAR = join(builtinRootDirectory, 'src/radar')
+const ROOT_REMOTE = join(builtinRootDirectory, 'src/remote')
+const ROOT_PUBLIC = join(builtinRootDirectory, 'public')
+
+const REDIRECT_PATHS = new Set(['/config', '/hud', '/radar', '/remote'])
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
+const IGNORED_ERROR_CODES = new Set(['ECONNABORTED', 'ECONNRESET', 'EPIPE', 'ECANCELED', 'ERR_STREAM_PREMATURE_CLOSE'])
+
+const MIME_TYPES = {
+	'.vue': 'text/plain',
+	'.js': 'application/javascript',
+	'.css': 'text/css',
+}
 
 const run = async () => {
 	await initSettings()
@@ -45,7 +61,7 @@ const run = async () => {
 
 	// Suppress expected client premature close & abort errors (e.g. video Range requests from OBS / browser)
 	app.on('error', (err) => {
-		if (['ECONNABORTED', 'ECONNRESET', 'EPIPE', 'ECANCELED', 'ERR_STREAM_PREMATURE_CLOSE'].includes(err.code)) {
+		if (IGNORED_ERROR_CODES.has(err.code)) {
 			return
 		}
 		console.error('[Server Error]', err.message || err)
@@ -60,13 +76,17 @@ const run = async () => {
 	}))
 
 	const websocket = new Websocket(server)
-	await websocket.init()
-	await obsManager.init().catch((err) => console.warn('[OBS] Init warning:', err.message))
+
+	// Параллельная инициализация подсистем вместо водопада await
+	await Promise.all([
+		websocket.init(),
+		obsManager.init().catch((err) => console.warn('[OBS] Init warning:', err.message)),
+	])
 
 	// 1. Mandatory Trailing Slash Redirects
 	app.use(async (context, next) => {
 		const path = context.path
-		if ((path === '/config' || path === '/hud' || path === '/radar' || path === '/remote') && !path.endsWith('/')) {
+		if (REDIRECT_PATHS.has(path)) {
 			context.status = 301
 			context.redirect(`${path}/`)
 			return
@@ -75,7 +95,7 @@ const run = async () => {
 		// one playback (per-show cache-busters guarantee a server hit), so the
 		// server log doubles as a "what actually played on stream" record
 		if (path.includes('/performances/') || path.includes('/waiting-idle/renders/')) {
-			console.log(`[anim] ${new Date().toISOString()} ${path.split('/').pop()} (${context.querystring})`)
+			console.log(`[anim] ${new Date().toISOString()} ${basename(path)} (${context.querystring})`)
 		}
 		await next()
 	})
@@ -85,8 +105,7 @@ const run = async () => {
 	// or carry a valid control token. GSI ingestion is exempt — it has its own
 	// token auth and CS2 posts from loopback.
 	app.use(async (context, next) => {
-		const method = context.method
-		const isSafe = method === 'GET' || method === 'HEAD' || method === 'OPTIONS'
+		const isSafe = SAFE_METHODS.has(context.method)
 		const path = context.path
 		const isGsi = path === '/gsi' || path.startsWith('/api/gsi')
 
@@ -127,41 +146,41 @@ const run = async () => {
 		if (context.status !== 404 || context.body) return
 
 		const urlPath = context.path
-		
+
 		try {
 			if (urlPath.startsWith('/config/')) {
 				const file = urlPath.slice(8).trim() || 'index.html'
-				const root = join(builtinRootDirectory, 'src/config')
-				await send(context, file, { root })
+				await send(context, file, { root: ROOT_CONFIG })
 				if (context.body) {
 					context.status = 200
-					if (file.endsWith('.vue')) context.type = 'text/plain'
-					else if (file.endsWith('.js')) context.type = 'application/javascript'
-					else if (file.endsWith('.css')) context.type = 'text/css'
+					const ext = extname(file)
+					if (MIME_TYPES[ext]) context.type = MIME_TYPES[ext]
 				}
-			} 
+			}
 			else if (urlPath.startsWith('/radar/')) {
 				const file = urlPath.slice(7).trim() || 'index.html'
-				const root = join(builtinRootDirectory, 'src/radar')
-				await send(context, file, { root })
+				await send(context, file, { root: ROOT_RADAR })
 				if (context.body) context.status = 200
-			} 
+			}
 			else if (urlPath.startsWith('/remote/')) {
 				const file = urlPath.slice(8).trim() || 'index.html'
-				const root = join(builtinRootDirectory, 'src/remote')
-				await send(context, file, { root })
+				await send(context, file, { root: ROOT_REMOTE })
 				if (context.body) {
 					context.status = 200
-					if (file.endsWith('.vue')) context.type = 'text/plain'
-					else if (file.endsWith('.js')) context.type = 'application/javascript'
-					else if (file.endsWith('.css')) context.type = 'text/css'
+					const ext = extname(file)
+					if (MIME_TYPES[ext]) context.type = MIME_TYPES[ext]
 				}
 			}
 			else if (urlPath.startsWith('/hud/')) {
-				const themeTree = await getThemeTree(context.query.theme)
-				const hudPath = decodeURIComponent(urlPath.slice(5) || 'index.html').replace(/^\//, '')
+				let hudPath
+				try {
+					hudPath = decodeURIComponent(urlPath.slice(5) || 'index.html').replace(/^\/+/, '')
+				} catch (_) {
+					return
+				}
 				if (basename(hudPath).startsWith('.')) return
 
+				const themeTree = await getThemeTree(context.query.theme)
 				const body = await concatStaticFileFromThemeTreeRecursively(hudPath, [], themeTree)
 				if (body) {
 					context.type = extname(hudPath)
@@ -171,24 +190,24 @@ const run = async () => {
 			}
 			else {
 				// Fallback to serving from the public directory
-				const root = join(builtinRootDirectory, 'public')
-				await send(context, urlPath.replace(/^\//, ''), { root })
+				await send(context, urlPath.replace(/^\/+/, ''), { root: ROOT_PUBLIC })
 				if (context.body) context.status = 200
 			}
-		} catch (err) {
+		} catch {
 			// Silent 404
 		}
 	})
 
 	server.listen(port, host)
-	
+
 	const interfaces = os.networkInterfaces()
 	const addresses = []
-	for (const k in interfaces) {
-		for (const k2 in interfaces[k]) {
-			const address = interfaces[k][k2]
-			if (address.family === 'IPv4' && !address.internal) {
-				addresses.push(address.address)
+	for (const k of Object.keys(interfaces)) {
+		const ifaceList = interfaces[k]
+		if (!ifaceList) continue
+		for (const iface of ifaceList) {
+			if (iface.family === 'IPv4' && !iface.internal) {
+				addresses.push(iface.address)
 			}
 		}
 	}
@@ -223,32 +242,37 @@ const run = async () => {
 		console.error('[NON-FATAL] Unhandled Rejection (server kept alive) at:', promise, 'reason:', reason)
 	})
 
+	let isShuttingDown = false
+
 	const shutdown = (code = 0) => {
+		if (isShuttingDown) return
+		isShuttingDown = true
+
 		console.info('Shutting down NeuronCast server cleanly...')
-		
-		try {
-			obsManager.disconnect().catch(() => {})
-			websocket.websocket.close(() => {
-				console.info('Websocket server closed.')
-				server.close(() => {
-					console.info('HTTP server closed.')
-					process.exit(code)
-				})
-			})
-		} catch (err) {
-			console.error('Error during graceful shutdown:', err)
-			process.exit(code)
-		}
 
 		// Force exit after timeout if closing hangs
-		setTimeout(() => {
+		const forceTimer = setTimeout(() => {
 			console.warn('Shutdown timed out, forcing exit.')
 			process.exit(code)
 		}, 3000)
+		if (forceTimer.unref) forceTimer.unref()
+
+		obsManager.disconnect().catch(() => {})
+		cs2Netcon.disconnect()
+
+		websocket.websocket.close(() => {
+			console.info('Websocket server closed.')
+			server.close((err) => {
+				if (err) console.error('Error closing HTTP server:', err)
+				else console.info('HTTP server closed.')
+				clearTimeout(forceTimer)
+				process.exit(code)
+			})
+		})
 	}
 
 	process.on('SIGINT', () => shutdown(0))
 	process.on('SIGTERM', () => shutdown(0))
 }
 
-run().then(() => {}).catch(console.error)
+run().catch(console.error)

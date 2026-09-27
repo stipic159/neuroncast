@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { writeJsonAtomic } from './json-file.js'
+import { writeJsonAtomicSync } from './json-file.js'
 import path from 'path'
 import { userspaceDirectory, userspaceSettingsPath } from './paths.js'
 import { applyThemeToOptions } from './theme-designer-helper.js'
@@ -19,8 +19,6 @@ export function ensurePackagesDir() {
 		console.warn('[EventPackageHelper] Failed to create event-packages folder:', err)
 	}
 }
-
-// writeJsonAtomic imported from ./json-file.js
 
 export function sanitizePackageSlug(id) {
 	if (!id || typeof id !== 'string') {
@@ -191,7 +189,7 @@ export function savePackage(packageId, data, { allowOverwrite = false } = {}) {
 		updatedAt: new Date().toISOString(),
 	}
 
-	writeJsonAtomic(pkgPath, payload)
+	writeJsonAtomicSync(pkgPath, payload)
 	return payload
 }
 
@@ -206,7 +204,7 @@ export function readPackageState() {
 }
 
 export function writePackageState(state) {
-	writeJsonAtomic(PACKAGE_STATE_PATH, state)
+	writeJsonAtomicSync(PACKAGE_STATE_PATH, state)
 }
 
 export function clearPackageState() {
@@ -225,7 +223,7 @@ export function getActivePackageStatus() {
 		return { active: false, state: null, package: null, warnings: [] }
 	}
 
-	const warnings = [...(state.warnings || [])]
+	const cleanWarnings = [...(state.warnings || [])]
 	let pkg = null
 
 	try {
@@ -233,8 +231,8 @@ export function getActivePackageStatus() {
 	} catch (_) {}
 
 	if (!pkg) {
-		warnings.push({ code: 'PACKAGE_MISSING', message: 'Active package file no longer exists.' })
-		return { active: true, state, package: null, warnings }
+		cleanWarnings.push({ code: 'PACKAGE_MISSING', message: 'Active package file no longer exists.' })
+		return { active: true, state, package: null, warnings: cleanWarnings }
 	}
 
 	const packageMeta = {
@@ -247,7 +245,7 @@ export function getActivePackageStatus() {
 		updatedAt: pkg.updatedAt,
 	}
 
-	return { active: true, state, package: packageMeta, warnings }
+	return { active: true, state, package: packageMeta, warnings: cleanWarnings }
 }
 
 export function deletePackage(packageId) {
@@ -257,6 +255,13 @@ export function deletePackage(packageId) {
 
 	if (fs.existsSync(pkgPath)) {
 		fs.unlinkSync(pkgPath)
+		// Clean up active package state if the deleted package was active
+		try {
+			const state = readPackageState()
+			if (state?.activePackageId === slug) {
+				clearPackageState()
+			}
+		} catch (_) {}
 		return true
 	}
 	return false
@@ -434,7 +439,7 @@ export function applyPackage(packageId) {
 			masterConfig.options[key] = { value: obj.value }
 		}
 
-		writeJsonAtomic(userspaceSettingsPath, masterConfig)
+		writeJsonAtomicSync(userspaceSettingsPath, masterConfig)
 
 		try {
 			writePackageState({

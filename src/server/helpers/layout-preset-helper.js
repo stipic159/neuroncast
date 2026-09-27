@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { writeJsonAtomic } from './json-file.js'
+import { writeJsonAtomicSync } from './json-file.js'
 import path from 'path'
 import { userspaceDirectory, userspaceSettingsPath } from './paths.js'
 
@@ -17,9 +17,6 @@ export function ensureLayoutsDir() {
 		console.warn('[LayoutPresetHelper] Failed to create layouts root folder:', err)
 	}
 }
-
-// writeJsonAtomic imported from ./json-file.js
-
 
 /**
  * Sanitizes a custom layout slug to prevent path traversal and shell injection
@@ -145,14 +142,19 @@ export function getLayoutPreset(layoutId) {
 	
 	if (!fs.existsSync(themePath)) return null
 	
-	const content = JSON.parse(fs.readFileSync(themePath, 'utf8'))
-	content.id = slug
-	content.isCustom = true
-	return content
+	try {
+		const content = JSON.parse(fs.readFileSync(themePath, 'utf8'))
+		content.id = slug
+		content.isCustom = true
+		return content
+	} catch (err) {
+		console.warn(`[LayoutPresetHelper] Failed to parse custom layout "${slug}":`, err.message)
+		return null
+	}
 }
 
 /**
- * Saves a custom layout preset to disk atomically
+ * Saves a custom layout preset to disk atomically and synchronously
  */
 export function saveLayoutPreset(layoutId, layoutData) {
 	ensureLayoutsDir()
@@ -182,7 +184,7 @@ export function saveLayoutPreset(layoutId, layoutData) {
 		options: formattedOptions
 	}
 	
-	writeJsonAtomic(targetPath, payload)
+	writeJsonAtomicSync(targetPath, payload)
 	return payload
 }
 
@@ -228,7 +230,7 @@ export function applyLayoutPresetToOptions(layoutId) {
 		masterConfig.options[key].value = obj.value
 	}
 	
-	// Write atomic update to theme.json
-	writeJsonAtomic(userspaceSettingsPath, masterConfig)
+	// Write atomic update to theme.json synchronously
+	writeJsonAtomicSync(userspaceSettingsPath, masterConfig)
 	return masterConfig
 }

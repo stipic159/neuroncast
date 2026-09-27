@@ -1,9 +1,33 @@
 import fs from 'fs'
-import { writeJsonAtomic } from '../helpers/json-file.js'
 import path from 'path'
 import { getSessionPath, updateSessionSummary } from './session-store.js'
 
-// writeJsonAtomic imported from ../helpers/json-file.js
+/**
+ * Calculates which side (CT or T) the starting team is on in a given round
+ * supporting MR12 (12 rounds per half) and Overtime (3 rounds per half).
+ */
+function getSideInRound(startSide, roundNumber) {
+	if (!startSide || !roundNumber || roundNumber <= 0) return startSide || 'CT'
+	if (roundNumber <= 12) return startSide
+	if (roundNumber <= 24) return startSide === 'CT' ? 'T' : 'CT'
+	// Overtime: 3 rounds per OT half (rounds 25-27, 28-30, etc.)
+	const otRound = roundNumber - 24
+	const otHalf = Math.floor((otRound - 1) / 3)
+	const isSwapped = (otHalf % 2) !== 0
+	return isSwapped ? (startSide === 'CT' ? 'T' : 'CT') : startSide
+}
+
+/**
+ * Helper to match team names case-insensitively while ignoring generic team names.
+ */
+function matchTeamName(targetName, candidateName) {
+	if (!targetName || !candidateName) return false
+	const target = targetName.trim().toLowerCase()
+	const candidate = candidateName.trim().toLowerCase()
+	if (['counter-terrorists', 'terrorists', 'ct', 't'].includes(target)) return false
+	if (['counter-terrorists', 'terrorists', 'ct', 't'].includes(candidate)) return false
+	return target === candidate || target.includes(candidate) || candidate.includes(target)
+}
 
 /**
  * Rebuilds stats.json for a given session by replaying timeline.jsonl and snapshots.jsonl
@@ -26,8 +50,8 @@ export function rebuildSessionStats(sessionId) {
 		console.warn(`[StatsAggregator] Failed to read metadata for session ${sessionId}:`, err)
 	}
 
-	const homeTeamName = metadata.teams?.home?.name || 'Home'
-	const awayTeamName = metadata.teams?.away?.name || 'Away'
+	const homeTeamName = metadata.teams?.home?.name || 'Counter-Terrorists'
+	const awayTeamName = metadata.teams?.away?.name || 'Terrorists'
 
 	// Define statistics structure
 	const stats = {
@@ -68,45 +92,51 @@ export function rebuildSessionStats(sessionId) {
 	// Read timeline events
 	let timelineEvents = []
 	if (fs.existsSync(timelinePath)) {
-		const content = fs.readFileSync(timelinePath, 'utf8')
-		timelineEvents = content
-			.split('\n')
-			.filter(Boolean)
-			.map((line, idx) => {
-				try {
-					return JSON.parse(line)
-				} catch (err) {
-					console.warn(`[StatsAggregator] Skipping malformed timeline event at line ${idx + 1} inside session ${sessionId}:`, err.message)
-					return null
-				}
-			})
-			.filter(Boolean)
+		try {
+			const content = fs.readFileSync(timelinePath, 'utf8')
+			timelineEvents = content
+				.split('\n')
+				.filter(Boolean)
+				.map((line, idx) => {
+					try {
+						return JSON.parse(line)
+					} catch (err) {
+						console.warn(`[StatsAggregator] Skipping malformed timeline event at line ${idx + 1} inside session ${sessionId}:`, err.message)
+						return null
+					}
+				})
+				.filter(Boolean)
+		} catch (err) {
+			console.warn(`[StatsAggregator] Error reading timeline.jsonl for ${sessionId}:`, err.message)
+		}
 	}
 
 	// Read snapshots
 	let snapshots = []
 	if (fs.existsSync(snapshotsPath)) {
-		const content = fs.readFileSync(snapshotsPath, 'utf8')
-		snapshots = content
-			.split('\n')
-			.filter(Boolean)
-			.map((line, idx) => {
-				try {
-					return JSON.parse(line)
-				} catch (err) {
-					console.warn(`[StatsAggregator] Skipping malformed snapshot at line ${idx + 1} inside session ${sessionId}:`, err.message)
-					return null
-				}
-			})
-			.filter(Boolean)
+		try {
+			const content = fs.readFileSync(snapshotsPath, 'utf8')
+			snapshots = content
+				.split('\n')
+				.filter(Boolean)
+				.map((line, idx) => {
+					try {
+						return JSON.parse(line)
+					} catch (err) {
+						console.warn(`[StatsAggregator] Skipping malformed snapshot at line ${idx + 1} inside session ${sessionId}:`, err.message)
+						return null
+					}
+				})
+				.filter(Boolean)
+		} catch (err) {
+			console.warn(`[StatsAggregator] Error reading snapshots.jsonl for ${sessionId}:`, err.message)
+		}
 	}
 
 	// 1. Process Timeline Events
 	let lastLiveStartedAt = null
 	let roundHasKill = false
 	let roundHasDeath = false
-	
-	// Track overall maps set
 	const mapsObservedSet = new Set()
 
 	for (const event of timelineEvents) {
@@ -144,40 +174,34 @@ export function rebuildSessionStats(sessionId) {
 				}
 				
 				stats.matchTotals.roundsObserved = Math.max(stats.matchTotals.roundsObserved, roundNumber)
-				
 				if (mapName && stats.maps[mapName]) {
 					stats.maps[mapName].roundsPlayed = Math.max(stats.maps[mapName].roundsPlayed, roundNumber)
-				}
-				
-				// Reconcile round winner details
-				const winnerSide = event.data?.winner // CT or T
-				if (winnerSide) {
-					// We will reconcile team score mapping based on snapshots, or team score changed events.
-					// For now, let's look at team score changed to map rounds won.
-				}
-				break
-
-			case 'team/score_changed':
-				const ctScore = event.data?.ctScore ?? 0
-				const tScore = event.data?.tScore ?? 0
-				
-				// Reconcile overall map scores
-				if (mapName && stats.maps[mapName]) {
-					// GSI doesn't tell us which team was CT/T directly here, but we can resolve it using the team score event data
-					// Standard fallback: update stats map scores
 				}
 				break
 
 			case 'bomb/planted':
 				stats.matchTotals.bombPlants++
+				if (event.actor?.steamid) {
+					if (!stats.players[event.actor.steamid]) {
+						stats.players[event.actor.steamid] = createPlayerStatObj(event.actor.name, event.actor.team)
+					}
+					stats.players[event.actor.steamid].bombPlants++
+				}
 				break
 
 			case 'bomb/defused':
 				stats.matchTotals.bombDefuses++
+				if (event.actor?.steamid) {
+					if (!stats.players[event.actor.steamid]) {
+						stats.players[event.actor.steamid] = createPlayerStatObj(event.actor.name, event.actor.team)
+					}
+					stats.players[event.actor.steamid].bombDefuses++
+				}
 				break
 
 			case 'player/kill':
-				stats.matchTotals.kills++
+				const killCount = Number(event.data?.count) || 1
+				stats.matchTotals.kills += killCount
 				
 				const killer = event.actor
 				if (killer && killer.steamid) {
@@ -185,9 +209,9 @@ export function rebuildSessionStats(sessionId) {
 						stats.players[killer.steamid] = createPlayerStatObj(killer.name, killer.team)
 					}
 					
-					stats.players[killer.steamid].kills++
+					stats.players[killer.steamid].kills += killCount
 					
-					// First Kill
+					// First Kill in round
 					if (!roundHasKill) {
 						stats.players[killer.steamid].firstKills++
 						stats.matchTotals.firstKills++
@@ -197,7 +221,8 @@ export function rebuildSessionStats(sessionId) {
 				break
 
 			case 'player/death':
-				stats.matchTotals.deaths++
+				const deathCount = Number(event.data?.count) || 1
+				stats.matchTotals.deaths += deathCount
 				
 				const victim = event.target
 				if (victim && victim.steamid) {
@@ -205,9 +230,9 @@ export function rebuildSessionStats(sessionId) {
 						stats.players[victim.steamid] = createPlayerStatObj(victim.name, victim.team)
 					}
 					
-					stats.players[victim.steamid].deaths++
+					stats.players[victim.steamid].deaths += deathCount
 					
-					// First Death
+					// First Death in round
 					if (!roundHasDeath) {
 						stats.players[victim.steamid].firstDeaths++
 						stats.matchTotals.firstDeaths++
@@ -220,25 +245,28 @@ export function rebuildSessionStats(sessionId) {
 
 	stats.matchTotals.mapsObserved = mapsObservedSet.size
 
-	// 2. Consolidate Assists & MVPs from Snapshots
+	// 2. Consolidate Assists, MVPs and Scores from Snapshots
 	const latestPlayerSnapshots = {}
 	let latestScores = { ct: 0, t: 0 }
-	let homeTeamSide = 'CT' // Default guess
-	let awayTeamSide = 'T'
-	
+	let homeStartingSide = 'CT' // Default assumption if names are generic
+	let resolvedHomeSide = 'CT'
+
 	for (const snap of snapshots) {
 		if (snap.score) {
 			latestScores = snap.score
 		}
 		
-		// Map side guesses
+		const currentRound = snap.round ?? 0
+		
+		// Attempt to resolve home side based on matching team names
 		if (snap.teams) {
-			if (snap.teams.ct?.name === homeTeamName) {
-				homeTeamSide = 'CT'
-				awayTeamSide = 'T'
-			} else if (snap.teams.t?.name === homeTeamName) {
-				homeTeamSide = 'T'
-				awayTeamSide = 'CT'
+			if (matchTeamName(homeTeamName, snap.teams.ct?.name) || matchTeamName(awayTeamName, snap.teams.t?.name)) {
+				resolvedHomeSide = 'CT'
+			} else if (matchTeamName(homeTeamName, snap.teams.t?.name) || matchTeamName(awayTeamName, snap.teams.ct?.name)) {
+				resolvedHomeSide = 'T'
+			} else {
+				// Default to MR12 halftime progression
+				resolvedHomeSide = getSideInRound(homeStartingSide, currentRound)
 			}
 		}
 
@@ -246,15 +274,10 @@ export function rebuildSessionStats(sessionId) {
 			for (const p of snap.players) {
 				if (!p.steamid) continue
 				
-				// Reconcile player side mapping
 				let resolvedTeam = 'home'
-				if (p.team === homeTeamSide) {
-					resolvedTeam = 'home'
-				} else if (p.team === awayTeamSide) {
-					resolvedTeam = 'away'
-				} else {
-					// Fallback to p.team matching id
-					resolvedTeam = p.team?.toLowerCase() === metadata.teams?.away?.id ? 'away' : 'home'
+				if (p.team) {
+					const upperSide = String(p.team).toUpperCase()
+					resolvedTeam = (upperSide === resolvedHomeSide) ? 'home' : 'away'
 				}
 
 				latestPlayerSnapshots[p.steamid] = {
@@ -269,14 +292,14 @@ export function rebuildSessionStats(sessionId) {
 		// Map scores updates
 		const mapName = snap.map
 		if (mapName && stats.maps[mapName] && snap.score) {
-			stats.maps[mapName].homeScore = homeTeamSide === 'CT' ? snap.score.ct : snap.score.t
-			stats.maps[mapName].awayScore = homeTeamSide === 'CT' ? snap.score.t : snap.score.ct
+			stats.maps[mapName].homeScore = resolvedHomeSide === 'CT' ? snap.score.ct : snap.score.t
+			stats.maps[mapName].awayScore = resolvedHomeSide === 'CT' ? snap.score.t : snap.score.ct
 		}
 	}
 
 	// Update overall team scores
-	stats.teams.home.roundsWon = homeTeamSide === 'CT' ? latestScores.ct : latestScores.t
-	stats.teams.away.roundsWon = homeTeamSide === 'CT' ? latestScores.t : latestScores.ct
+	stats.teams.home.roundsWon = resolvedHomeSide === 'CT' ? latestScores.ct : latestScores.t
+	stats.teams.away.roundsWon = resolvedHomeSide === 'CT' ? latestScores.t : latestScores.ct
 
 	// 3. Integrate snapshots back into stats players structure
 	for (const [steamid, snapData] of Object.entries(latestPlayerSnapshots)) {
@@ -284,8 +307,8 @@ export function rebuildSessionStats(sessionId) {
 			stats.players[steamid] = createPlayerStatObj(snapData.name, snapData.team)
 		}
 		
-		stats.players[steamid].name = snapData.name
-		stats.players[steamid].team = snapData.team
+		stats.players[steamid].name = snapData.name || stats.players[steamid].name
+		stats.players[steamid].team = snapData.team || stats.players[steamid].team
 		
 		stats.players[steamid].assists = snapData.assists
 		stats.players[steamid].assistsSource = 'snapshot'
@@ -294,11 +317,10 @@ export function rebuildSessionStats(sessionId) {
 		stats.players[steamid].mvpsSource = 'snapshot'
 	}
 
-	// 4. Finalize K/D and team stats
-	for (const [steamid, p] of Object.entries(stats.players)) {
+	// 4. Finalize K/D, missing fallbacks and team cumulative stats
+	for (const [, p] of Object.entries(stats.players)) {
 		p.kdRatio = +(p.kills / Math.max(1, p.deaths)).toFixed(2)
 		
-		// Fill in fallback unavailable settings
 		if (p.assists === null) {
 			p.assists = 0
 			p.assistsSource = 'unavailable'
@@ -313,12 +335,18 @@ export function rebuildSessionStats(sessionId) {
 		if (stats.teams[tKey]) {
 			stats.teams[tKey].kills += p.kills
 			stats.teams[tKey].deaths += p.deaths
+			stats.teams[tKey].bombPlants += p.bombPlants || 0
+			stats.teams[tKey].bombDefuses += p.bombDefuses || 0
 		}
 	}
 
-	// Write stats.json atomically
+	// Write stats.json synchronously
 	const statsPath = path.join(sPath, 'stats.json')
-	writeJsonAtomic(statsPath, stats).catch(e => console.warn("[StatsAggregator] Atomic write failed:", e.message))
+	try {
+		fs.writeFileSync(statsPath, JSON.stringify(stats, null, '\t'), 'utf8')
+	} catch (err) {
+		console.warn(`[StatsAggregator] Failed to write stats.json for ${sessionId}:`, err.message)
+	}
 	
 	// Update events count in summary.json
 	updateSessionSummary(sessionId, { eventsRecorded: timelineEvents.length })
@@ -331,7 +359,7 @@ export function rebuildSessionStats(sessionId) {
  * Creates a standard player statistic template
  */
 function createPlayerStatObj(name, team = 'home') {
-	const resolvedTeam = team?.toLowerCase() === 'away' || team === 'away' ? 'away' : 'home'
+	const resolvedTeam = (team === 'away' || String(team).toLowerCase() === 'away') ? 'away' : 'home'
 	return {
 		name: name || 'Player',
 		team: resolvedTeam,
@@ -356,7 +384,6 @@ function createPlayerStatObj(name, team = 'home') {
  */
 export function updateSessionStatsIncremental(sessionId) {
 	try {
-		// Rebuilding is extremely fast and robust, and guarantees perfect synchronization
 		rebuildSessionStats(sessionId)
 	} catch (err) {
 		console.warn(`[StatsAggregator] Warning: Failed to incrementally update stats for ${sessionId}:`, err.message)

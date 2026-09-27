@@ -4,20 +4,27 @@ import { builtinRootDirectory } from './paths.js'
 
 const logsDir = join(builtinRootDirectory, 'logs')
 
-if (!existsSync(logsDir)) {
-	mkdirSync(logsDir, { recursive: true })
+try {
+	if (!existsSync(logsDir)) {
+		mkdirSync(logsDir, { recursive: true })
+	}
+} catch (err) {
+	console.warn('[Logger] Failed to create logs directory on startup:', err.message)
 }
 
 const matchHistoryPath = join(logsDir, 'match_history.json')
 
 export const logRound = (data) => {
 	try {
+		if (!existsSync(logsDir)) {
+			mkdirSync(logsDir, { recursive: true })
+		}
 		const entry = JSON.stringify({
-			...data,
+			...(data || {}),
 			timestamp: new Date().toISOString()
 		}) + '\n'
-		appendFileSync(matchHistoryPath, entry)
+		appendFileSync(matchHistoryPath, entry, 'utf8')
 	} catch (err) {
-		console.error('Failed to log round:', err)
+		console.error('[Logger] Failed to log round:', err.message)
 	}
 }

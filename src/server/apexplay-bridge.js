@@ -105,12 +105,19 @@ export function maybePushApexPlay(gsiState) {
 	lastPushAt = now
 	inFlight = true
 
-	const endpoint = cfg.url.replace(/\/+$/, '') + '/api/webhooks/eon'
+	let endpoint
+	try {
+		endpoint = new URL('/api/webhooks/eon', cfg.url.replace(/\/+$/, '') + '/').toString()
+	} catch (_) {
+		inFlight = false
+		return
+	}
+
 	fetch(endpoint, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${cfg.token}` },
 		body: JSON.stringify(payload),
-		signal: AbortSignal.timeout ? AbortSignal.timeout(2000) : undefined,
+		signal: typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(2000) : undefined,
 	})
 		.catch(() => { /* transient network on observer machine; ignore */ })
 		.finally(() => { inFlight = false })

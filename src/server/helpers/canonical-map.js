@@ -21,23 +21,27 @@ try {
 	const jsFiles = files.filter(f => f.endsWith('.js'))
 
 	for (const file of jsFiles) {
-		const filePath = path.join(slicesDir, file)
-		const fileUrl = pathToFileURL(filePath).href
-		const module = await import(fileUrl)
+		try {
+			const filePath = path.join(slicesDir, file)
+			const fileUrl = pathToFileURL(filePath).href
+			const module = await import(fileUrl)
 
-		// Aggregate all exported definition arrays from this slice
-		for (const key of Object.keys(module)) {
-			const definitionsList = module[key]
-			if (Array.isArray(definitionsList)) {
-				definitionsList.forEach(def => {
-					ALL_DEFINITIONS.push(def)
-					if (def.canonical && def.aliases) {
-						def.aliases.forEach(alias => {
-							LEGACY_TO_CANONICAL[alias] = def.canonical
-						})
-					}
-				})
+			// Aggregate all exported definition arrays from this slice
+			for (const key of Object.keys(module)) {
+				const definitionsList = module[key]
+				if (Array.isArray(definitionsList)) {
+					definitionsList.forEach(def => {
+						ALL_DEFINITIONS.push(def)
+						if (def.canonical && def.aliases) {
+							def.aliases.forEach(alias => {
+								LEGACY_TO_CANONICAL[alias] = def.canonical
+							})
+						}
+					})
+				}
 			}
+		} catch (fileErr) {
+			console.warn(`[CanonicalMap] Failed to load slice "${file}":`, fileErr.message)
 		}
 	}
 
@@ -90,4 +94,3 @@ export function getSunsetCandidates(targetRelease) {
 	}
 	return candidates
 }
-

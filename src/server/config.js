@@ -31,6 +31,35 @@ import {
 	clearPackageState,
 } from './helpers/event-package-helper.js'
 
+// Константы и пути вынесены на уровень модуля, чтобы не пересоздавать их на каждый запрос
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
+const MAX_FONT_BYTES = 5 * 1024 * 1024  // 5 MB
+
+const ALLOWED_IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp'])
+const ALLOWED_FONT_EXTS = new Set(['woff2', 'woff', 'ttf', 'otf'])
+
+const CONFIG_STATIC_ROOT = join(builtinRootDirectory, 'src/config')
+const FONTS_DIRECTORY = join(userspaceDirectory, 'fonts')
+const BACKUP_THEME_PATH = join(userspaceDirectory, 'theme.backup.pre-canonical.json')
+
+// Предварительная оценка размера base64 строки без выделения тяжелого Buffer в куче
+const getBase64Payload = (base64) => {
+	const commaIndex = base64.indexOf(',')
+	const cleanStr = commaIndex !== -1 ? base64.slice(commaIndex + 1) : base64
+	// 4 символа base64 = 3 байта сырых данных
+	const estimatedBytes = (cleanStr.length * 3) / 4
+	return { cleanStr, estimatedBytes }
+}
+
+const purgeAliases = (options, canonicalKey) => {
+	const aliases = CANONICAL_TO_LEGACY[canonicalKey]
+	if (aliases) {
+		for (const alias of aliases) {
+			delete options[alias]
+		}
+	}
+}
+
 export const registerConfigRoutes = (router, websocket) => {
 	router.get('/', (context) => {
 		context.status = 302
@@ -38,80 +67,91 @@ export const registerConfigRoutes = (router, websocket) => {
 	})
 
 	router.get('/config/options', async (context) => {
-		const { settings } = await getSettings().catch((err) => {
+		let settings
+		try {
+			const res = await getSettings()
+			settings = res.settings
+		} catch (err) {
 			console.error('Error getting settings', err)
-			return { settings: { options: {} } }
-		})
+			settings = { options: {} }
+		}
 
-		context.body = [
+		const options = settings?.options || {}
+		const descriptions = settings?.optionSectionDescriptions
+
+		const result = [
 			{
 				fallback: 'default',
 				key: 'theme',
 				section: 'Theme',
 				type: 'string',
-				value: settings.parent,
+				value: settings?.parent,
 			},
+		]
 
-			...Object.entries(settings.options).map(([key, data]) => ({
+		for (const key in options) {
+			const data = options[key]
+			result.push({
 				...data,
 				key,
-				sectionDescription: settings.optionSectionDescriptions?.[data.section],
-			})),
-		]
+				sectionDescription: descriptions?.[data.section],
+			})
+		}
+
+		context.body = result
 	})
 
 	router.get('/analysis', async (context) => {
-		await send(context, 'analysis.html', { root: `${builtinRootDirectory}/src/config` })
+		try {
+			await send(context, 'analysis.html', { root: CONFIG_STATIC_ROOT })
+		} catch (err) {
+			context.status = 404
+			context.body = 'Analysis view not found'
+		}
 	})
 
 	router.put('/config/options', async (context) => {
 		const settings = await readJson(userspaceSettingsPath)
 		normalizeSettingsOptions(settings)
 
-		if (! settings.options) settings.options = {}
+		if (!settings.options) settings.options = {}
 
 		let wasThemeChanged = false
-		const incoming = context.request.body
+		const incoming = context.request.body || {}
 
-		// 1. Detect Game Mode change for automatic presets
+		// 1. Применение пресетов режима
 		const currentMode = settings.options['match.mode']?.value
 		const newMode = incoming['match.mode']
 
 		if (newMode && newMode !== currentMode) {
 			const presets = MODE_PRESETS[newMode]
 			if (presets) {
-				for (const [key, val] of Object.entries(presets)) {
+				for (const key in presets) {
 					const canonicalKey = LEGACY_TO_CANONICAL[key] || key
-					if (! settings.options[canonicalKey]) settings.options[canonicalKey] = {}
-					settings.options[canonicalKey].value = val
-
-					// Remove legacy aliases to prevent duplication
-					const aliases = CANONICAL_TO_LEGACY[canonicalKey] || []
-					for (const alias of aliases) {
-						delete settings.options[alias]
-					}
+					if (!settings.options[canonicalKey]) settings.options[canonicalKey] = {}
+					settings.options[canonicalKey].value = presets[key]
+					purgeAliases(settings.options, canonicalKey)
 				}
 			}
 		}
 
-		for (const [key, value] of Object.entries(incoming)) {
+		// 2. Обработка входящих настроек
+		for (const key in incoming) {
+			const value = incoming[key]
 			if (key === 'theme') {
-				wasThemeChanged = settings.parent !== (value || 'default')
-				settings.parent = (value || 'default')
+				const normalizedTheme = value || 'default'
+				wasThemeChanged = settings.parent !== normalizedTheme
+				settings.parent = normalizedTheme
 			} else {
 				const canonicalKey = LEGACY_TO_CANONICAL[key] || key
-				if (value != null) { // this SHOULD be a double-equal instead of triple-equal (similar to lodash's isNil)
-					if (! settings.options[canonicalKey]) settings.options[canonicalKey] = {}
+				if (value != null) {
+					if (!settings.options[canonicalKey]) settings.options[canonicalKey] = {}
 					settings.options[canonicalKey].value = value
 				} else if (settings.options[canonicalKey]) {
 					delete settings.options[canonicalKey].value
 				}
 
-				// Remove legacy aliases to prevent duplication in userspace theme.json
-				const aliases = CANONICAL_TO_LEGACY[canonicalKey] || []
-				for (const alias of aliases) {
-					delete settings.options[alias]
-				}
+				purgeAliases(settings.options, canonicalKey)
 			}
 		}
 
@@ -123,36 +163,37 @@ export const registerConfigRoutes = (router, websocket) => {
 		context.status = 204
 	})
 
-	// Uploads are served back from the same origin under /hud/, so anything
-	// script-bearing (SVG in particular) would be a stored-XSS vector against the
-	// HUD/config origin. Restrict to raster formats and cap the decoded size.
-	const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
-	const MAX_FONT_BYTES = 5 * 1024 * 1024  // 5 MB
-
 	router.post('/config/upload-image', async (context) => {
-		const { filename, base64 } = context.request.body
+		const { filename, base64 } = context.request.body || {}
 		if (!filename || !base64) {
 			context.status = 400
 			return
 		}
-		try {
-			const ext = String(filename).split('.').pop().toLowerCase()
-			if (!['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) {
-				context.status = 400
-				context.body = { error: 'Unsupported file type. Use PNG, JPG, GIF, or WEBP (SVG is rejected for security).' }
-				return
-			}
-			const newName = `upload-${Date.now()}.${ext}`
-			const filepath = join(userspaceDirectory, newName)
 
-			const base64Data = base64.split(',')[1] || base64
-			const buffer = Buffer.from(base64Data, 'base64')
+		const ext = String(filename).slice(String(filename).lastIndexOf('.') + 1).toLowerCase()
+		if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+			context.status = 400
+			context.body = { error: 'Unsupported file type. Use PNG, JPG, GIF, or WEBP (SVG is rejected for security).' }
+			return
+		}
+
+		const { cleanStr, estimatedBytes } = getBase64Payload(base64)
+		if (estimatedBytes > MAX_IMAGE_BYTES * 1.05) {
+			context.status = 413
+			context.body = { error: `Image exceeds the ${Math.round(MAX_IMAGE_BYTES / (1024 * 1024))} MB limit.` }
+			return
+		}
+
+		try {
+			const buffer = Buffer.from(cleanStr, 'base64')
 			if (buffer.length > MAX_IMAGE_BYTES) {
 				context.status = 413
 				context.body = { error: `Image exceeds the ${Math.round(MAX_IMAGE_BYTES / (1024 * 1024))} MB limit.` }
 				return
 			}
-			await writeFile(filepath, buffer)
+
+			const newName = `upload-${Date.now()}.${ext}`
+			await writeFile(join(userspaceDirectory, newName), buffer)
 
 			context.body = { url: `/hud/${newName}` }
 		} catch (err) {
@@ -163,17 +204,31 @@ export const registerConfigRoutes = (router, websocket) => {
 	})
 
 	router.post('/config/upload-font', async (context) => {
-		const { filename, base64 } = context.request.body
+		const { filename, base64 } = context.request.body || {}
 		if (!filename || !base64) {
 			context.status = 400
 			return
 		}
 
+		const ext = String(filename).slice(String(filename).lastIndexOf('.') + 1).toLowerCase()
+		if (!ALLOWED_FONT_EXTS.has(ext)) {
+			context.status = 400
+			context.body = { error: 'Unsupported font type' }
+			return
+		}
+
+		const { cleanStr, estimatedBytes } = getBase64Payload(base64)
+		if (estimatedBytes > MAX_FONT_BYTES * 1.05) {
+			context.status = 413
+			context.body = { error: `Font exceeds the ${Math.round(MAX_FONT_BYTES / (1024 * 1024))} MB limit.` }
+			return
+		}
+
 		try {
-			const ext = String(filename).split('.').pop().toLowerCase()
-			if (!['woff2', 'woff', 'ttf', 'otf'].includes(ext)) {
-				context.status = 400
-				context.body = { error: 'Unsupported font type' }
+			const buffer = Buffer.from(cleanStr, 'base64')
+			if (buffer.length > MAX_FONT_BYTES) {
+				context.status = 413
+				context.body = { error: `Font exceeds the ${Math.round(MAX_FONT_BYTES / (1024 * 1024))} MB limit.` }
 				return
 			}
 
@@ -182,18 +237,11 @@ export const registerConfigRoutes = (router, websocket) => {
 				.replace(/[^a-z0-9_-]+/gi, '-')
 				.replace(/^-+|-+$/g, '')
 				.slice(0, 48) || 'uploaded-font'
-			const newName = `font-${Date.now()}-${fontFamily}.${ext}`
-			const fontsDirectory = join(userspaceDirectory, 'fonts')
-			const filepath = join(fontsDirectory, newName)
 
-			const base64Data = base64.split(',')[1] || base64
-			const buffer = Buffer.from(base64Data, 'base64')
-			if (buffer.length > MAX_FONT_BYTES) {
-				context.status = 413
-				context.body = { error: `Font exceeds the ${Math.round(MAX_FONT_BYTES / (1024 * 1024))} MB limit.` }
-				return
-			}
-			await mkdir(fontsDirectory, { recursive: true })
+			const newName = `font-${Date.now()}-${fontFamily}.${ext}`
+			const filepath = join(FONTS_DIRECTORY, newName)
+
+			await mkdir(FONTS_DIRECTORY, { recursive: true })
 			await writeFile(filepath, buffer)
 
 			context.body = {
@@ -213,7 +261,7 @@ export const registerConfigRoutes = (router, websocket) => {
 	})
 
 	/* ── Layout Presets CRUD (Phase 18D) ── */
-	router.get('/config/layout-presets', async (context) => {
+	router.get('/config/layout-presets', (context) => {
 		try {
 			context.body = listLayoutPresets()
 			context.status = 200
@@ -223,7 +271,7 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.get('/config/layout-presets/:id', async (context) => {
+	router.get('/config/layout-presets/:id', (context) => {
 		try {
 			const preset = getLayoutPreset(context.params.id)
 			if (!preset) {
@@ -239,12 +287,11 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.post('/config/layout-presets', async (context) => {
+	router.post('/config/layout-presets', (context) => {
 		try {
 			const incoming = context.request.body || {}
 			const slug = incoming.id || ('layout-' + Math.random().toString(36).substring(2, 8))
-			const saved = saveLayoutPreset(slug, incoming)
-			context.body = saved
+			context.body = saveLayoutPreset(slug, incoming)
 			context.status = 201
 		} catch (err) {
 			context.status = 400
@@ -252,12 +299,10 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.put('/config/layout-presets/:id', async (context) => {
+	router.put('/config/layout-presets/:id', (context) => {
 		try {
-			const id = context.params.id
 			const incoming = context.request.body || {}
-			const saved = saveLayoutPreset(id, incoming)
-			context.body = saved
+			context.body = saveLayoutPreset(context.params.id, incoming)
 			context.status = 200
 		} catch (err) {
 			context.status = 400
@@ -265,10 +310,9 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.delete('/config/layout-presets/:id', async (context) => {
+	router.delete('/config/layout-presets/:id', (context) => {
 		try {
-			const deleted = deleteLayoutPreset(context.params.id)
-			if (!deleted) {
+			if (!deleteLayoutPreset(context.params.id)) {
 				context.status = 404
 				context.body = { error: `Layout preset with ID "${context.params.id}" not found.` }
 				return
@@ -296,11 +340,10 @@ export const registerConfigRoutes = (router, websocket) => {
 	/* ── Setup Import/Export ── */
 	router.get('/config/export', async (context) => {
 		const theme = await readJson(userspaceSettingsPath).catch(() => ({}))
-		const presets = listLayoutPresets()
-		
+
 		context.body = {
 			theme,
-			presets,
+			presets: listLayoutPresets(),
 			exportedAt: new Date().toISOString()
 		}
 		context.set('Content-Disposition', `attachment; filename="neuroncast-setup-${Date.now()}.json"`)
@@ -315,22 +358,18 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 
 		if (theme) {
-			// 1. Create backup of existing theme.json if it exists
 			const currentTheme = await readJson(userspaceSettingsPath).catch(() => null)
 			if (currentTheme) {
-				const backupPath = `${userspaceDirectory}/theme.backup.pre-canonical.json`
-				await writeJson(backupPath, currentTheme)
+				await writeJson(BACKUP_THEME_PATH, currentTheme)
 			}
 
-			// 2. Normalize imported options to canonical
 			normalizeSettingsOptions(theme)
-
 			await writeJson(userspaceSettingsPath, theme)
 		}
 
 		if (Array.isArray(presets)) {
 			for (const preset of presets) {
-				if (preset && preset.id) {
+				if (preset?.id) {
 					try {
 						saveLayoutPreset(preset.id, preset)
 					} catch (e) {
@@ -346,7 +385,7 @@ export const registerConfigRoutes = (router, websocket) => {
 	})
 
 	/* ── Visual Event Themes CRUD (Phase 17A) ── */
-	router.get('/config/event-themes', async (context) => {
+	router.get('/config/event-themes', (context) => {
 		try {
 			context.body = listEventThemes()
 			context.status = 200
@@ -356,7 +395,7 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.get('/config/event-themes/:id', async (context) => {
+	router.get('/config/event-themes/:id', (context) => {
 		try {
 			const theme = getEventTheme(context.params.id)
 			if (!theme) {
@@ -372,12 +411,11 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.post('/config/event-themes', async (context) => {
+	router.post('/config/event-themes', (context) => {
 		try {
 			const incoming = context.request.body || {}
 			const slug = incoming.id || ('theme-' + Math.random().toString(36).substring(2, 8))
-			const saved = saveCustomTheme(slug, incoming)
-			context.body = saved
+			context.body = saveCustomTheme(slug, incoming)
 			context.status = 201
 		} catch (err) {
 			context.status = 400
@@ -385,12 +423,10 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.put('/config/event-themes/:id', async (context) => {
+	router.put('/config/event-themes/:id', (context) => {
 		try {
-			const id = context.params.id
 			const incoming = context.request.body || {}
-			const saved = saveCustomTheme(id, incoming)
-			context.body = saved
+			context.body = saveCustomTheme(context.params.id, incoming)
 			context.status = 200
 		} catch (err) {
 			context.status = 400
@@ -398,10 +434,9 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.delete('/config/event-themes/:id', async (context) => {
+	router.delete('/config/event-themes/:id', (context) => {
 		try {
-			const deleted = deleteCustomTheme(context.params.id)
-			if (!deleted) {
+			if (!deleteCustomTheme(context.params.id)) {
 				context.status = 404
 				context.body = { error: `Theme with ID "${context.params.id}" not found or cannot be deleted.` }
 				return
@@ -427,7 +462,7 @@ export const registerConfigRoutes = (router, websocket) => {
 	})
 
 	/* ── Event Packages CRUD (Phase 20A) ── */
-	router.get('/config/event-packages', async (context) => {
+	router.get('/config/event-packages', (context) => {
 		try {
 			context.body = listPackages()
 			context.status = 200
@@ -437,8 +472,7 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	/* /active must be registered before /:id so "active" is not consumed as a package ID */
-	router.get('/config/event-packages/active', async (context) => {
+	router.get('/config/event-packages/active', (context) => {
 		try {
 			context.body = getActivePackageStatus()
 			context.status = 200
@@ -448,7 +482,7 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.delete('/config/event-packages/active', async (context) => {
+	router.delete('/config/event-packages/active', (context) => {
 		try {
 			clearPackageState()
 			context.status = 204
@@ -458,7 +492,7 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.get('/config/event-packages/:id', async (context) => {
+	router.get('/config/event-packages/:id', (context) => {
 		try {
 			const pkg = getPackage(context.params.id)
 			if (!pkg) {
@@ -474,12 +508,11 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.post('/config/event-packages', async (context) => {
+	router.post('/config/event-packages', (context) => {
 		try {
 			const incoming = context.request.body || {}
 			const slug = incoming.id || ('pkg-' + Math.random().toString(36).substring(2, 8))
-			const saved = savePackage(slug, incoming, { allowOverwrite: false })
-			context.body = saved
+			context.body = savePackage(slug, incoming, { allowOverwrite: false })
 			context.status = 201
 		} catch (err) {
 			if (err.code === 'PACKAGE_EXISTS') {
@@ -492,12 +525,10 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.put('/config/event-packages/:id', async (context) => {
+	router.put('/config/event-packages/:id', (context) => {
 		try {
-			const id = context.params.id
 			const incoming = context.request.body || {}
-			const saved = savePackage(id, incoming, { allowOverwrite: true })
-			context.body = saved
+			context.body = savePackage(context.params.id, incoming, { allowOverwrite: true })
 			context.status = 200
 		} catch (err) {
 			context.status = 400
@@ -505,10 +536,9 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	router.delete('/config/event-packages/:id', async (context) => {
+	router.delete('/config/event-packages/:id', (context) => {
 		try {
-			const deleted = deletePackage(context.params.id)
-			if (!deleted) {
+			if (!deletePackage(context.params.id)) {
 				context.status = 404
 				context.body = { error: `Package with ID "${context.params.id}" not found.` }
 				return
@@ -520,13 +550,10 @@ export const registerConfigRoutes = (router, websocket) => {
 		}
 	})
 
-	/* capture-current must be registered before /:id/apply so the static segment
-	   is not consumed as an :id parameter by Koa Router */
-	router.post('/config/event-packages/capture-current', async (context) => {
+	router.post('/config/event-packages/capture-current', (context) => {
 		try {
 			const incoming = context.request.body || {}
-			const result = captureCurrentAsPackage(incoming)
-			context.body = result
+			context.body = captureCurrentAsPackage(incoming)
 			context.status = 201
 		} catch (err) {
 			if (err.code === 'PACKAGE_EXISTS') {

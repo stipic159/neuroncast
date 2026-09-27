@@ -11,23 +11,33 @@ const VBS_SCRIPT_PATH = path.join(userspaceDirectory, 'cs2-sendkey.vbs')
 function ensureVbsScript() {
 	if (os.platform() !== 'win32') return
 	try {
+		if (fs.existsSync(VBS_SCRIPT_PATH)) return
 		fs.mkdirSync(userspaceDirectory, { recursive: true })
 		fs.writeFileSync(VBS_SCRIPT_PATH, `
 Set WshShell = CreateObject("WScript.Shell")
 WshShell.AppActivate "Counter-Strike"
 WshShell.SendKeys WScript.Arguments(0)
 `, 'utf8')
-	} catch (_) {}
+	} catch (err) {
+		console.warn('[CS2 KeyPress] Failed to create sendkey script:', err.message)
+	}
 }
 
 function sendWindowsKey(slot) {
 	if (os.platform() !== 'win32') return false
 	ensureVbsScript()
-	const slotStr = String(slot).trim()
+	const slotStr = String(slot ?? '').trim()
 	const keyToSend = slotStr === '0' || slotStr === '10' ? '0' : slotStr
 
+	// Strict sanitization: only allow single digit 0-9 to prevent command/argument injection
+	if (!/^[0-9]$/.test(keyToSend)) {
+		console.warn('[CS2 KeyPress] Rejected invalid slot key:', slot)
+		return false
+	}
+
 	try {
-		cp.exec(`cscript //Nologo "${VBS_SCRIPT_PATH}" ${keyToSend}`, (err) => {
+		// Use execFile instead of exec with shell string interpolation to prevent command injection
+		cp.execFile('cscript.exe', ['//Nologo', VBS_SCRIPT_PATH, keyToSend], (err) => {
 			if (err) {
 				console.warn('[CS2 KeyPress] SendKeys error:', err.message)
 			}
@@ -96,6 +106,7 @@ class Cs2Netcon {
 			if (this.autoReconnect) {
 				if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
 				this.reconnectTimer = setTimeout(() => this.connect(), 3000)
+				if (this.reconnectTimer?.unref) this.reconnectTimer.unref()
 			}
 		})
 	}
@@ -117,7 +128,8 @@ class Cs2Netcon {
 
 	sendCommand(command) {
 		if (!command || typeof command !== 'string') return false
-		const cleanCmd = command.trim()
+		const cleanCmd = command.replace(/[\r\n]+/g, ' ').trim()
+		if (!cleanCmd) return false
 
 		if (this.connected && this.socket) {
 			try {
@@ -157,18 +169,23 @@ class Cs2Netcon {
 				slotKey = String((Number(rawSlot) + 1) % 10)
 			}
 
-			if (steamid) {
+			if (steamid && /^[0-9]{15,20}$/.test(String(steamid).trim())) {
 				try {
-					const accountId = (BigInt(steamid) & 0xFFFFFFFFn).toString()
+					const accountId = (BigInt(String(steamid).trim()) & 0xFFFFFFFFn).toString()
 					command = `spec_player_by_accountid ${accountId}`
 				} catch (_) {}
 			}
 			if (!command && rawSlot !== undefined && rawSlot !== null && !isNaN(Number(rawSlot))) {
-				command = `spec_player ${Number(rawSlot)}`
+				const slotNum = Math.floor(Number(rawSlot))
+				if (slotNum >= 0 && slotNum <= 9) {
+					command = `spec_player ${slotNum}`
+				}
 			}
 			if (!command && slotKey) {
 				const slotNum = slotKey === '0' ? '10' : slotKey
-				command = `slot${slotNum}`
+				if (/^(?:[1-9]|10)$/.test(slotNum)) {
+					command = `slot${slotNum}`
+				}
 			}
 		} else if (target !== undefined && target !== null) {
 			const val = String(target).trim()
@@ -178,29 +195,20 @@ class Cs2Netcon {
 					const accountId = (BigInt(val) & 0xFFFFFFFFn).toString()
 					command = `spec_player_by_accountid ${accountId}`
 				} catch (_) {}
-			} else {
-				const slotNum = val === '0' ? '10' : val
-				if (!isNaN(Number(slotNum)) && Number(slotNum) >= 1 && Number(slotNum) <= 10) {
-					command = `spec_player ${Number(slotNum) - 1}`
-				} else {
-					command = `slot${slotNum}`
-				}
+			} else if (/^[0-9]$/.test(val)) {
+				command = `spec_player ${val}`
+			} else if (/^(?:10|[1-9])$/.test(val)) {
+				command = `slot${val}`
 			}
 		}
 
-		// 1. If NetCon TCP socket is active, send console command
-		if (this.connected && command) {
-			return this.sendCommand(command)
+		if (command && this.sendCommand(command)) {
+			return true
 		}
 
-		// 2. Fallback on Windows: send simulated spectator key (1..9, 0) to Counter-Strike window
-		if (os.platform() === 'win32' && slotKey) {
+		// Fallback to Windows SendKeys if NetCon is offline and we have a valid slot
+		if (slotKey) {
 			return sendWindowsKey(slotKey)
-		}
-
-		// 3. Fallback: queue NetCon command and attempt TCP connect
-		if (command) {
-			return this.sendCommand(command)
 		}
 
 		return false
@@ -208,11 +216,11 @@ class Cs2Netcon {
 
 	getStatus() {
 		return {
-			enabled: true,
 			connected: this.connected,
 			host: this.host,
 			port: this.port,
-			windowsFallbackAvailable: os.platform() === 'win32'
+			pendingCommands: this.pendingCommands.length,
+			autoReconnect: this.autoReconnect
 		}
 	}
 }

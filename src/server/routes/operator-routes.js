@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { promises as fsPromises } from 'node:fs'
+import { promises as fsPromises, existsSync } from 'node:fs'
 import { exec } from 'node:child_process'
 import { gsiState } from '../state.js'
 import { lastGsiMeta } from '../gsi.js'
@@ -12,23 +12,39 @@ import { getActiveSession, readSession } from '../sessions/session-store.js'
 
 const serverStartedAt = new Date().toISOString()
 
-// Cache status and readiness HTML files in memory
-const STATUS_HTML_PATH = path.join(process.cwd(), 'public', 'operator', 'status.html')
-const READINESS_HTML_PATH = path.join(process.cwd(), 'public', 'operator', 'readiness.html')
+// Resolve status and readiness HTML files robustly
+function resolveHtmlPath(fileName) {
+	const primary = path.join(builtinRootDirectory, 'public', 'operator', fileName)
+	if (existsSync(primary)) return primary
+	const cwdPath = path.join(process.cwd(), 'public', 'operator', fileName)
+	if (existsSync(cwdPath)) return cwdPath
+	return primary
+}
+
+const STATUS_HTML_PATH = resolveHtmlPath('status.html')
+const READINESS_HTML_PATH = resolveHtmlPath('readiness.html')
 
 let cachedStatusHtml = null
 let cachedReadinessHtml = null
 
 async function getStatusHtml() {
 	if (!cachedStatusHtml) {
-		cachedStatusHtml = await fsPromises.readFile(STATUS_HTML_PATH, 'utf8')
+		try {
+			cachedStatusHtml = await fsPromises.readFile(STATUS_HTML_PATH, 'utf8')
+		} catch (_) {
+			return '<!DOCTYPE html><html><head><title>NeuronCast Status</title></head><body><h1>NeuronCast Operator Status</h1><p>Status view is loading or unavailable.</p></body></html>'
+		}
 	}
 	return cachedStatusHtml
 }
 
 async function getReadinessHtml() {
 	if (!cachedReadinessHtml) {
-		cachedReadinessHtml = await fsPromises.readFile(READINESS_HTML_PATH, 'utf8')
+		try {
+			cachedReadinessHtml = await fsPromises.readFile(READINESS_HTML_PATH, 'utf8')
+		} catch (_) {
+			return '<!DOCTYPE html><html><head><title>NeuronCast Readiness</title></head><body><h1>NeuronCast Operator Readiness</h1><p>Readiness view is loading or unavailable.</p></body></html>'
+		}
 	}
 	return cachedReadinessHtml
 }
@@ -45,7 +61,7 @@ try {
 // Git Commit
 let gitCommit = null
 try {
-	exec('git rev-parse --short HEAD', { cwd: builtinRootDirectory }, (err, stdout) => {
+	exec('git rev-parse --short HEAD', { cwd: builtinRootDirectory, timeout: 5000 }, (err, stdout) => {
 		if (!err && stdout) gitCommit = stdout.trim()
 	})
 } catch (_) {}
@@ -70,7 +86,7 @@ function runThemeValidationCached() {
 	}
 
 	activeValidationPromise = new Promise((resolve) => {
-		exec('node scripts/theme-validate.js --json', { cwd: builtinRootDirectory }, (err, stdout) => {
+		exec('node scripts/theme-validate.js --json', { cwd: builtinRootDirectory, timeout: 10000 }, (err, stdout) => {
 			lastThemeValidationAt = Date.now()
 			activeValidationPromise = null
 			try {
@@ -106,12 +122,13 @@ export function registerOperatorRoutes(router, websocket) {
 		context.set('Pragma', 'no-cache')
 		context.set('Expires', '0')
 
-		const elapsedMs = lastGsiMeta.acceptedAtUnixTimestamp > 0
-			? Date.now() - lastGsiMeta.acceptedAtUnixTimestamp
+		const acceptedAt = lastGsiMeta?.acceptedAtUnixTimestamp ?? 0
+		const elapsedMs = acceptedAt > 0
+			? Date.now() - acceptedAt
 			: null
 
 		let gsiStateStr = 'waiting'
-		if (lastGsiMeta.acceptedAtUnixTimestamp > 0) {
+		if (acceptedAt > 0) {
 			gsiStateStr = (elapsedMs <= 5000 || isUiDevMode) ? 'active' : 'stale'
 		} else if (isUiDevMode) {
 			gsiStateStr = 'active'
@@ -129,11 +146,11 @@ export function registerOperatorRoutes(router, websocket) {
 
 		context.body = {
 			ok: true,
-			gsiActive: isUiDevMode ? true : (lastGsiMeta.acceptedAtUnixTimestamp > 0 && elapsedMs <= 5000),
+			gsiActive: isUiDevMode ? true : (acceptedAt > 0 && elapsedMs <= 5000),
 			gsiState: gsiStateStr,
 			lastGsiSecondsAgo: elapsedMs !== null ? elapsedMs / 1000 : null,
-			lastSuccessfulGsiAt: lastGsiMeta.acceptedAtUnixTimestamp > 0
-				? new Date(lastGsiMeta.acceptedAtUnixTimestamp).toISOString()
+			lastSuccessfulGsiAt: acceptedAt > 0
+				? new Date(acceptedAt).toISOString()
 				: null,
 			uiDevMode: isUiDevMode,
 			mapName: gsiState.map?.name || null,
@@ -175,13 +192,14 @@ export function registerOperatorRoutes(router, websocket) {
 		})
 
 		// 2. GSI State Check
-		const elapsedMs = lastGsiMeta.acceptedAtUnixTimestamp > 0
-			? Date.now() - lastGsiMeta.acceptedAtUnixTimestamp
+		const acceptedAt = lastGsiMeta?.acceptedAtUnixTimestamp ?? 0
+		const elapsedMs = acceptedAt > 0
+			? Date.now() - acceptedAt
 			: null
 
 		let gsiStatus = 'warn'
 		let gsiMessage = 'Waiting for first Game State Integration GSI packet from Counter-Strike 2.'
-		if (lastGsiMeta.acceptedAtUnixTimestamp > 0) {
+		if (acceptedAt > 0) {
 			if (elapsedMs > 5000 && !isUiDevMode) {
 				gsiStatus = 'fail'
 				gsiMessage = 'CS2 GSI signal is stale. No GSI packet received in last 5 seconds.'

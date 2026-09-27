@@ -94,6 +94,7 @@ npm run broadcast:start  # Production startup script with health checks
 npm run overlay          # Transparent, click-through HUD overlay window
 npm run config           # Standalone operator control panel window
 npm run radar            # Standalone map radar window
+npm run start:all        # Concurrently launches Server + Overlay
 npm run start:broadcast  # Concurrently launches Server + Overlay + Radar
 
 # Testing & Quality Assurance
@@ -110,6 +111,7 @@ npm run gsi:simulate     # Stream simulated CS2 GSI packets for testing
 ```text
 neuroncast/
 ├── gamestate_integration_neuroncast.cfg  # Valve CS2 GSI config template
+├── CHANGELOG.md                          # Release version history & changelog
 ├── public/
 │   └── operator/                         # Standalone status & readiness HTML dashboards
 ├── src/
@@ -145,3 +147,9 @@ neuroncast/
 | `GSI_TOKEN` | `""` | Expected GSI authentication token configured in CS2. |
 | `CS2_NETCON_PORT` | `2121` | CS2 TCP NetCon port for camera control. |
 | `NEURON_UI_DEV_MODE` | `0` | Set to `1` to freeze match state for offline theme/layout editing. |
+
+---
+
+## Changelog
+
+Detailed release history, security patches, and performance updates are documented in [CHANGELOG.md](file:///F:/project/eon/eon-master/CHANGELOG.md).

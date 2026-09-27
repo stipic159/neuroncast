@@ -18,13 +18,33 @@ export const registerDependencyRoutes = (router) => {
 
 // NB! Do _not_ use this with user-supplied values for localFile!
 const sendStaticFile = (localFile) => async (context) => {
-	await send(context, localFile, { root: builtinRootDirectory })
+	try {
+		await send(context, localFile, { root: builtinRootDirectory })
+	} catch (err) {
+		if (err.status === 404 || err.statusCode === 404 || err.code === 'ENOENT') {
+			context.status = 404
+			return
+		}
+		context.status = 500
+		context.body = { error: 'Failed to serve dependency' }
+	}
 }
 
 const serveFontsourceFont = (router, fontName) => {
 	const prefix = `/dependencies/${fontName}`
+	const fontRoot = `${builtinRootDirectory}/node_modules/@fontsource/${fontName}`
 
 	router.get(new RegExp(`^${prefix}(?:\\/(?<path>.*))?$`), async (context) => {
-		await send(context, context.path.substring(prefix.length), { root: `${builtinRootDirectory}/node_modules/@fontsource/${fontName}` })
+		const rawRelativePath = context.path.substring(prefix.length).replace(/^\/+/, '') || 'index.css'
+		try {
+			await send(context, rawRelativePath, { root: fontRoot })
+		} catch (err) {
+			if (err.status === 404 || err.statusCode === 404 || err.code === 'ENOENT') {
+				context.status = 404
+				return
+			}
+			context.status = 500
+			context.body = { error: 'Failed to serve font asset' }
+		}
 	})
 }

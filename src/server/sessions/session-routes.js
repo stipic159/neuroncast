@@ -12,6 +12,10 @@ import {
 import { rebuildSessionStats } from './stats-aggregator.js'
 import { exportSessionToJson, exportSessionToCsv } from './session-export.js'
 
+function sanitizeFileNamePart(str) {
+	return String(str || '').replace(/[^a-zA-Z0-9_\-]/g, '_')
+}
+
 export function registerSessionRoutes(router) {
 	// GET /api/sessions
 	router.get('/api/sessions', (context) => {
@@ -147,13 +151,14 @@ export function registerSessionRoutes(router) {
 	router.get('/api/sessions/:sessionId/export/json', (context) => {
 		try {
 			const sessionId = context.params.sessionId
+			const safeSessionId = sanitizeFileNamePart(sessionId)
 			const data = exportSessionToJson(sessionId)
 			if (!data) {
 				context.status = 404
 				context.body = { error: `Session with ID/slug "${sessionId}" not found or failed to export.` }
 				return
 			}
-			context.set('Content-Disposition', `attachment; filename="eon_session_${sessionId}.json"`)
+			context.set('Content-Disposition', `attachment; filename="eon_session_${safeSessionId}.json"`)
 			context.body = data
 			context.status = 200
 		} catch (err) {
@@ -166,6 +171,7 @@ export function registerSessionRoutes(router) {
 	router.get('/api/sessions/:sessionId/export/csv', (context) => {
 		try {
 			const sessionId = context.params.sessionId
+			const safeSessionId = sanitizeFileNamePart(sessionId)
 			const data = exportSessionToCsv(sessionId)
 			if (data === null) {
 				context.status = 404
@@ -173,7 +179,7 @@ export function registerSessionRoutes(router) {
 				return
 			}
 			context.set('Content-Type', 'text/csv; charset=utf-8')
-			context.set('Content-Disposition', `attachment; filename="eon_session_${sessionId}.csv"`)
+			context.set('Content-Disposition', `attachment; filename="eon_session_${safeSessionId}.csv"`)
 			context.body = data
 			context.status = 200
 		} catch (err) {
@@ -201,17 +207,15 @@ export function registerSessionRoutes(router) {
 			}
 			
 			const content = fs.readFileSync(timelinePath, 'utf8')
-			const events = content
-				.split('\n')
-				.filter(Boolean)
-				.map(line => {
-					try {
-						return JSON.parse(line)
-					} catch (_) {
-						return null
-					}
-				})
-				.filter(Boolean)
+			const events = []
+			const lines = content.split('\n')
+			for (const line of lines) {
+				const trimmed = line.trim()
+				if (!trimmed) continue
+				try {
+					events.push(JSON.parse(trimmed))
+				} catch (_) {}
+			}
 				
 			context.body = events
 			context.status = 200
@@ -232,14 +236,15 @@ export function registerSessionRoutes(router) {
 				return
 			}
 			
-			const summaryPath = path.join(sPath, 'summary.json')
-			if (!fs.existsSync(summaryPath)) {
+			// Prefer authoritative in-memory cached summary via readSession
+			const sessionData = readSession(sessionId)
+			if (!sessionData) {
 				context.status = 404
 				context.body = { error: `Summary for session "${sessionId}" does not exist.` }
 				return
 			}
 			
-			context.body = JSON.parse(fs.readFileSync(summaryPath, 'utf8'))
+			context.body = sessionData.summary || {}
 			context.status = 200
 		} catch (err) {
 			context.status = 500
@@ -266,17 +271,15 @@ export function registerSessionRoutes(router) {
 			}
 			
 			const content = fs.readFileSync(snapshotsPath, 'utf8')
-			const snapshots = content
-				.split('\n')
-				.filter(Boolean)
-				.map(line => {
-					try {
-						return JSON.parse(line)
-					} catch (_) {
-						return null
-					}
-				})
-				.filter(Boolean)
+			const snapshots = []
+			const lines = content.split('\n')
+			for (const line of lines) {
+				const trimmed = line.trim()
+				if (!trimmed) continue
+				try {
+					snapshots.push(JSON.parse(trimmed))
+				} catch (_) {}
+			}
 				
 			context.body = snapshots
 			context.status = 200

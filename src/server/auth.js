@@ -70,6 +70,7 @@ export const isLoopbackAddress = (ip) => {
 export const isValidControlToken = (presented) => {
 	if (!presented || typeof presented !== 'string') return false
 	const expected = getControlToken()
+	if (!expected) return false
 	const a = Buffer.from(presented)
 	const b = Buffer.from(expected)
 	if (a.length !== b.length) return false

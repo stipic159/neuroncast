@@ -28,6 +28,7 @@ import {
 } from './fallbacks/payload-fallbacks.js'
 
 const configPath = join(userspaceDirectory, 'komplettligaen.json')
+const MAX_SCRAPER_MEM_CACHE = 100
 const cache = new Map()
 const ttlMs = 60 * 1000
 
@@ -49,6 +50,10 @@ const cached = async (key, fetcher) => {
 	if (hit && Date.now() - hit.createdAt < ttlMs) return hit.value
 
 	const value = await fetcher()
+	if (cache.size >= MAX_SCRAPER_MEM_CACHE) {
+		const oldest = cache.keys().next().value
+		cache.delete(oldest)
+	}
 	cache.set(key, { createdAt: Date.now(), value })
 	return value
 }
@@ -62,6 +67,7 @@ const withTimeout = (promise, ms, description = 'Operation') => {
 		timeoutId = setTimeout(() => {
 			reject(new Error(`${description} timed out after ${ms}ms`));
 		}, ms);
+		if (timeoutId.unref) timeoutId.unref();
 	});
 	return Promise.race([
 		promise.then(res => {

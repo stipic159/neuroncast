@@ -1,5 +1,4 @@
 import fs from 'fs'
-import { writeJsonAtomic, readJsonIfExists } from '../helpers/json-file.js'
 import path from 'path'
 import { gsiState } from '../state.js'
 import {
@@ -10,8 +9,9 @@ import {
 	getSessionPath
 } from './session-store.js'
 
-// Lightweight previous-state cache
+// Previous-state cache bound to the active session
 const lastState = {
+	sessionId: null,
 	isInitialized: false,
 	gsiActive: false,
 	mapName: null,
@@ -23,14 +23,32 @@ const lastState = {
 		CT: 0,
 		T: 0
 	},
-	playerKills: {},  // steamid -> cumulative kills
-	playerDeaths: {}  // steamid -> cumulative deaths
+	playerKills: {},   // steamid -> cumulative kills
+	playerDeaths: {},  // steamid -> cumulative deaths
+	knownMaps: new Set()
 }
 
-// (writeJsonAtomic imported from ../helpers/json-file.js)
+/**
+ * Resets the in-memory timeline state for a session.
+ */
+export function resetTimelineState(sessionId = null) {
+	lastState.sessionId = sessionId
+	lastState.isInitialized = false
+	lastState.gsiActive = false
+	lastState.mapName = null
+	lastState.mapPhase = null
+	lastState.roundPhase = null
+	lastState.roundNumber = -1
+	lastState.bombState = null
+	lastState.teamScores = { CT: 0, T: 0 }
+	lastState.playerKills = {}
+	lastState.playerDeaths = {}
+	lastState.knownMaps.clear()
+}
 
 /**
- * Builds a standard event envelope
+ * Builds a standard event envelope.
+ * Uses gsiState for fallback contextual data (clock, round, map, phase).
  */
 function createEventEnvelope(type, actor, target, team, data = {}) {
 	const mapObj = gsiState.map || {}
@@ -53,31 +71,34 @@ function createEventEnvelope(type, actor, target, team, data = {}) {
 }
 
 /**
- * Builds a standard snapshot envelope
+ * Builds a standard snapshot envelope.
+ * Falls back to accumulated gsiState for any omitted delta properties in body.
  */
-function createSnapshotEnvelope(reason, body) {
-	const mapObj = body.map || {}
-	const roundObj = body.round || {}
-	const bombObj = body.bomb || {}
+function createSnapshotEnvelope(reason, body = {}) {
+	const mapObj = body.map || gsiState.map || {}
+	const roundObj = body.round || gsiState.round || {}
+	const bombObj = body.bomb || gsiState.bomb || {}
+	const allplayersObj = body.allplayers || gsiState.allplayers || {}
 	
 	const players = []
-	if (body.allplayers) {
-		for (const [steamid, p] of Object.entries(body.allplayers)) {
-			if (!p) continue
-			players.push({
-				steamid,
-				name: p.name,
-				team: p.team,
-				health: p.state?.health ?? 0,
-				money: p.state?.money ?? 0,
-				kills: p.match_stats?.kills ?? 0,
-				deaths: p.match_stats?.deaths ?? 0,
-				assists: p.match_stats?.assists ?? 0,
-				mvps: p.match_stats?.mvps ?? 0
-			})
-		}
+	for (const [steamid, p] of Object.entries(allplayersObj)) {
+		if (!p) continue
+		players.push({
+			steamid,
+			name: p.name || 'Unknown',
+			team: p.team || null,
+			health: p.state?.health ?? 0,
+			money: p.state?.money ?? 0,
+			kills: p.match_stats?.kills ?? 0,
+			deaths: p.match_stats?.deaths ?? 0,
+			assists: p.match_stats?.assists ?? 0,
+			mvps: p.match_stats?.mvps ?? 0
+		})
 	}
 	
+	const ctScore = mapObj.team_ct?.score ?? 0
+	const tScore = mapObj.team_t?.score ?? 0
+
 	return {
 		at: new Date().toISOString(),
 		reason,
@@ -86,17 +107,17 @@ function createSnapshotEnvelope(reason, body) {
 		teams: {
 			ct: {
 				name: mapObj.team_ct?.name || 'Counter-Terrorists',
-				score: mapObj.team_ct?.score ?? 0
+				score: ctScore
 			},
 			t: {
 				name: mapObj.team_t?.name || 'Terrorists',
-				score: mapObj.team_t?.score ?? 0
+				score: tScore
 			}
 		},
 		players,
 		score: {
-			ct: mapObj.team_ct?.score ?? 0,
-			t: mapObj.team_t?.score ?? 0
+			ct: ctScore,
+			t: tScore
 		},
 		bomb: bombObj.state || null,
 		phase: mapObj.phase || roundObj.phase || null
@@ -104,10 +125,41 @@ function createSnapshotEnvelope(reason, body) {
 }
 
 /**
- * Explicitly records session start event
+ * Synchronously registers a map name into maps.json and updates session summary.
+ */
+function registerObservedMap(sessionId, mapName) {
+	if (!sessionId || !mapName) return
+	if (lastState.knownMaps.has(mapName)) return
+	lastState.knownMaps.add(mapName)
+
+	const sPath = getSessionPath(sessionId)
+	if (!sPath) return
+
+	try {
+		const mapsPath = path.join(sPath, 'maps.json')
+		let list = []
+		if (fs.existsSync(mapsPath)) {
+			try {
+				list = JSON.parse(fs.readFileSync(mapsPath, 'utf8'))
+			} catch (_) {}
+		}
+		if (!Array.isArray(list)) list = []
+		if (!list.includes(mapName)) {
+			list.push(mapName)
+			fs.writeFileSync(mapsPath, JSON.stringify(list, null, '\t'), 'utf8')
+			updateSessionSummary(sessionId, { mapsObserved: list.length })
+		}
+	} catch (err) {
+		console.warn(`[TimelineRecorder] Failed to persist map "${mapName}" for session "${sessionId}":`, err.message)
+	}
+}
+
+/**
+ * Explicitly records session start event and resets recorder state.
  */
 export function recordSessionStart(sessionId, metadata) {
 	try {
+		resetTimelineState(sessionId)
 		const event = createEventEnvelope('match/session_started', null, null, null, { metadata })
 		appendTimelineEvent(sessionId, event)
 	} catch (err) {
@@ -116,7 +168,7 @@ export function recordSessionStart(sessionId, metadata) {
 }
 
 /**
- * Explicitly records session end event
+ * Explicitly records session end event and creates final snapshot.
  */
 export function recordSessionEnd(sessionId) {
 	try {
@@ -125,13 +177,14 @@ export function recordSessionEnd(sessionId) {
 		
 		const snapshot = createSnapshotEnvelope('session_end', gsiState)
 		appendSnapshot(sessionId, snapshot)
+		resetTimelineState(null)
 	} catch (err) {
 		console.warn('[TimelineRecorder] Failed to record session end event:', err)
 	}
 }
 
 /**
- * Heartbeat stale checker hook
+ * Heartbeat stale checker hook.
  */
 export function recordGsiStale() {
 	try {
@@ -154,24 +207,32 @@ export function recordGsiStale() {
 export function processGsiFrame(body = {}) {
 	try {
 		const active = getActiveSession()
-		if (!active) return // No active session, no-op safely!
+		if (!active) return // No active session, no-op safely
+
+		// Detect session switch or fresh start
+		if (lastState.sessionId !== active.id) {
+			resetTimelineState(active.id)
+		}
 		
-		// 1. Initialize previous-state cache on the very first frame to prevent massive noise
+		// 1. Initialize previous-state cache on the very first frame to prevent noise
 		if (!lastState.isInitialized) {
-			lastState.mapName = body.map?.name || null
-			lastState.mapPhase = body.map?.phase || null
-			lastState.roundPhase = body.round?.phase || null
-			lastState.roundNumber = body.map?.round ?? -1
-			lastState.bombState = body.bomb?.state || null
-			lastState.teamScores.CT = body.map?.team_ct?.score || 0
-			lastState.teamScores.T = body.map?.team_t?.score || 0
+			const mapObj = body.map || gsiState.map || {}
+			const roundObj = body.round || gsiState.round || {}
+			const bombObj = body.bomb || gsiState.bomb || {}
+			const allplayersObj = body.allplayers || gsiState.allplayers || {}
+
+			lastState.mapName = mapObj.name || null
+			lastState.mapPhase = mapObj.phase || null
+			lastState.roundPhase = roundObj.phase || null
+			lastState.roundNumber = mapObj.round ?? -1
+			lastState.bombState = bombObj.state || null
+			lastState.teamScores.CT = mapObj.team_ct?.score ?? 0
+			lastState.teamScores.T = mapObj.team_t?.score ?? 0
 			
-			if (body.allplayers) {
-				for (const [steamid, p] of Object.entries(body.allplayers)) {
-					if (!p) continue
-					lastState.playerKills[steamid] = p.match_stats?.kills ?? 0
-					lastState.playerDeaths[steamid] = p.match_stats?.deaths ?? 0
-				}
+			for (const [steamid, p] of Object.entries(allplayersObj)) {
+				if (!p || !steamid || steamid === '0') continue
+				lastState.playerKills[steamid] = p.match_stats?.kills ?? 0
+				lastState.playerDeaths[steamid] = p.match_stats?.deaths ?? 0
 			}
 			
 			lastState.gsiActive = true
@@ -184,17 +245,7 @@ export function processGsiFrame(body = {}) {
 					previousMap: null
 				})
 				appendTimelineEvent(active.id, event)
-				
-				// Write initial map file
-				const mapsPath = path.join(getSessionPath(active.id), 'maps.json')
-				readJsonIfExists(mapsPath).then(mapsList => {
-					const list = Array.isArray(mapsList) ? mapsList : []
-					if (!list.includes(lastState.mapName)) {
-						list.push(lastState.mapName)
-						writeJsonAtomic(mapsPath, list).catch(() => {})
-						updateSessionSummary(active.id, { mapsObserved: list.length })
-					}
-				}).catch(() => {})
+				registerObservedMap(active.id, lastState.mapName)
 			}
 			return
 		}
@@ -206,133 +257,136 @@ export function processGsiFrame(body = {}) {
 			lastState.gsiActive = true
 		}
 		
-		// 3. Map changed transition
-		const currentMapName = body.map?.name || null
-		const mapChanged = currentMapName !== lastState.mapName
-		if (mapChanged && currentMapName !== null) {
-			const event = createEventEnvelope('map/map_changed', null, null, null, {
-				map: currentMapName,
-				previousMap: lastState.mapName
-			})
-			appendTimelineEvent(active.id, event)
-			
-			// Create a snapshot for map change
-			const snapshot = createSnapshotEnvelope('map_change', body)
-			appendSnapshot(active.id, snapshot)
-			
-			// Clear player stats tracking to prevent cross-map bleed
-			lastState.playerKills = {}
-			lastState.playerDeaths = {}
-			
-			// Add map name to maps.json list
-			const sPath = getSessionPath(active.id)
-			if (sPath) {
-				const mapsPath = path.join(sPath, 'maps.json')
-				readJsonIfExists(mapsPath).then(mapsList => {
-					const list = Array.isArray(mapsList) ? mapsList : []
-					if (!list.includes(currentMapName)) {
-						list.push(currentMapName)
-						writeJsonAtomic(mapsPath, list).catch(() => {})
-						updateSessionSummary(active.id, { mapsObserved: list.length })
-					}
-				}).catch(() => {})
+		// 3. Map changed transition (only when map data is explicitly present)
+		if (body.map && body.map.name !== undefined) {
+			const currentMapName = body.map.name || null
+			const mapChanged = currentMapName !== lastState.mapName
+			if (mapChanged && currentMapName !== null) {
+				const event = createEventEnvelope('map/map_changed', null, null, null, {
+					map: currentMapName,
+					previousMap: lastState.mapName
+				})
+				appendTimelineEvent(active.id, event)
+				
+				// Snapshot on map change
+				const snapshot = createSnapshotEnvelope('map_change', body)
+				appendSnapshot(active.id, snapshot)
+				
+				// Clear player stats tracking to prevent cross-map bleed
+				lastState.playerKills = {}
+				lastState.playerDeaths = {}
+				lastState.teamScores = { CT: 0, T: 0 }
+				lastState.bombState = null
+				
+				registerObservedMap(active.id, currentMapName)
+				lastState.mapName = currentMapName
 			}
-			
-			lastState.mapName = currentMapName
 		}
 		
 		// 4. Round Freezetime transition
-		const currentRoundPhase = body.round?.phase || null
-		if (currentRoundPhase === 'freezetime' && lastState.roundPhase !== 'freezetime') {
-			const event = createEventEnvelope('round/freezetime_started', null, null, null, {
-				round: body.map?.round ?? 0
-			})
-			appendTimelineEvent(active.id, event)
-			lastState.roundPhase = 'freezetime'
-		}
-		
-		// 5. Round Live transition
-		if (currentRoundPhase === 'live' && lastState.roundPhase !== 'live') {
-			const event = createEventEnvelope('round/live_started', null, null, null, {
-				round: body.map?.round ?? 0
-			})
-			appendTimelineEvent(active.id, event)
-			lastState.roundPhase = 'live'
-		}
-		
-		// 6. Round Over transition
-		if (currentRoundPhase === 'over' && lastState.roundPhase !== 'over') {
-			const roundNum = body.map?.round ?? 0
-			const winner = body.round?.win_team || null
-			const event = createEventEnvelope('round/over', null, null, null, {
-				round: roundNum,
-				winner,
-				score: {
-					ct: body.map?.team_ct?.score ?? 0,
-					t: body.map?.team_t?.score ?? 0
-				}
-			})
-			appendTimelineEvent(active.id, event)
-			
-			// Append round over snapshot
-			const snapshot = createSnapshotEnvelope('round_over', body)
-			appendSnapshot(active.id, snapshot)
-			
-			// Update rounds count in summary
-			updateSessionSummary(active.id, { roundsObserved: roundNum })
-			
-			lastState.roundPhase = 'over'
-		}
-		
-		// 7. Bomb state transitions
-		const currentBombState = body.bomb?.state || null
-		if (currentBombState !== lastState.bombState) {
-			if (currentBombState === 'planted') {
-				const event = createEventEnvelope('bomb/planted', null, null, null, {
-					site: body.bomb?.site || null
+		const currentRoundPhase = body.round?.phase
+		if (currentRoundPhase) {
+			const roundNum = body.map?.round ?? gsiState.map?.round ?? 0
+
+			if (currentRoundPhase === 'freezetime' && lastState.roundPhase !== 'freezetime') {
+				const event = createEventEnvelope('round/freezetime_started', null, null, null, {
+					round: roundNum
 				})
 				appendTimelineEvent(active.id, event)
-			} else if (currentBombState === 'defused') {
-				const event = createEventEnvelope('bomb/defused', null, null, null, {})
-				appendTimelineEvent(active.id, event)
-			} else if (currentBombState === 'exploded') {
-				const event = createEventEnvelope('bomb/exploded', null, null, null, {})
-				appendTimelineEvent(active.id, event)
+				lastState.roundPhase = 'freezetime'
+				lastState.bombState = null // Reset bomb state for the new round
 			}
-			lastState.bombState = currentBombState
+			
+			// 5. Round Live transition
+			if (currentRoundPhase === 'live' && lastState.roundPhase !== 'live') {
+				const event = createEventEnvelope('round/live_started', null, null, null, {
+					round: roundNum
+				})
+				appendTimelineEvent(active.id, event)
+				lastState.roundPhase = 'live'
+			}
+			
+			// 6. Round Over transition
+			if (currentRoundPhase === 'over' && lastState.roundPhase !== 'over') {
+				const winner = body.round?.win_team || null
+				const event = createEventEnvelope('round/over', null, null, null, {
+					round: roundNum,
+					winner,
+					score: {
+						ct: body.map?.team_ct?.score ?? gsiState.map?.team_ct?.score ?? 0,
+						t: body.map?.team_t?.score ?? gsiState.map?.team_t?.score ?? 0
+					}
+				})
+				appendTimelineEvent(active.id, event)
+				
+				// Append round over snapshot
+				const snapshot = createSnapshotEnvelope('round_over', body)
+				appendSnapshot(active.id, snapshot)
+				
+				// Update rounds count in summary
+				updateSessionSummary(active.id, { roundsObserved: roundNum })
+				
+				lastState.roundPhase = 'over'
+			}
 		}
 		
-		// 8. Team score transitions
-		const ctScore = body.map?.team_ct?.score ?? 0
-		const tScore = body.map?.team_t?.score ?? 0
-		if (ctScore !== lastState.teamScores.CT || tScore !== lastState.teamScores.T) {
-			const event = createEventEnvelope('team/score_changed', null, null, null, {
-				ctScore,
-				tScore,
-				previousScores: { ...lastState.teamScores }
-			})
-			appendTimelineEvent(active.id, event)
-			lastState.teamScores.CT = ctScore
-			lastState.teamScores.T = tScore
+		// 7. Bomb state transitions (only when bomb object is present in frame)
+		if (body.bomb && body.bomb.state !== undefined) {
+			const currentBombState = body.bomb.state || null
+			if (currentBombState !== lastState.bombState) {
+				if (currentBombState === 'planted') {
+					const event = createEventEnvelope('bomb/planted', null, null, null, {
+						site: body.bomb?.site || null
+					})
+					appendTimelineEvent(active.id, event)
+				} else if (currentBombState === 'defused') {
+					const event = createEventEnvelope('bomb/defused', null, null, null, {})
+					appendTimelineEvent(active.id, event)
+				} else if (currentBombState === 'exploded') {
+					const event = createEventEnvelope('bomb/exploded', null, null, null, {})
+					appendTimelineEvent(active.id, event)
+				}
+				lastState.bombState = currentBombState
+			}
 		}
 		
-		// 9. Player kills and deaths telemetry (highly conservative)
+		// 8. Team score transitions (guard against delta ticks without map object)
+		if (body.map?.team_ct?.score !== undefined && body.map?.team_t?.score !== undefined) {
+			const ctScore = Number(body.map.team_ct.score)
+			const tScore = Number(body.map.team_t.score)
+			if (ctScore !== lastState.teamScores.CT || tScore !== lastState.teamScores.T) {
+				const event = createEventEnvelope('team/score_changed', null, null, null, {
+					ctScore,
+					tScore,
+					previousScores: { ...lastState.teamScores }
+				})
+				appendTimelineEvent(active.id, event)
+				lastState.teamScores.CT = ctScore
+				lastState.teamScores.T = tScore
+			}
+		}
+		
+		// 9. Player kills and deaths telemetry
 		if (body.allplayers) {
 			for (const [steamid, p] of Object.entries(body.allplayers)) {
-				if (!p) continue
+				if (!p || !steamid || steamid === '0') continue
 				
 				const curKills = p.match_stats?.kills ?? 0
 				const curDeaths = p.match_stats?.deaths ?? 0
 				
 				if (lastState.playerKills[steamid] === undefined) {
-					// Conservative: initialize silently to current count, never trigger joining/spurious events
+					// Conservative initialization: silently register baseline without spurious events
 					lastState.playerKills[steamid] = curKills
 					lastState.playerDeaths[steamid] = curDeaths
 				} else {
 					const prevKills = lastState.playerKills[steamid]
 					const prevDeaths = lastState.playerDeaths[steamid]
 					
-					if (curKills > prevKills) {
+					// Detect game/round restart or warmup reset: re-baseline without firing negative/corrupt events
+					if (curKills < prevKills) {
+						lastState.playerKills[steamid] = curKills
+					} else if (curKills > prevKills) {
+						const killDelta = curKills - prevKills
 						const event = createEventEnvelope(
 							'player/kill',
 							{ steamid, name: p.name, team: p.team },
@@ -341,14 +395,17 @@ export function processGsiFrame(body = {}) {
 							{
 								confidence: 'derived',
 								currentKills: curKills,
-								count: curKills - prevKills
+								count: killDelta
 							}
 						)
 						appendTimelineEvent(active.id, event)
 						lastState.playerKills[steamid] = curKills
 					}
 					
-					if (curDeaths > prevDeaths) {
+					if (curDeaths < prevDeaths) {
+						lastState.playerDeaths[steamid] = curDeaths
+					} else if (curDeaths > prevDeaths) {
+						const deathDelta = curDeaths - prevDeaths
 						const event = createEventEnvelope(
 							'player/death',
 							null,
@@ -357,7 +414,7 @@ export function processGsiFrame(body = {}) {
 							{
 								confidence: 'derived',
 								currentDeaths: curDeaths,
-								count: curDeaths - prevDeaths
+								count: deathDelta
 							}
 						)
 						appendTimelineEvent(active.id, event)

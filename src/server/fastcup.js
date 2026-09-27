@@ -303,10 +303,12 @@ export function startFastcupPolling(websocket) {
 			console.warn('[FastCup Polling] Tick error:', err.message)
 		} finally {
 			pollingTimer = setTimeout(poll, delay)
+			if (pollingTimer.unref) pollingTimer.unref()
 		}
 	}
 
 	pollingTimer = setTimeout(poll, 1000)
+	if (pollingTimer.unref) pollingTimer.unref()
 }
 
 /**

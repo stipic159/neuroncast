@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { writeJsonAtomic } from './json-file.js'
+import { writeJsonAtomicSync } from './json-file.js'
 import path from 'path'
 import { userspaceDirectory, userspaceSettingsPath } from './paths.js'
 import { EVENT_THEME_PRESETS } from './theme-presets.js'
@@ -19,9 +19,6 @@ function ensureEventThemesDir() {
 	}
 }
 
-// writeJsonAtomic imported from ./json-file.js
-
-
 /**
  * Sanitizes a custom theme slug to prevent path traversal and shell injection
  */
@@ -29,6 +26,12 @@ export function sanitizeThemeSlug(id) {
 	if (!id || typeof id !== 'string') {
 		throw new Error('Theme slug ID must be a valid string.')
 	}
+
+	// Pre-sanitization check to immediately catch traversal/injection attempts
+	if (id.includes('..') || id.includes('/') || id.includes('\\')) {
+		throw new Error('Path traversal detected inside theme slug ID.')
+	}
+
 	const slug = id
 		.toLowerCase()
 		.replace(/[^a-z0-9_\-]/g, '-') // collapse non-alphanumerics/hyphens/underscores
@@ -140,14 +143,19 @@ export function getEventTheme(themeId) {
 	
 	if (!fs.existsSync(themePath)) return null
 	
-	const content = JSON.parse(fs.readFileSync(themePath, 'utf8'))
-	content.id = slug
-	content.isCustom = true
-	return content
+	try {
+		const content = JSON.parse(fs.readFileSync(themePath, 'utf8'))
+		content.id = slug
+		content.isCustom = true
+		return content
+	} catch (err) {
+		console.warn(`[ThemeDesignerHelper] Corrupt custom theme "${slug}":`, err.message)
+		return null
+	}
 }
 
 /**
- * Saves a custom event theme to disk atomically
+ * Saves a custom event theme to disk atomically and synchronously
  */
 export function saveCustomTheme(themeId, themeData) {
 	ensureEventThemesDir()
@@ -171,7 +179,7 @@ export function saveCustomTheme(themeId, themeData) {
 		tokens: themeData.tokens || {}
 	}
 	
-	writeJsonAtomic(targetPath, payload)
+	writeJsonAtomicSync(targetPath, payload)
 	return payload
 }
 
@@ -250,7 +258,7 @@ export function applyThemeToOptions(themeId) {
 		}
 	}
 	
-	// Write atomic update to theme.json
-	writeJsonAtomic(userspaceSettingsPath, masterConfig)
+	// Write atomic update to theme.json synchronously
+	writeJsonAtomicSync(userspaceSettingsPath, masterConfig)
 	return masterConfig
 }

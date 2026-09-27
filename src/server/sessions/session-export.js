@@ -5,7 +5,8 @@ import { rebuildSessionStats } from './stats-aggregator.js'
 
 /**
  * Escapes a single field for CSV.
- * Prevents CSV Injection (leading =, +, -, @ characters) by prepending a single quote.
+ * Prevents CSV Injection (leading =, +, -, @, \t, |, \r characters, even with leading spaces)
+ * by prepending a single quote.
  * Replaces newlines with a single space.
  * Quotes fields containing commas, quotes, or whitespace, doubling any existing quotes.
  */
@@ -16,13 +17,13 @@ function escapeCsvField(val) {
 	// Replace CR/LF with a space
 	str = str.replace(/[\r\n]+/g, ' ')
 	
-	// Escape spreadsheet formula-leading values where practical
-	if (/^[=\+\-@]/.test(str)) {
-		str = "'" + str
+	// Escape spreadsheet formula-leading values (handling leading whitespace/tabs)
+	if (/^\s*[=\+\-@|\t]/.test(str)) {
+		str = "'" + str.trimStart()
 	}
 	
 	// Double-quote if contains quotes, commas, or spaces
-	if (str.includes(',') || str.includes('"') || str.includes(' ')) {
+	if (str.includes(',') || str.includes('"') || str.includes(' ') || str.includes("'")) {
 		str = `"${str.replace(/"/g, '""')}"`
 	}
 	
@@ -33,6 +34,7 @@ function escapeCsvField(val) {
  * Lazily fetches or rebuilds statistics for the session
  */
 function getOrRebuildStats(sessionId, sPath) {
+	if (!sPath) return null
 	const statsPath = path.join(sPath, 'stats.json')
 	if (!fs.existsSync(statsPath)) {
 		console.info(`[SessionExport] Lazy rebuilding stats for session "${sessionId}" because stats.json was missing.`)
@@ -55,9 +57,12 @@ export function exportSessionToJson(sessionId) {
 	if (!sPath) return null
 	
 	try {
-		const metadata = JSON.parse(fs.readFileSync(path.join(sPath, 'metadata.json'), 'utf8'))
-		const summary = JSON.parse(fs.readFileSync(path.join(sPath, 'summary.json'), 'utf8'))
-		const stats = getOrRebuildStats(sessionId, sPath)
+		const metaPath = path.join(sPath, 'metadata.json')
+		const summaryPath = path.join(sPath, 'summary.json')
+		
+		const metadata = fs.existsSync(metaPath) ? JSON.parse(fs.readFileSync(metaPath, 'utf8')) : {}
+		const summary = fs.existsSync(summaryPath) ? JSON.parse(fs.readFileSync(summaryPath, 'utf8')) : {}
+		const stats = getOrRebuildStats(sessionId, sPath) || {}
 		
 		return {
 			generatedAt: new Date().toISOString(),
@@ -85,8 +90,9 @@ export function exportSessionToCsv(sessionId) {
 	if (!sPath) return null
 	
 	try {
-		const metadata = JSON.parse(fs.readFileSync(path.join(sPath, 'metadata.json'), 'utf8'))
-		const stats = getOrRebuildStats(sessionId, sPath)
+		const metaPath = path.join(sPath, 'metadata.json')
+		const metadata = fs.existsSync(metaPath) ? JSON.parse(fs.readFileSync(metaPath, 'utf8')) : {}
+		const stats = getOrRebuildStats(sessionId, sPath) || {}
 		
 		const lines = []
 		
@@ -94,16 +100,17 @@ export function exportSessionToCsv(sessionId) {
 		lines.push('--- MATCH METADATA ---')
 		lines.push('Event,Format,Date,Home Team,Away Team,Home Score,Away Score,Rounds Played,Maps Played,Duration')
 		
-		const durationMin = stats.matchTotals?.durationSeconds 
-			? `${Math.floor(stats.matchTotals.durationSeconds / 60)}m ${Math.floor(stats.matchTotals.durationSeconds % 60)}s`
+		const durationSec = stats.matchTotals?.durationSeconds || 0
+		const durationMin = durationSec
+			? `${Math.floor(durationSec / 60)}m ${Math.floor(durationSec % 60)}s`
 			: '0s'
 			
 		const metaRow = [
 			metadata.match?.eventName || 'NeuronCast Match',
 			metadata.match?.format || 'BO1',
 			metadata.createdAt ? new Date(metadata.createdAt).toLocaleDateString() : 'N/A',
-			stats.teams?.home?.name || 'Home',
-			stats.teams?.away?.name || 'Away',
+			stats.teams?.home?.name || metadata.teams?.home?.name || 'Home',
+			stats.teams?.away?.name || metadata.teams?.away?.name || 'Away',
 			stats.teams?.home?.roundsWon ?? 0,
 			stats.teams?.away?.roundsWon ?? 0,
 			stats.matchTotals?.roundsObserved ?? 0,
@@ -138,12 +145,13 @@ export function exportSessionToCsv(sessionId) {
 		// 3. Write Player Rows
 		const players = Object.entries(stats.players || {})
 		// Sort by kills descending
-		players.sort((a, b) => (b[1].kills || 0) - (a[1].kills || 0))
+		players.sort((a, b) => (b[1]?.kills || 0) - (a[1]?.kills || 0))
 		
 		for (const [steamid, p] of players) {
+			if (!p) continue
 			const teamName = p.team === 'away' 
-				? (stats.teams?.away?.name || 'Away')
-				: (stats.teams?.home?.name || 'Home')
+				? (stats.teams?.away?.name || metadata.teams?.away?.name || 'Away')
+				: (stats.teams?.home?.name || metadata.teams?.home?.name || 'Home')
 				
 			const playerRow = [
 				p.name || 'Player',

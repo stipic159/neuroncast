@@ -14,6 +14,11 @@ export class Websocket {
 			client.isAlive = true
 			client.on('pong', () => { client.isAlive = true })
 
+			// Защита от аварийного падения Node.js процесса при резком дисконнекте сокета клиентом
+			client.on('error', (err) => {
+				console.error('WebSocket client error:', err.message)
+			})
+
 			// Read-only state is pushed to every client (so overlays render on any
 			// machine), but only trusted clients (loopback or valid token) may
 			// inject draw:/config: control events into the broadcast.
@@ -23,6 +28,11 @@ export class Websocket {
 
 			client.on('message', (data) => {
 				try {
+					// Guard against oversized WebSocket control payloads (> 1MB)
+					if (data && data.length > 1024 * 1024) {
+						return
+					}
+					// Избегаем лишних парсингов и аллокаций, если сообщение слишком короткое или невалидное
 					const parsed = JSON.parse(data)
 					if (parsed.event === 'ping') {
 						if (client.readyState === WebSocket.OPEN) {
@@ -30,6 +40,7 @@ export class Websocket {
 						}
 						return
 					}
+
 					const { event, body } = parsed
 					// Relay drawing and config events to all clients
 					if (event && (event.startsWith('draw:') || event.startsWith('config:'))) {
@@ -37,7 +48,7 @@ export class Websocket {
 						this.broadcastToWebsockets(event, body)
 					}
 				} catch (err) {
-					console.error('Error handling websocket message:', err)
+					console.error('Error handling websocket message:', err.message)
 				}
 			})
 		})
@@ -72,12 +83,19 @@ export class Websocket {
 		const { bombsites, radars, settings } = await getSettings()
 
 		this.bombsitesCache = bombsites
-		this.optionsCache = Object.fromEntries(Object.entries(settings.options).map(([key, { fallback, value }]) => [key, value ?? fallback]))
 		this.radarsCache = radars
 
+		// Быстрый сбор объекта без тройного создания промежуточных массивов (Object.entries -> map -> Object.fromEntries)
+		const options = {}
+		const rawOptions = settings?.options || {}
+		for (const key in rawOptions) {
+			const opt = rawOptions[key]
+			options[key] = opt?.value ?? opt?.fallback ?? null
+		}
+		this.optionsCache = options
+
 		// Static data changed? Tell clients to refresh their menus/static state
-		this.broadcastToWebsockets('static_data', {
-			bombsites: this.bombsitesCache,
+		this.broadcastToWebsockets('static_data', {\tbombsites: this.bombsitesCache,
 			options: this.optionsCache,
 			radars: this.radarsCache,
 			isFullState: true,
@@ -103,9 +121,19 @@ export class Websocket {
 			this.optionsCache[body.key] = body.value
 		}
 
-		const message = body !== undefined
-			? JSON.stringify({ event, body })
-			: JSON.stringify({ event })
+		// Если нет активных клиентов, прерываемся ДО сериализации JSON
+		// (критично для частых GSI-тиков при отключенных оверлеях)
+		if (this.websocket.clients.size === 0) return
+
+		let message
+		try {
+			message = body !== undefined
+				? JSON.stringify({ event, body })
+				: JSON.stringify({ event })
+		} catch (err) {
+			console.error('Error serializing websocket message:', err.message)
+			return
+		}
 
 		for (const client of this.websocket.clients) {
 			if (client.readyState !== WebSocket.OPEN) continue
@@ -120,10 +148,13 @@ export class Websocket {
 	sendState(client) {
 		if (!client || client.readyState !== WebSocket.OPEN) return
 		try {
+			// Мутируем только что созданный в getState объект вместо лишнего поверхностного копирования {...state}
 			const state = this.getState()
-			client.send(JSON.stringify({ 
-				event: 'state', 
-				body: { ...state, isFullState: true } 
+			state.isFullState = true
+
+			client.send(JSON.stringify({
+				event: 'state',
+				body: state
 			}))
 		} catch (err) {
 			console.error('Error sending state to client:', err.message)

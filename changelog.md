@@ -1,36 +1,54 @@
 # Changelog
 
-All notable changes to **NeuronCast** will be documented in this file.
+All notable changes to the NeuronCast project are documented in this file.
 
-## [3.0.2] - 2026-09-27
-
-### 🚀 Hardening & Broadcast Stability
-- **Series Map Cards (`KlSeries`)**:
-  - Implemented automatic symmetric team side resolution (`homeStartSide` / `awayStartSide`) so starting badges (`CT` / `T`) always render reliably.
-  - Added seamless universal series match fallback (`gsiSeriesMatch`) into `shell.html`, enabling tournament map cards on all match scenes without external platform scrapers.
-  - Added support for BO1, BO2, BO3, and BO5 card layouts with GPU layer isolation (`contain: layout style paint; will-change: transform, opacity; transform: translateZ(0)`).
-  - Defensive map name normalization and safe map asset fallback resolution (`/assets/maps/`).
-- **Server Resilience (`src/server`)**:
-  - Fixed `ReferenceError: presetsPath is not defined` during layout configuration import (`/config/import`).
-  - Fixed race condition in bomb defused alert detection (`body.bomb?.state === 'defused'`).
-  - Hardened round analytics against call stack overflow on long matches by replacing `Math.min(...history)` with $O(N)$ linear scans.
-  - Secured WebSocket client broadcast loops with explicit `try/catch` and `readyState` checks to eliminate uncaught socket drop exceptions.
-  - Sanitized logo filename paths in team identity context against directory traversal attacks.
-- **HUD Components Hardening**:
-  - **Scoreboard**: Safe team identity resolver fallbacks, defensive null-checks in player sorting, and unique composite DOM keys.
-  - **Focused Player**: Resolved memory leak by revoking old Blob URLs (`URL.revokeObjectURL`) on unmount and image refreshes; hardened weapon and utility array accesses.
-  - **Series Graph & Round Graph**: Fixed division by zero and `NaN` round limits by validating `mp_maxrounds` (MR12) and `mp_overtime_maxrounds`.
-  - **Clutch Banner**: Fixed live bomb phase detection to check root `gsiState.bomb.state` instead of nested round property; extended visibility across all in-game scenes (`default`, `ingame`, `radar`).
-  - **Round Result Banner**: Eliminated banner blink by clearing active timeouts prior to new round events; strengthened win reason deductions and match point checks.
-- **Dependencies**:
-  - Removed unused dependency `tiny-emitter`.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [3.0.1] - 2026-09-26
-- Performance refinements in WebSocket state broadcasting.
-- Fixed map name normalization for workshop maps.
+## [3.0.3] - 2026-09-27
+
+### Security & Hardening
+- **CS2 NetCon Command Injection Elimination**: Replaced arbitrary shell string interpolation via `child_process.exec` in `cs2-netcon.js` with parameterized `child_process.execFile` execution of `cscript.exe` with strict single-digit validation (`^[0-9]$`), neutralizing remote command execution (RCE) vectors.
+- **Console Command Sanitization**: Console commands dispatched via `POST /api/cs2/command` now strip carriage return (`\r`) and newline (`\n`) delimiters, preventing multi-command batch injection into the CS2 game engine.
+- **Timing-Safe Authentication**: Enforced length matching prior to invoking `crypto.timingSafeEqual` in `auth.js`, preventing runtime crashes when verifying mismatched control token headers or query strings.
+- **WebSocket Payload Quotas**: Guarded WebSocket client message ingestion with a 1 MB payload size limit, mitigating DoS via oversized payload allocations.
+- **Path Traversal Guards**: Added strict character allowlists and boundary checks across FastCup asset requests (`/api/fastcup/assets/:file`) and theme configuration slugs (`theme-designer-helper.js`).
+
+### Performance & Memory Leak Prevention
+- **Bounded Resource Caching**:
+  - `hud.js`: Added an LRU cap (1000 items) to `themeAssetCache` to prevent unbounded memory growth on high-cardinality HUD requests.
+  - `team-identity-context.js`: Transitioned `logoCache` to a FIFO eviction strategy capped at 200 entries instead of abrupt whole-cache wipes.
+  - `komplettligaen.js`: Capped in-memory scraper cache at 100 entries.
+  - `session-store.js`: Capped `sessionPathCache` at 500 entries with LRU eviction.
+- **Node.js Process Lifecycle & Timer Cleansing**:
+  - NetCon reconnection timers (`reconnectTimer`), WebSocket heartbeat intervals, GSI stale checks, and scraper timeouts now call `.unref()`, ensuring background loops do not stall clean process termination.
+  - Added clean disconnect of CS2 NetCon and OBS Manager on `SIGINT` / `SIGTERM` server shutdowns in `index.js`.
+  - Added cleanup of session summary flush timers on process exit in `session-store.js`.
+- **OBS Event Subscription Singleton**: Fixed a listener accumulation leak where repeated registrations of `registerObsRoutes` multiplied WebSocket status broadcast listeners.
+
+### Reliability & Error Recovery
+- **Child Process Execution Timeouts**: Added explicit timeouts to `theme-validate.js` (10s) and `git rev-parse` (5s) in `operator-routes.js`, eliminating deadlocks in `/api/readiness` when background processes hang.
+- **Windows File System Atomic Fallbacks**: `json-file.js` now handles Windows `EPERM`, `EBUSY`, and `EEXIST` file locks with exponential backoff retries and graceful atomic copy fallbacks for both async and sync write workflows.
+- **Graceful Static Asset Recovery**: Added comprehensive 404 and `ENOENT` handling for missing `@fontsource` font packages, `vue.js` ESM dependencies, `license.txt`, and `version.txt` routes.
+- **Safe URI Decoding**: Wrapped URL path decoding in `index.js` in defensive error boundaries to prevent server errors on malformed URI sequences.
+
+---
+
+## [3.0.2] - 2026-09-25
+
+### Added
+- Tournament session recording and match telemetry streams.
+- Live fragger statistics aggregator and MVPs tracker.
+- Integration tests and comprehensive unit test suite with 20 passing suites.
+
+---
 
 ## [3.0.0] - 2026-09-20
-- Initial major release of NeuronCast CS2 broadcast suite.
-- Integrated NetCon TCP spectator switching and touch-first PWA mobile remote.
+
+### Added
+- Initial release of NeuronCast v3 architecture.
+- Real-time 20Hz GSI telemetry processing.
+- Multi-theme support with Theme Designer and Layout Presets.
+- Mobile PWA Remote deck with OBS WebSocket integration.
