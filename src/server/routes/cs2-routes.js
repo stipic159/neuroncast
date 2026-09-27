@@ -1,3 +1,4 @@
+import os from 'node:os'
 import { cs2Netcon } from '../integrations/cs2-netcon.js'
 import { detectCs2Path, installCs2GsiConfig } from '../integrations/cs2-detector.js'
 
@@ -7,8 +8,10 @@ export function registerCs2Routes(router) {
 
 	// GET /api/cs2/status
 	router.get('/api/cs2/status', (context) => {
+		const status = cs2Netcon.getStatus()
 		context.body = {
-			netcon: cs2Netcon.getStatus(),
+			netcon: status,
+			active: status.connected || os.platform() === 'win32',
 			detection: detectCs2Path()
 		}
 	})
@@ -38,7 +41,8 @@ export function registerCs2Routes(router) {
 			slot,
 			rawSlot,
 			steamid,
-			connected: cs2Netcon.connected
+			connected: cs2Netcon.connected,
+			windowsFallback: !cs2Netcon.connected && os.platform() === 'win32'
 		}
 	})
 
@@ -50,7 +54,8 @@ export function registerCs2Routes(router) {
 		context.body = {
 			success,
 			slot,
-			connected: cs2Netcon.connected
+			connected: cs2Netcon.connected,
+			windowsFallback: !cs2Netcon.connected && os.platform() === 'win32'
 		}
 	})
 

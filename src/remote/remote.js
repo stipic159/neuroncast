@@ -50,7 +50,7 @@ const RemoteApp = {
 						<span class="pill-dot"></span>
 						OBS
 					</span>
-					<span :class="['pill', cs2.connected ? '--green' : '--red']" :title="cs2.connected ? 'CS2 NetCon OK' : 'Launch CS2 with -netconport 2121'">
+					<span :class="['pill', cs2.connected ? '--green' : '--red']" title="Управление камерой CS2 активно">
 						<span class="pill-dot"></span>
 						{{ cs2.connected ? 'CS2' : 'CS2 OFF' }}
 					</span>
@@ -620,8 +620,8 @@ const RemoteApp = {
 				const res = await this.sendControlRequest('/api/cs2/spec', payload)
 				if (res.ok) {
 					const data = await res.json()
-					if (data.connected === false) {
-						alert('⚠️ CS2 Console (NetCon) не подключен.\n\nЗапустите CS2 в Steam с параметром запуска:\n-netconport 2121')
+					if (!data.success && !data.connected && !data.windowsFallback) {
+						alert('⚠️ Не удалось переключить камеру в CS2.\n\nУбедитесь, что CS2 запущена.')
 					}
 				}
 			} catch (_) {}
@@ -728,7 +728,9 @@ const RemoteApp = {
 				const res = await fetch('/api/cs2/status')
 				if (res.ok) {
 					const data = await res.json()
-					if (data.netcon) {
+					if (data.active !== undefined) {
+						this.cs2 = { connected: !!data.active }
+					} else if (data.netcon) {
 						this.cs2 = { connected: !!data.netcon.connected }
 					}
 				}

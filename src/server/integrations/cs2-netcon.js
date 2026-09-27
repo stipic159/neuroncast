@@ -1,9 +1,47 @@
 import net from 'node:net'
+import cp from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+
+import { userspaceDirectory } from '../helpers/paths.js'
+
+const VBS_SCRIPT_PATH = path.join(userspaceDirectory, 'cs2-sendkey.vbs')
+
+function ensureVbsScript() {
+	if (os.platform() !== 'win32') return
+	try {
+		fs.mkdirSync(userspaceDirectory, { recursive: true })
+		fs.writeFileSync(VBS_SCRIPT_PATH, `
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.AppActivate "Counter-Strike"
+WshShell.SendKeys WScript.Arguments(0)
+`, 'utf8')
+	} catch (_) {}
+}
+
+function sendWindowsKey(slot) {
+	if (os.platform() !== 'win32') return false
+	ensureVbsScript()
+	const slotStr = String(slot).trim()
+	const keyToSend = slotStr === '0' || slotStr === '10' ? '0' : slotStr
+
+	try {
+		cp.exec(`cscript //Nologo "${VBS_SCRIPT_PATH}" ${keyToSend}`, (err) => {
+			if (err) {
+				console.warn('[CS2 KeyPress] SendKeys error:', err.message)
+			}
+		})
+		return true
+	} catch (err) {
+		console.warn('[CS2 KeyPress] Failed to trigger SendKeys:', err.message)
+		return false
+	}
+}
 
 /**
  * CS2 NetCon (Network Console) Integration Service
- * Allows remote control of CS2 spectator camera via local TCP socket.
- * Launch CS2 with launch option: -netconport 2121
+ * Allows remote control of CS2 spectator camera via local TCP socket or Windows keypress simulation.
  */
 class Cs2Netcon {
 	constructor() {
@@ -102,36 +140,42 @@ class Cs2Netcon {
 
 	/**
 	 * Spectates a player by SteamID64, raw slot index (0..9), or physical slot key (1..10).
-	 * Sends the single best unambiguous command to CS2:
-	 * 1. spec_player_by_accountid <accountId> (if steamid present)
-	 * 2. spec_player <rawSlot> (0-indexed 0..9)
-	 * 3. slot<1..10> (physical key slot)
+	 * Strategy:
+	 * 1. If CS2 NetCon TCP socket is connected, send exact console command.
+	 * 2. If NetCon TCP is not connected on Windows, fallback to Windows SendKeys to CS2 window.
 	 */
 	specPlayer(target) {
 		let command = null
-		let accountId = null
+		let slotKey = null
 
 		if (target && typeof target === 'object') {
 			const { slot, rawSlot, steamid } = target
 
+			if (slot !== undefined && slot !== null) {
+				slotKey = String(slot).trim()
+			} else if (rawSlot !== undefined && rawSlot !== null && !isNaN(Number(rawSlot))) {
+				slotKey = String((Number(rawSlot) + 1) % 10)
+			}
+
 			if (steamid) {
 				try {
-					accountId = (BigInt(steamid) & 0xFFFFFFFFn).toString()
+					const accountId = (BigInt(steamid) & 0xFFFFFFFFn).toString()
 					command = `spec_player_by_accountid ${accountId}`
 				} catch (_) {}
 			}
 			if (!command && rawSlot !== undefined && rawSlot !== null && !isNaN(Number(rawSlot))) {
 				command = `spec_player ${Number(rawSlot)}`
 			}
-			if (!command && slot !== undefined && slot !== null) {
-				const slotNum = String(slot).trim() === '0' ? '10' : String(slot).trim()
+			if (!command && slotKey) {
+				const slotNum = slotKey === '0' ? '10' : slotKey
 				command = `slot${slotNum}`
 			}
 		} else if (target !== undefined && target !== null) {
 			const val = String(target).trim()
+			slotKey = val
 			if (/^7656\d{13}$/.test(val)) {
 				try {
-					accountId = (BigInt(val) & 0xFFFFFFFFn).toString()
+					const accountId = (BigInt(val) & 0xFFFFFFFFn).toString()
 					command = `spec_player_by_accountid ${accountId}`
 				} catch (_) {}
 			} else {
@@ -144,18 +188,22 @@ class Cs2Netcon {
 			}
 		}
 
-		if (!command) return false
-		
-		// Send primary exact target command
-		const sent = this.sendCommand(command)
-
-		// Also send slot command fallback if rawSlot / slot was provided
-		if (target && typeof target === 'object' && target.slot) {
-			const fallbackSlot = String(target.slot).trim() === '0' ? '10' : String(target.slot).trim()
-			this.sendCommand(`slot${fallbackSlot}`)
+		// 1. If NetCon TCP socket is active, send console command
+		if (this.connected && command) {
+			return this.sendCommand(command)
 		}
 
-		return sent
+		// 2. Fallback on Windows: send simulated spectator key (1..9, 0) to Counter-Strike window
+		if (os.platform() === 'win32' && slotKey) {
+			return sendWindowsKey(slotKey)
+		}
+
+		// 3. Fallback: queue NetCon command and attempt TCP connect
+		if (command) {
+			return this.sendCommand(command)
+		}
+
+		return false
 	}
 
 	getStatus() {
@@ -163,7 +211,8 @@ class Cs2Netcon {
 			enabled: true,
 			connected: this.connected,
 			host: this.host,
-			port: this.port
+			port: this.port,
+			windowsFallbackAvailable: os.platform() === 'win32'
 		}
 	}
 }
