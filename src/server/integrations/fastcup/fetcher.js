@@ -30,11 +30,41 @@ export function extractMatchId(input) {
 /**
  * Normalizes map names (e.g. 'de_dust2' -> 'de_dust2', 'dust2' -> 'de_dust2')
  */
+export const FASTCUP_MAP_ID_TO_NAME = {
+	1: 'de_dust2',
+	2: 'de_inferno',
+	3: 'de_mirage',
+	4: 'de_nuke',
+	5: 'de_ancient',
+	6: 'de_anubis',
+	7: 'de_vertigo',
+	8: 'de_train',
+	9: 'de_overpass',
+	10: 'de_cache',
+}
+
 export function normalizeMapName(mapName) {
 	if (!mapName) return 'de_tbd'
 	const str = String(mapName).trim().toLowerCase()
+	if (/^map_\\d+$/.test(str)) {
+		const id = parseInt(str.replace('map_', ''), 10)
+		if (FASTCUP_MAP_ID_TO_NAME[id]) return FASTCUP_MAP_ID_TO_NAME[id]
+	}
+	if (/^\\d+$/.test(str)) {
+		const id = parseInt(str, 10)
+		if (FASTCUP_MAP_ID_TO_NAME[id]) return FASTCUP_MAP_ID_TO_NAME[id]
+	}
+	if (str === 'dust2' || str === 'dust_2' || str === 'dustii' || str === 'dust_ii' || str === 'dust ii') return 'de_dust2'
+	if (str === 'mirage') return 'de_mirage'
+	if (str === 'inferno') return 'de_inferno'
+	if (str === 'nuke') return 'de_nuke'
+	if (str === 'ancient') return 'de_ancient'
+	if (str === 'anubis') return 'de_anubis'
+	if (str === 'vertigo') return 'de_vertigo'
+	if (str === 'train') return 'de_train'
+	if (str === 'overpass') return 'de_overpass'
 	if (str.startsWith('de_') || str.startsWith('cs_')) return str
-	return `de_${str}`
+	return de_
 }
 
 const FASTCUP_GRAPHQL_QUERY = `
@@ -397,7 +427,7 @@ export async function normalizeFastcupPayload(rawData, matchId) {
 		for (const m of membersForTeam) {
 			const u = m.private?.user || m.user || m
 			const fastcupId = String(u.id || m.userId || '')
-			const steamId64 = toSteamID64(u.steam_id || u.steamId || fastcupId) || `765611990000000${parsedPlayers.length + 1}`
+			const steamId64 = toSteamID64(u.steam_id64 || u.steamId64 || u.steam_id || u.steamId || fastcupId) || `765611990000000${parsedPlayers.length + 1}`
 			const nickname = String(u.nickName || u.nickname || u.name || `Player_${fastcupId.slice(-4)}`).trim()
 			
 			const avatarFileName = u.avatar || u.avatar_url || null
@@ -460,7 +490,20 @@ export async function normalizeFastcupPayload(rawData, matchId) {
 	// Parse Pick / Ban Veto
 	const rawBans = Array.isArray(data.mapBans) ? data.mapBans : []
 	const rawPicks = Array.isArray(data.mapPicks) ? data.mapPicks : []
+	const rawDirectVeto = Array.isArray(data.veto) ? data.veto : []
 	const steps = []
+
+	if (rawDirectVeto.length > 0) {
+		rawDirectVeto.forEach((v, idx) => {
+			const isTeam1 = (v.team_id && (v.team_id === team1.id || String(v.team_id) === '101')) || v.team === 'team1' || team1.players.some(p => p.fastcupId === String(v.userId || v.user_id))
+			steps.push({
+				team: isTeam1 ? 'team1' : 'team2',
+				action: (v.action || 'ban').toLowerCase(),
+				mapName: normalizeMapName(v.map_name || v.mapName || map_),
+				order: idx + 1,
+			})
+		})
+	}
 
 	rawBans.forEach((b, idx) => {
 		const isTeam1 = team1.players.some(p => p.fastcupId === String(b.userId))

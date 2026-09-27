@@ -5,7 +5,7 @@ const { createApp } = Vue
 const PRESET_TICKERS = [
 	{ label: '💜 Follow Twitch', text: '💜 ЖМИ FOLLOW НА КАНАЛ! СПАСИБО ЗА ПОДДЕРЖКУ!' },
 	{ label: '💬 Команды чата', text: '💬 КОМАНДЫ В ЧАТЕ: !score !bracket !rules' },
-	{ label: '📣 Telegram & Discord', text: '📣 СЕТКА И АНОНСЫ В НАШЕМ TELEGRAM & DISCORD' },
+	{ label: '📢 Telegram & Discord', text: '📢 СЕТКА И АНОНСЫ В НАШЕМ TELEGRAM & DISCORD' },
 	{ label: '🎙️ Кастер на связи', text: '🎙️ НА МИКРОФОНЕ ВАШ КОММЕНТАТОР · ПРИЯТНОГО ПРОСМОТРА!' },
 	{ label: '🎁 Розыгрыш в чате', text: '🎁 РОЗЫГРЫШ СКИНОВ СРЕДИ ЗРИТЕЛЕЙ В ЧАТЕ TWITCH!' },
 	{ label: '⚔️ Формат BO3', text: '⚔️ МАТЧ СЕРИИ BEST OF 3 · ИГРА НА ВЫЛЕТ' },
@@ -31,6 +31,18 @@ const WEAPON_MAP = {
 	weapon_knife: 'Нож',
 	weapon_c4: '💣 C4 Bomb',
 	weapon_taser: 'Zeus x27',
+}
+
+const MAP_PRETTY_NAMES = {
+	de_mirage: 'Mirage',
+	de_inferno: 'Inferno',
+	de_nuke: 'Nuke',
+	de_ancient: 'Ancient',
+	de_anubis: 'Anubis',
+	de_dust2: 'Dust II',
+	de_vertigo: 'Vertigo',
+	de_train: 'Train',
+	de_overpass: 'Overpass',
 }
 
 const RemoteApp = {
@@ -84,13 +96,19 @@ const RemoteApp = {
 					:class="['tab-nav-btn', { '--active': activeTab === 'broadcast' }]"
 					@click="switchTab('broadcast')"
 				>
-					📺 ЭФИР & СЦЕНЫ
+					📺 ЭФИР
+				</button>
+				<button 
+					:class="['tab-nav-btn', { '--active': activeTab === 'veto' }]"
+					@click="switchTab('veto')"
+				>
+					🎯 ВЕТО
 				</button>
 				<button 
 					:class="['tab-nav-btn', { '--active': activeTab === 'observer' }]"
 					@click="switchTab('observer')"
 				>
-					👥 ОБСЕРВЕР + РАДАР
+					👥 ИГРОКИ
 					<span v-if="aliveCountText" class="tab-badge-alive">{{ aliveCountText }}</span>
 				</button>
 				<button 
@@ -284,7 +302,124 @@ const RemoteApp = {
 				</section>
 			</div>
 
-			<!-- TAB 2: OBSERVER & PLAYERS VIEW (1-0 SLOTS + INTEGRATED RADAR) -->
+			<!-- TAB 2: VETO & MATCH SETUP -->
+			<div v-show="activeTab === 'veto'" class="tab-content veto-tab">
+				<!-- Veto Status & Timer Bar -->
+				<div class="veto-status-header">
+					<div class="status-left">
+						<span :class="['veto-phase-badge', '--' + (veto.phase || 'not_started').toLowerCase().replace('_', '-')]">
+							{{ vetoPhaseText }}
+						</span>
+						<span style="font-size: 0.7rem; color: #8b949e;">{{ vetoStepText }}</span>
+					</div>
+					<div v-if="veto.phase === 'IN_PROGRESS'" class="veto-timer-pill">
+						<span>⏱️</span>
+						<span class="timer-num">{{ veto.timer?.secondsLeft ?? '--' }}s</span>
+					</div>
+				</div>
+
+				<!-- 1-Click FACEIT URL Import -->
+				<section class="remote-section">
+					<div class="section-title">
+						<span>⚡ 1-Click Import (FastCup / FACEIT)</span>
+					</div>
+					<div class="import-row">
+						<input 
+							type="text" 
+							class="input-faceit" 
+							v-model="faceitImportUrl" 
+							placeholder="FastCup ID матча или ссылка..." 
+							@keyup.enter="importFaceitMatch"
+						/>
+						<button class="btn-import" :disabled="importingMatch" @click="importFaceitMatch">
+							{{ importingMatch ? 'Загрузка...' : 'Импорт' }}
+						</button>
+					</div>
+					<div v-if="activeMatch" class="match-summary-card">
+						<div class="summary-teams">
+							<span>{{ activeMatch.team1?.name || 'Team 1' }}</span>
+							<span style="color: #6e7681;">vs</span>
+							<span>{{ activeMatch.team2?.name || 'Team 2' }}</span>
+						</div>
+						<span class="summary-format">{{ (activeMatch.format || 'bo3').toUpperCase() }}</span>
+					</div>
+				</section>
+
+				<!-- Current Turn Instruction / Action Box -->
+				<div v-if="veto.phase === 'IN_PROGRESS'" class="turn-banner">
+					<span class="turn-team">
+						👉 Очередь: <b>{{ currentVetoTeamName }}</b>
+					</span>
+					<span :class="['turn-action-tag', { '--side': veto.currentActionType === 'SIDE_PICK' }]">
+						{{ veto.currentActionType }}
+					</span>
+				</div>
+
+				<!-- Side Pick Selector Prompt (Only during SIDE_PICK) -->
+				<div v-if="veto.phase === 'IN_PROGRESS' && veto.currentActionType === 'SIDE_PICK'" class="side-pick-prompt">
+					<div style="font-size: 0.75rem; color: #fff; font-weight: 700; text-align: center;">
+						Выберите сторону для {{ formatMapName(veto.targetMapId) }}:
+					</div>
+					<div class="button-grid-2">
+						<button class="btn-side --ct" @click="pickSide('CT')">
+							🛡️ CT (Защита)
+						</button>
+						<button class="btn-side --t" @click="pickSide('TERRORIST')">
+							💣 T (Атака)
+						</button>
+					</div>
+				</div>
+
+				<!-- Interactive Map Pool Grid -->
+				<section class="remote-section">
+					<div class="section-title">
+						<span>Пул Карт (Нажмите для действия)</span>
+					</div>
+					<div class="veto-grid-mobile">
+						<button 
+							v-for="mapId in vetoMapPool" 
+							:key="mapId" 
+							:class="['map-btn-mobile', '--' + (getMapStatus(mapId).status || 'available').toLowerCase()]"
+							:disabled="veto.phase !== 'IN_PROGRESS' || veto.currentActionType === 'SIDE_PICK' || getMapStatus(mapId).status !== 'AVAILABLE'"
+							@click="selectMap(mapId)"
+						>
+							<span class="map-name-mobile">{{ formatMapName(mapId) }}</span>
+							<span class="map-status-sub">{{ getMapStatusText(mapId) }}</span>
+						</button>
+					</div>
+				</section>
+
+				<!-- Veto Session Controls (Start / Undo / Reset) -->
+				<section class="remote-section">
+					<div class="section-title">
+						<span>Управление Сессией</span>
+					</div>
+					<div class="button-grid-3">
+						<button 
+							class="btn-tap" 
+							:disabled="veto.phase === 'IN_PROGRESS'"
+							@click="startManualVeto"
+						>
+							▶️ Старт Veto
+						</button>
+						<button 
+							class="btn-tap" 
+							:disabled="!veto.actionHistory || veto.actionHistory.length === 0"
+							@click="undoVetoAction"
+						>
+							↩️ Отмена
+						</button>
+						<button 
+							class="btn-tap" 
+							@click="resetVetoSession"
+						>
+							🔄 Сброс
+						</button>
+					</div>
+				</section>
+			</div>
+
+			<!-- TAB 3: OBSERVER & PLAYERS VIEW (1-0 SLOTS + INTEGRATED RADAR) -->
 			<div v-show="activeTab === 'observer'" class="tab-content observer-tab">
 				<div class="observer-controls-bar">
 					<div class="observer-hint-text">
@@ -416,7 +551,7 @@ const RemoteApp = {
 				</div>
 			</div>
 
-			<!-- TAB 3: RADAR -->
+			<!-- TAB 4: RADAR -->
 			<div v-show="activeTab === 'radar'" class="tab-content radar-tab">
 				<div class="radar-card">
 					<iframe src="/radar/" class="radar-iframe"></iframe>
@@ -435,6 +570,21 @@ const RemoteApp = {
 			replaySaved: false,
 			tickerText: '',
 			presets: PRESET_TICKERS,
+			faceitImportUrl: '',
+			importingMatch: false,
+			activeMatch: null,
+			veto: {
+				phase: 'NOT_STARTED',
+				currentStepIndex: 0,
+				totalSteps: 0,
+				currentActorTeam: null,
+				currentActionType: null,
+				targetMapId: null,
+				activeMapPool: ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_dust2', 'de_vertigo'],
+				mapsStatus: {},
+				actionHistory: [],
+				timer: { secondsLeft: 30, isRunning: false },
+			},
 			obs: {
 				connected: false,
 				currentScene: '',
@@ -498,6 +648,27 @@ const RemoteApp = {
 			if (phase === 'over') return 'ROUND OVER'
 			return 'MATCH READY'
 		},
+		vetoPhaseText() {
+			if (this.veto.phase === 'COMPLETED') return '✅ ВЕТО ЗАВЕРШЕНО'
+			if (this.veto.phase === 'IN_PROGRESS') return '🔥 ВЕТО АКТИВНО'
+			return '⏸️ ОЖИДАНИЕ СТАРТА'
+		},
+		vetoStepText() {
+			if (this.veto.phase !== 'IN_PROGRESS') return ''
+			return `Шаг ${(this.veto.currentStepIndex || 0) + 1} из ${this.veto.totalSteps || 7}`
+		},
+		currentVetoTeamName() {
+			if (!this.veto.currentActorTeam) return 'КОМАНДА'
+			if (this.veto.currentActorTeam === 'team1') {
+				return this.activeMatch?.team1?.name || 'TEAM 1'
+			}
+			return this.activeMatch?.team2?.name || 'TEAM 2'
+		},
+		vetoMapPool() {
+			return this.veto.activeMapPool && this.veto.activeMapPool.length > 0
+				? this.veto.activeMapPool
+				: ['de_mirage', 'de_inferno', 'de_nuke', 'de_ancient', 'de_anubis', 'de_dust2', 'de_vertigo']
+		},
 		observerPlayers() {
 			const all = this.gsi?.allplayers || {}
 			const spectatedSteamId = this.gsi?.player?.steamid || ''
@@ -512,11 +683,8 @@ const RemoteApp = {
 					rawSlot = idx
 				}
 				rawSlot = Number(rawSlot)
-				// CS2 physical spectator keys: 1..5 for CT, 6..9,0 for T
-				// slot 0 -> key '1', slot 1 -> key '2', ..., slot 8 -> key '9', slot 9 -> key '0'
 				const slot = String((rawSlot + 1) % 10)
 
-				// Active weapon resolving
 				let activeWeapon = ''
 				let ammoClip = null
 				let hasBomb = false
@@ -580,6 +748,8 @@ const RemoteApp = {
 		this.connectWebSocket()
 		this.fetchObsStatus()
 		this.fetchCs2Status()
+		this.fetchMatchConfig()
+		this.fetchVetoState()
 		setInterval(() => {
 			this.fetchObsStatus()
 			this.fetchCs2Status()
@@ -608,13 +778,30 @@ const RemoteApp = {
 			if (!name) return ''
 			return WEAPON_MAP[name] || name.replace('weapon_', '').toUpperCase()
 		},
+		formatMapName(mapId) {
+			if (!mapId) return ''
+			return MAP_PRETTY_NAMES[mapId] || mapId.replace('de_', '').toUpperCase()
+		},
+		getMapStatus(mapId) {
+			return this.veto.mapsStatus?.[mapId] || { status: 'AVAILABLE' }
+		},
+		getMapStatusText(mapId) {
+			const info = this.getMapStatus(mapId)
+			if (info.status === 'BANNED') return `BANNED ${info.orderIndex ? '#' + info.orderIndex : ''}`
+			if (info.status === 'PICKED') {
+				const side = info.pickedSide ? ` (${info.pickedSide})` : ''
+				return `PICKED ${info.orderIndex ? '#' + info.orderIndex : ''}${side}`
+			}
+			if (info.status === 'DECIDER') return 'DECIDER (MAP 3)'
+			return 'ДОСТУПНА'
+		},
 		async specPlayer(player) {
 			this.vibrate(35)
 			try {
 				const payload = (typeof player === 'object' && player) ? {
 					slot: player.slot,
 					rawSlot: player.rawSlot,
-					steamid: player.steamid
+					steamid: player.steamid,
 				} : { slot: player }
 
 				const res = await this.sendControlRequest('/api/cs2/spec', payload)
@@ -635,8 +822,8 @@ const RemoteApp = {
 					steamid: player.steamid,
 					tag: 'PLAYER SPOTLIGHT',
 					side: player.team.toLowerCase(),
-					durationMs: 8000
-				}
+					durationMs: 8000,
+				},
 			}))
 		},
 		getHpClass(hp) {
@@ -644,7 +831,6 @@ const RemoteApp = {
 			if (hp > 20) return '--hp-mid'
 			return '--hp-low'
 		},
-		// Haptic vibration feedback
 		vibrate(pattern = 40) {
 			if (navigator.vibrate) {
 				try {
@@ -652,8 +838,6 @@ const RemoteApp = {
 				} catch (_) {}
 			}
 		},
-
-		// Screen Wake Lock API to prevent phone screen from sleeping
 		async initWakeLock() {
 			if ('wakeLock' in navigator) {
 				try {
@@ -668,7 +852,6 @@ const RemoteApp = {
 				}
 			}
 		},
-
 		connectWebSocket() {
 			const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
 			const token = this.getToken()
@@ -681,6 +864,8 @@ const RemoteApp = {
 				this.connected = true
 				this.fetchObsStatus()
 				this.fetchCs2Status()
+				this.fetchMatchConfig()
+				this.fetchVetoState()
 			}
 
 			this.socket.onclose = () => {
@@ -698,20 +883,18 @@ const RemoteApp = {
 						if (data.body.gsiState) this.gsi = data.body.gsiState
 						if (data.body.additionalState) this.additionalState = data.body.additionalState
 					} else if (data.event === 'gsi_update' && data.body) {
-						// Real-time 20Hz update without needing page reload
 						if (data.body.gsiState) this.gsi = data.body.gsiState
 						if (data.body.additionalState) this.additionalState = data.body.additionalState
-					} else if (data.options) {
-						this.options = { ...this.options, ...data.options }
-					} else if (data.gsiState) {
-						this.gsi = data.gsiState
 					} else if (data.event === 'obs:status' && data.body) {
 						this.obs = { ...this.obs, ...data.body }
+					} else if (data.event === 'veto:sync' && data.body) {
+						this.veto = data.body
+					} else if (data.event === 'match:config_updated' && data.body) {
+						this.activeMatch = data.body
 					}
 				} catch (_) {}
 			}
 		},
-
 		async fetchObsStatus() {
 			try {
 				const token = this.getToken()
@@ -722,7 +905,6 @@ const RemoteApp = {
 				}
 			} catch (_) {}
 		},
-
 		async fetchCs2Status() {
 			try {
 				const res = await fetch('/api/cs2/status')
@@ -736,7 +918,25 @@ const RemoteApp = {
 				}
 			} catch (_) {}
 		},
-
+		async fetchMatchConfig() {
+			try {
+				const res = await fetch('/api/match/config')
+				if (res.ok) {
+					const data = await res.json()
+					if (data.config) this.activeMatch = data.config
+					if (data.veto) this.veto = data.veto
+				}
+			} catch (_) {}
+		},
+		async fetchVetoState() {
+			try {
+				const res = await fetch('/api/veto/state')
+				if (res.ok) {
+					const data = await res.json()
+					if (data.state) this.veto = data.state
+				}
+			} catch (_) {}
+		},
 		async sendControlRequest(url, body = {}) {
 			this.vibrate(35)
 			let token = this.getToken()
@@ -765,7 +965,6 @@ const RemoteApp = {
 
 			return res
 		},
-
 		async toggleCasterMic() {
 			this.vibrate(60)
 			try {
@@ -778,20 +977,17 @@ const RemoteApp = {
 				console.error('[Remote] Failed to toggle mic:', err)
 			}
 		},
-
 		async saveReplay() {
 			this.vibrate([40, 60, 40])
 			this.replaySaved = true
 			setTimeout(() => (this.replaySaved = false), 2500)
 			await this.sendControlRequest('/api/obs/replay-buffer/save')
 		},
-
 		async switchObsScene(role) {
 			this.vibrate(35)
 			await this.sendControlRequest('/api/obs/scene', { role })
 			await this.fetchObsStatus()
 		},
-
 		setHudScene(id) {
 			this.vibrate(35)
 			const next = this.currentHudScene === id ? 'default' : id
@@ -800,7 +996,6 @@ const RemoteApp = {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'match.activeScene', value: next } }))
 			}
 		},
-
 		setMatchFormat(bo) {
 			this.vibrate(35)
 			this.options['match.bestOf'] = bo
@@ -808,7 +1003,6 @@ const RemoteApp = {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'match.bestOf', value: bo } }))
 			}
 		},
-
 		setWinner(val) {
 			this.vibrate(35)
 			this.options['preferences.celebration.forceWinner'] = val
@@ -816,7 +1010,6 @@ const RemoteApp = {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'preferences.celebration.forceWinner', value: val } }))
 			}
 		},
-
 		togglePromotion() {
 			this.vibrate(35)
 			const next = !this.options['promotion.visible']
@@ -825,13 +1018,11 @@ const RemoteApp = {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'promotion.visible', value: next } }))
 			}
 		},
-
 		applyPreset(preset) {
 			this.vibrate(35)
 			this.tickerText = preset.text
 			this.sendTicker()
 		},
-
 		sendTicker() {
 			if (!this.tickerText) return
 			this.vibrate(45)
@@ -840,7 +1031,6 @@ const RemoteApp = {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: this.tickerText } }))
 			}
 		},
-
 		clearTicker() {
 			this.vibrate([30, 40])
 			this.tickerText = ''
@@ -850,6 +1040,87 @@ const RemoteApp = {
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'branding.ticker', value: '' } }))
 				this.socket.send(JSON.stringify({ event: 'config:update', body: { key: 'promotion.visible', value: false } }))
 			}
+		},
+
+		// ================= VETO CONTROLLER METHODS =================
+		async importFaceitMatch() {
+			if (!this.faceitImportUrl) return
+			this.vibrate(40)
+			this.importingMatch = true
+			try {
+				const res = await this.sendControlRequest('/api/match/import', {
+					url: this.faceitImportUrl,
+					autoCache: true,
+				})
+				const data = await res.json()
+				if (data.ok) {
+					this.activeMatch = data.match || data.matchConfig
+					if (data.vetoData) {
+						this.veto = data.veto || data.vetoData
+					}
+					alert(`✅ Матч "${data.matchConfig.title}" успешно импортирован!`)
+				} else {
+					alert(`❌ Ошибка импорта: ${data.error || 'Неизвестная ошибка'}`)
+				}
+			} catch (err) {
+				alert(`❌ Ошибка сети: ${err.message}`)
+			} finally {
+				this.importingMatch = false
+			}
+		},
+
+		selectMap(mapId) {
+			this.vibrate(40)
+			if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
+			this.socket.send(JSON.stringify({
+				event: 'veto:action',
+				body: {
+					type: this.veto.currentActionType,
+					mapId,
+				},
+			}))
+		},
+
+		pickSide(side) {
+			this.vibrate(40)
+			if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
+			this.socket.send(JSON.stringify({
+				event: 'veto:action',
+				body: {
+					type: 'SIDE_PICK',
+					pickedSide: side,
+				},
+			}))
+		},
+
+		startManualVeto() {
+			this.vibrate(45)
+			if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
+			this.socket.send(JSON.stringify({
+				event: 'veto:start',
+				body: {
+					format: this.activeMatch?.format || 'bo3',
+					knifeRoundDecider: true,
+					firstTeam: 'team1',
+				},
+			}))
+		},
+
+		undoVetoAction() {
+			this.vibrate(35)
+			if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
+			this.socket.send(JSON.stringify({
+				event: 'veto:undo',
+			}))
+		},
+
+		resetVetoSession() {
+			if (!confirm('Вы уверены, что хотите сбросить текущее вето?')) return
+			this.vibrate(40)
+			if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return
+			this.socket.send(JSON.stringify({
+				event: 'veto:reset',
+			}))
 		},
 	},
 }

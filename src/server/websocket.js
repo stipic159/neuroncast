@@ -5,6 +5,7 @@ import { getSettings } from './settings.js'
 import { isUiDevMode } from './dev-mode.js'
 import { isAuthorizedControlSocket } from './auth.js'
 import { clearThemeAssetCache } from './hud.js'
+import { vetoEngine } from './veto/veto-engine.js'
 
 export class Websocket {
 	constructor(server) {
@@ -21,6 +22,12 @@ export class Websocket {
 
 			this.sendState(client)
 
+			// Send active veto state on connect
+			client.send(JSON.stringify({
+				event: 'veto:sync',
+				body: vetoEngine.getState(),
+			}))
+
 			client.on('message', (data) => {
 				try {
 					const parsed = JSON.parse(data)
@@ -29,10 +36,29 @@ export class Websocket {
 						return
 					}
 					const { event, body } = parsed
+
 					// Relay drawing and config events to all clients
 					if (event && (event.startsWith('draw:') || event.startsWith('config:'))) {
 						if (!client._eonTrusted) return
 						this.broadcastToWebsockets(event, body)
+					}
+
+					// Handle real-time veto events from Remote
+					if (event && event.startsWith('veto:')) {
+						if (!client._eonTrusted) return
+						if (event === 'veto:action') {
+							vetoEngine.executeAction(body)
+						} else if (event === 'veto:undo') {
+							vetoEngine.undoLastAction()
+						} else if (event === 'veto:reset') {
+							vetoEngine.reset()
+						} else if (event === 'veto:start') {
+							vetoEngine.initSession(body)
+						} else if (event === 'veto:timer') {
+							if (body?.action === 'start') vetoEngine.startTimer()
+							else if (body?.action === 'pause') vetoEngine.pauseTimer()
+							else if (body?.action === 'add') vetoEngine.addTimerSeconds(body?.seconds || 30)
+						}
 					}
 				} catch (err) {
 					console.error('Error handling websocket message:', err)

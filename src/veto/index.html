@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+	<title>NeuronCast - Map Veto Screen</title>
+	<link rel="stylesheet" href="/dependencies/normalize.css">
+	<link rel="stylesheet" href="/veto/veto.css">
+</head>
+<body class="no-transitions">
+	<div id="veto-root" class="veto-screen">
+		<!-- Match Header -->
+		<header class="veto-header">
+			<div class="team-banner team-1">
+				<img id="team1-logo" class="team-logo" src="/assets/placeholders/default_team.svg" alt="Team 1 Logo">
+				<div class="team-meta">
+					<h2 id="team1-name" class="team-name">TEAM 1</h2>
+					<span id="team1-tag" class="team-tag">T1</span>
+				</div>
+			</div>
+
+			<div class="veto-center">
+				<div class="brand-title">NEURONCAST // CS2 MAP VETO</div>
+				<div id="veto-phase-indicator" class="phase-indicator">WAITING TO START</div>
+				<div id="veto-timer-box" class="timer-box">
+					<span class="timer-label">TIME</span>
+					<span id="veto-timer-val" class="timer-value">--</span>
+				</div>
+			</div>
+
+			<div class="team-banner team-2">
+				<div class="team-meta --right">
+					<h2 id="team2-name" class="team-name">TEAM 2</h2>
+					<span id="team2-tag" class="team-tag">T2</span>
+				</div>
+				<img id="team2-logo" class="team-logo" src="/assets/placeholders/default_team.svg" alt="Team 2 Logo">
+			</div>
+		</header>
+
+		<!-- Active Veto Map Cards Grid -->
+		<main id="veto-cards-container" class="veto-grid">
+			<!-- Populated dynamically by veto.js -->
+		</main>
+
+		<!-- Bottom Status & History Bar -->
+		<footer class="veto-footer">
+			<div class="footer-step-info">
+				<span class="step-badge" id="current-step-label">STEP -/-</span>
+				<span class="action-desc" id="current-instruction">Waiting for match data...</span>
+			</div>
+			<div class="footer-history" id="recent-action-ticker">
+				<!-- Ticker log of picks/bans -->
+			</div>
+		</footer>
+	</div>
+
+	<script type="module" src="/veto/veto.js"></script>
+</body>
+</html>

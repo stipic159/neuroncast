@@ -14,6 +14,8 @@ import { registerDependencyRoutes } from './dependencies.js'
 import { registerGsiRoutes } from './gsi.js'
 import { registerOperatorRoutes } from './routes/operator-routes.js'
 import { registerCs2Routes } from './routes/cs2-routes.js'
+import { registerMatchRoutes } from './routes/match-routes.js'
+import { registerVetoRoutes } from './veto/veto-routes.js'
 import { registerDiagnosticsRoutes } from './diagnostics.js'
 import { registerHudRoutes, concatStaticFileFromThemeTreeRecursively } from './hud.js'
 import { registerKomplettligaenRoutes } from './komplettligaen.js'
@@ -66,7 +68,7 @@ const run = async () => {
 	// 1. Mandatory Trailing Slash Redirects
 	app.use(async (context, next) => {
 		const path = context.path
-		if ((path === '/config' || path === '/hud' || path === '/radar' || path === '/remote') && !path.endsWith('/')) {
+		if ((path === '/config' || path === '/hud' || path === '/radar' || path === '/remote' || path === '/veto') && !path.endsWith('/')) {
 			context.status = 301
 			context.redirect(`${path}/`)
 			return
@@ -108,6 +110,8 @@ const run = async () => {
 	registerDependencyRoutes(router)
 	registerGsiRoutes(router, websocket)
 	registerOperatorRoutes(router, websocket)
+	registerMatchRoutes(router, websocket)
+	registerVetoRoutes(router, websocket)
 	registerHudRoutes(router)
 	registerKomplettligaenRoutes(router, websocket)
 	registerFastcupRoutes(router, websocket)
@@ -157,6 +161,16 @@ const run = async () => {
 					else if (file.endsWith('.css')) context.type = 'text/css'
 				}
 			}
+			else if (urlPath.startsWith('/veto/')) {
+				const file = urlPath.slice(6).trim() || 'index.html'
+				const root = join(builtinRootDirectory, 'src/veto')
+				await send(context, file, { root })
+				if (context.body) {
+					context.status = 200
+					if (file.endsWith('.js')) context.type = 'application/javascript'
+					else if (file.endsWith('.css')) context.type = 'text/css'
+				}
+			}
 			else if (urlPath.startsWith('/hud/')) {
 				const themeTree = await getThemeTree(context.query.theme)
 				const hudPath = decodeURIComponent(urlPath.slice(5) || 'index.html').replace(/^\//, '')
@@ -198,6 +212,7 @@ const run = async () => {
 	console.info(`\n[NeuronCast] CS2 Broadcast Server active at:`)
 	console.info(` > Local Config:  http://localhost:${port}/config/`)
 	console.info(` > Local Remote:  http://localhost:${port}/remote/`)
+	console.info(` > Local Veto:    http://localhost:${port}/veto/`)
 	console.info(` > Local HUD:     http://localhost:${port}/hud/`)
 
 	if (exposedToNetwork) {
@@ -248,7 +263,9 @@ const run = async () => {
 	}
 
 	process.on('SIGINT', () => shutdown(0))
-	process.on('SIGTERM', () => shutdown(0))
 }
 
-run().then(() => {}).catch(console.error)
+run().catch((err) => {
+	console.error('FATAL: Failed to start NeuronCast server:', err)
+	process.exit(1)
+})
