@@ -25,7 +25,9 @@ export class Websocket {
 				try {
 					const parsed = JSON.parse(data)
 					if (parsed.event === 'ping') {
-						client.send(JSON.stringify({ event: 'pong', at: Date.now() }))
+						if (client.readyState === WebSocket.OPEN) {
+							client.send(JSON.stringify({ event: 'pong', at: Date.now() }))
+						}
 						return
 					}
 					const { event, body } = parsed
@@ -97,8 +99,8 @@ export class Websocket {
 
 	broadcastToWebsockets(event, body) {
 		// Update optionsCache if this is a config update
-		if (event === 'config:update' && body.key) {
-			this.optionsCache[body.key] = body.value;
+		if (event === 'config:update' && body?.key) {
+			this.optionsCache[body.key] = body.value
 		}
 
 		const message = body !== undefined
@@ -107,16 +109,25 @@ export class Websocket {
 
 		for (const client of this.websocket.clients) {
 			if (client.readyState !== WebSocket.OPEN) continue
-			client.send(message)
+			try {
+				client.send(message)
+			} catch (err) {
+				console.error('Error broadcasting message to websocket client:', err.message)
+			}
 		}
 	}
 
 	sendState(client) {
-		const state = this.getState()
-		client.send(JSON.stringify({ 
-			event: 'state', 
-			body: { ...state, isFullState: true } 
-		}))
+		if (!client || client.readyState !== WebSocket.OPEN) return
+		try {
+			const state = this.getState()
+			client.send(JSON.stringify({ 
+				event: 'state', 
+				body: { ...state, isFullState: true } 
+			}))
+		} catch (err) {
+			console.error('Error sending state to client:', err.message)
+		}
 	}
 
 	broadcastState() {

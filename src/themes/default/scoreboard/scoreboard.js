@@ -29,18 +29,34 @@ export default {
 		// resolved display names (override -> komplettligaen -> GSI), the SAME
 		// source the top bar uses, so the scoreboard matches the broadcast.
 		resolvedTeams() {
-			const ctx = buildHudTeamIdentityContext({
-				teams: this.$teams, map: this.$map, options: this.$opts, match: this.klMatch,
-			})
-			return resolveTeamIdentities(ctx).teams
+			try {
+				const ctx = buildHudTeamIdentityContext({
+					teams: this.$teams, map: this.$map, options: this.$opts, match: this.klMatch,
+				})
+				return resolveTeamIdentities(ctx)?.teams || {
+					CT: { final: { name: 'Counter-Terrorists' } },
+					T: { final: { name: 'Terrorists' } },
+				}
+			} catch (_) {
+				return {
+					CT: { final: { name: 'Counter-Terrorists' } },
+					T: { final: { name: 'Terrorists' } },
+				}
+			}
 		},
 
 		ctTeam() {
-			return { name: this.resolvedTeams.CT.final.name, score: this.scoreForSide(3) }
+			return { 
+				name: this.resolvedTeams?.CT?.final?.name || 'Counter-Terrorists', 
+				score: this.scoreForSide(3) 
+			}
 		},
 
 		tTeam() {
-			return { name: this.resolvedTeams.T.final.name, score: this.scoreForSide(2) }
+			return { 
+				name: this.resolvedTeams?.T?.final?.name || 'Terrorists', 
+				score: this.scoreForSide(2) 
+			}
 		},
 
 		ctPlayers() {
@@ -63,20 +79,22 @@ export default {
 
 	methods: {
 		scoreForSide(side) {
-			const match = (this.$teams || []).find((team) => sideNum(team.side) === side)
+			const match = (this.$teams || []).find((team) => sideNum(team?.side) === side)
 			return match?.score ?? 0
 		},
 
 		playersForSide(side) {
 			return (this.$players || [])
-				.filter((player) => player.side === side)
-				.sort((a, b) => (b.kills - a.kills) || (a.deaths - b.deaths))
+				.filter((player) => player && sideNum(player.side) === side)
+				.sort((a, b) => ((b.kills ?? 0) - (a.kills ?? 0)) || ((a.deaths ?? 0) - (b.deaths ?? 0)))
 		},
 
 		async loadKl() {
 			try {
 				const res = await fetch('/api/komplettligaen')
-				this.klMatch = (await res.json())?.data?.match || null
+				if (!res.ok) return
+				const json = await res.json()
+				this.klMatch = json?.data?.match || null
 			} catch { /* no KL data - resolver falls back to overrides/GSI */ }
 		},
 	},
@@ -93,9 +111,9 @@ export default {
 		this.loadKl()
 		this._klTimer = setInterval(() => this.loadKl(), 60000)
 		this._onDraw = (event) => {
-			const body = event.detail || {}
+			const body = event?.detail || {}
 			// user gate: hide-requests always honoured, show-requests only when enabled
-			if (body.show !== false && this.$opts['director.scoreboard.enabled'] === false) return
+			if (body.show !== false && this.$opts?.['director.scoreboard.enabled'] === false) return
 			this.visible = typeof body.show === 'boolean' ? body.show : ! this.visible
 
 			if (this._hideTimer) {

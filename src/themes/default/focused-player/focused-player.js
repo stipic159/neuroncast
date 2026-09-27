@@ -15,9 +15,17 @@ export default {
 		this.setOverlayBottomImageUrl()
 	},
 
+	beforeUnmount() {
+		if (this.overlayBottomImageUrl && this.overlayBottomImageUrl.startsWith('blob:')) {
+			try {
+				URL.revokeObjectURL(this.overlayBottomImageUrl)
+			} catch (_) {}
+		}
+	},
+
 	computed: {
 		player() {
-			return this.$players.focused
+			return this.$players?.focused || null
 		},
 
 		isActive() {
@@ -33,25 +41,29 @@ export default {
 
 		resolvedTeamIdentity() {
 			if (!this.player?.team) return null
-			const context = buildHudTeamIdentityContext({
-				teams: this.$teams,
-				map: this.$map,
-				options: this.$opts,
-				match: this.$root?.komplettligaenMatch,
-			})
-			const resolved = resolveTeamIdentities(context)
-			return this.player.team.side === 3 ? resolved.teams.CT : resolved.teams.T
+			try {
+				const context = buildHudTeamIdentityContext({
+					teams: this.$teams,
+					map: this.$map,
+					options: this.$opts,
+					match: this.$root?.komplettligaenMatch,
+				})
+				const resolved = resolveTeamIdentities(context)
+				return this.player.team.side === 3 ? resolved.teams.CT : resolved.teams.T
+			} catch (_) {
+				return null
+			}
 		},
 
 		teamLogoSrc() {
-			return this.resolvedTeamIdentity?.final.logo || getTeamLogoPath(this.resolvedTeamIdentity?.final.name || this.player?.team?.name)
+			return this.resolvedTeamIdentity?.final?.logo || getTeamLogoPath(this.resolvedTeamIdentity?.final?.name || this.player?.team?.name)
 		},
 
 		isLowHealth() {
 			if (! this.player) return false
 
-			const maxHp = Number(this.$opts['preferences.focusedPlayer.maximumRedHealthPoints'] || 0)
-			return !! maxHp && this.player.health <= maxHp
+			const maxHp = Number(this.$opts?.['preferences.focusedPlayer.maximumRedHealthPoints'] || 0)
+			return !! maxHp && (this.player.health || 0) <= maxHp
 		},
 
 		armorIcon() {
@@ -60,15 +72,15 @@ export default {
 		},
 
 		weapon() {
-			const activeWeapon = this.player?.weapons?.find((weapon) => weapon.isActive && ! weapon.isGrenade && ! weapon.isKnife && ! weapon.isBomb)
+			const activeWeapon = this.player?.weapons?.find((weapon) => weapon?.isActive && ! weapon?.isGrenade && ! weapon?.isKnife && ! weapon?.isBomb)
 			if (activeWeapon) return activeWeapon
 			if (this.player?.primary?.isActive) return this.player.primary
 			if (this.player?.secondary?.isActive) return this.player.secondary
-			return this.player?.primary || this.player?.secondary
+			return this.player?.primary || this.player?.secondary || null
 		},
 
 		weaponIconUrl() {
-			return this.weapon ? `/hud/img/weapons/${this.weapon.unprefixedName}.svg` : null
+			return this.weapon?.unprefixedName ? `/hud/img/weapons/${this.weapon.unprefixedName}.svg` : null
 		},
 
 		metrics() {
@@ -84,14 +96,15 @@ export default {
 			const foundPerType = {}
 
 			return (this.player?.grenades || []).map((grenade) => {
+				if (!grenade) return null
 				foundPerType[grenade.name] = (foundPerType[grenade.name] || 0) + 1
 
 				return {
-					iconUrl: `/hud/img/weapons/${grenade.unprefixedName}.svg`,
-					isActive: grenade.isActive,
-					key: `${grenade.name}${foundPerType[grenade.name]}`,
+					iconUrl: grenade.unprefixedName ? `/hud/img/weapons/${grenade.unprefixedName}.svg` : null,
+					isActive: Boolean(grenade.isActive),
+					key: `${grenade.name || 'grenade'}${foundPerType[grenade.name]}`,
 				}
-			})
+			}).filter(Boolean)
 		},
 	},
 
@@ -110,22 +123,25 @@ export default {
 		getTeamLogoPath,
 
 		async setOverlayBottomImageUrl() {
-			let fetchResponse = await fetch('/hud/overlay-images/focused-player-bottom.webp').catch(() => null)
+			try {
+				let fetchResponse = await fetch('/hud/overlay-images/focused-player-bottom.webp').catch(() => null)
 
-			if (! fetchResponse?.ok) {
-				fetchResponse = await fetch('/hud/overlay-images/focused-player-bottom.png').catch(() => null)
-			}
+				if (! fetchResponse?.ok) {
+					fetchResponse = await fetch('/hud/overlay-images/focused-player-bottom.png').catch(() => null)
+				}
 
-			if (! fetchResponse?.ok) {
-				fetchResponse = await fetch('/hud/overlay-images/focused-player-bottom.gif').catch(() => null)
-			}
+				if (! fetchResponse?.ok) {
+					fetchResponse = await fetch('/hud/overlay-images/focused-player-bottom.gif').catch(() => null)
+				}
 
-			if (! fetchResponse?.ok) return
+				if (! fetchResponse?.ok) return
 
-			const blob = await fetchResponse.blob()
-			this.overlayBottomImageUrl = URL.createObjectURL(blob)
+				const blob = await fetchResponse.blob()
+				if (this.overlayBottomImageUrl && this.overlayBottomImageUrl.startsWith('blob:')) {
+					URL.revokeObjectURL(this.overlayBottomImageUrl)
+				}
+				this.overlayBottomImageUrl = URL.createObjectURL(blob)
+			} catch (_) {}
 		},
 	},
 }
-
-

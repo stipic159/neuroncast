@@ -5,9 +5,9 @@ export default {
 	computed: {
 		activeClutch() {
 			// Only show during live round play (including when bomb is planted/defused)
-			const phase = this.$gsiState?.round?.phase
-			const bombPhase = this.$gsiState?.round?.bomb
-			const isLive = phase === 'live' || bombPhase === 'planted' || bombPhase === 'defusing'
+			const roundPhase = this.$gsiState?.round?.phase
+			const bombState = this.$gsiState?.bomb?.state
+			const isLive = roundPhase === 'live' || bombState === 'planted' || bombState === 'defusing'
 			if (!isLive) return null
 
 			const players = this.$players || []
@@ -21,7 +21,7 @@ export default {
 				const clutcher = ctAlive[0]
 				return {
 					side: 'CT',
-					steamId: clutcher.steam64Id || clutcher.steamId,
+					steamId: clutcher.steam64Id || clutcher.steamId || clutcher.name,
 					name: getPlayerDisplayName(clutcher.steam64Id, clutcher.name, this.$opts?.['teams.playerNameOverrides']),
 					hp: clutcher.health ?? 100,
 					versus: tAlive.length,
@@ -34,7 +34,7 @@ export default {
 				const clutcher = tAlive[0]
 				return {
 					side: 'T',
-					steamId: clutcher.steam64Id || clutcher.steamId,
+					steamId: clutcher.steam64Id || clutcher.steamId || clutcher.name,
 					name: getPlayerDisplayName(clutcher.steam64Id, clutcher.name, this.$opts?.['teams.playerNameOverrides']),
 					hp: clutcher.health ?? 100,
 					versus: ctAlive.length,

@@ -122,7 +122,7 @@ const recordRawGsiFrame = (body) => {
 	runGsiRetentionPolicy(dir)
 
 	if (!gsiRecordStream) {
-		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+		if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })\
 		const stamp = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')
 		const file = path.join(dir, `gsi-${stamp}.jsonl`)
 		gsiRecordStream = fs.createWriteStream(file, { flags: 'a' })
@@ -275,6 +275,7 @@ export const registerGsiRoutes = (router, websocket) => {
 		const wasRoundOver = gsiState.round?.phase === 'over' || gsiState.round?.phase === 'timeout'
 		
 		const wasBombPlanted = gsiState.bomb?.state === 'planted'
+		const wasBombDefused = gsiState.bomb?.state === 'defused'
 		const wasMapActive = !!gsiState.map
 
 		additionalState.gsiActive = true
@@ -292,7 +293,7 @@ export const registerGsiRoutes = (router, websocket) => {
 		// Caster Alerts
 		if (body.bomb?.state === 'planted' && !wasBombPlanted) {
 			websocket.broadcastToWebsockets('CASTER_ALERT', { message: 'Bomb Planted', type: 'warning' })
-		} else if (body.bomb?.state === 'defused' && gsiState.bomb?.state !== 'defused') {
+		} else if (body.bomb?.state === 'defused' && !wasBombDefused) {
 			websocket.broadcastToWebsockets('CASTER_ALERT', { message: 'Bomb Defused', type: 'success' })
 		}
 

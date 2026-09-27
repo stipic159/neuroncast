@@ -1,5 +1,5 @@
 import { access } from 'fs/promises'
-import { join } from 'path'
+import { join, basename } from 'path'
 
 import { getSettings } from './settings.js'
 import { gsiState } from './state.js'
@@ -11,7 +11,11 @@ import { assignKlSides, assignFastcupSides, isGenericGsiTeamName } from './team-
 
 const optionValue = (settings, key) => settings.options?.[key]?.value ?? settings.options?.[key]?.fallback ?? null
 
-const sanitizeLogoName = (name) => String(name || '').trim()
+const sanitizeLogoName = (name) => {
+	if (!name) return ''
+	const str = String(name).trim()
+	return basename(str).replace(/[\/\\]/g, '')
+}
 
 const fileExists = async (path) => {
 	try {
@@ -102,7 +106,7 @@ export const buildTeamIdentityContext = async () => {
 	const sessionSlots = mapSessionSlots(session)
 
 	// Mirror raw parse-teams ordering: lower observer slots decide left/right.
-	const gsiSlots = [
+	const gsiSlots = [\
 		{ side: 'T', key: 't', team: gsiState.map?.team_t || null, sort: 1 },
 		{ side: 'CT', key: 'ct', team: gsiState.map?.team_ct || null, sort: 10 },
 	].sort((a, b) => a.sort - b.sort)

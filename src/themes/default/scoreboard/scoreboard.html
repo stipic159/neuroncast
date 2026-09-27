@@ -11,12 +11,15 @@
 						<tr><th class="sb-name">Terrorists</th><th>K</th><th>A</th><th>D</th><th>ADR</th></tr>
 					</thead>
 					<tbody>
-						<tr v-for="player in tPlayers" :key="player.steam64Id" :class="{ '--dead': !player.isAlive }">
-							<td class="sb-name">{{ player.name }}</td>
-							<td>{{ player.kills }}</td>
-							<td>{{ player.assists }}</td>
-							<td>{{ player.deaths }}</td>
-							<td>{{ player.adr }}</td>
+						<tr v-for="player in tPlayers" :key="player.steam64Id || player.steamId || player.id || player.name" :class="{ '--dead': !player.isAlive }">
+							<td class="sb-name">{{ player.name || 'Player' }}</td>
+							<td>{{ player.kills ?? 0 }}</td>
+							<td>{{ player.assists ?? 0 }}</td>
+							<td>{{ player.deaths ?? 0 }}</td>
+							<td>{{ player.adr ?? '-' }}</td>
+						</tr>
+						<tr v-if="!tPlayers.length">
+							<td colspan="5" style="text-align: center; opacity: 0.5; padding: 12px;">No players</td>
 						</tr>
 					</tbody>
 				</table>
@@ -37,12 +40,15 @@
 						<tr><th class="sb-name">Counter-Terrorists</th><th>K</th><th>A</th><th>D</th><th>ADR</th></tr>
 					</thead>
 					<tbody>
-						<tr v-for="player in ctPlayers" :key="player.steam64Id" :class="{ '--dead': !player.isAlive }">
-							<td class="sb-name">{{ player.name }}</td>
-							<td>{{ player.kills }}</td>
-							<td>{{ player.assists }}</td>
-							<td>{{ player.deaths }}</td>
-							<td>{{ player.adr }}</td>
+						<tr v-for="player in ctPlayers" :key="player.steam64Id || player.steamId || player.id || player.name" :class="{ '--dead': !player.isAlive }">
+							<td class="sb-name">{{ player.name || 'Player' }}</td>
+							<td>{{ player.kills ?? 0 }}</td>
+							<td>{{ player.assists ?? 0 }}</td>
+							<td>{{ player.deaths ?? 0 }}</td>
+							<td>{{ player.adr ?? '-' }}</td>
+						</tr>
+						<tr v-if="!ctPlayers.length">
+							<td colspan="5" style="text-align: center; opacity: 0.5; padding: 12px;">No players</td>
 						</tr>
 					</tbody>
 				</table>

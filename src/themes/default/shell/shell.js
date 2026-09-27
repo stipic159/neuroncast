@@ -116,6 +116,40 @@ export default {
 			return m
 		},
 
+		gsiSeriesMatch() {
+			if (this.komplettligaenMatch) return this.komplettligaenMatch
+			const bestOf = this.matchBestOf || 1
+			if (bestOf <= 1 && !this.$opts?.['series.maps.0.name']) return null
+
+			const maps = []
+			for (let i = 0; i < bestOf; i++) {
+				const name = this.$opts?.[`series.maps.${i}.name`] || (i === 0 ? this.$map?.name : null)
+				const winner = this.$opts?.[`series.maps.${i}.winner`]
+				const homeScore = this.$opts?.[`series.maps.${i}.score.home`]
+				const awayScore = this.$opts?.[`series.maps.${i}.score.away`]
+				const finished = this.$opts?.[`series.maps.${i}.finished`]
+
+				if (name || i === 0) {
+					maps.push({
+						number: i + 1,
+						name: name || `Map ${i + 1}`,
+						winner,
+						homeScore: homeScore != null ? Number(homeScore) : null,
+						awayScore: awayScore != null ? Number(awayScore) : null,
+						finished: Boolean(finished),
+					})
+				}
+			}
+
+			return {
+				bestOf,
+				home: this.gsiCtTeam,
+				away: this.gsiTTeam,
+				currentMap: this.$map,
+				maps,
+			}
+		},
+
 		matchBestOf() {
 			if (this.$opts?.['match.bestOf']) return Number(this.$opts['match.bestOf'])
 			if (this.komplettligaenMatch?.bestOf) return Number(this.komplettligaenMatch.bestOf)
@@ -455,23 +489,23 @@ export default {
 			applyResolvedCssVariables(PROMOTION_OPTION_DEFINITIONS, target)
 
 			// Dynamically retrieve the keys and legacy aliases to bypass in the loop
-			const migratedKeys = [
-				...getMigratedOptionKeys(RADAR_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(TOPBAR_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(SIDEBAR_POSITION_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(SIDEBAR_VISIBILITY_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(PLAYERS_ALIVE_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(FOCUSED_PLAYER_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(CURRENT_MAP_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(EVENT_BADGE_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(SERIES_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(SPONSOR_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(MAPS_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(THEME_MATERIALS_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(THEME_COLORS_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(THEME_SHAPES_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(THEME_TYPOGRAPHY_OPTION_DEFINITIONS),
-				...getMigratedOptionKeys(PROMOTION_OPTION_DEFINITIONS)
+			const migratedKeys = [\
+				...getMigratedOptionKeys(RADAR_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(TOPBAR_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(SIDEBAR_POSITION_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(SIDEBAR_VISIBILITY_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(PLAYERS_ALIVE_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(FOCUSED_PLAYER_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(CURRENT_MAP_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(EVENT_BADGE_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(SERIES_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(SPONSOR_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(MAPS_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(THEME_MATERIALS_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(THEME_COLORS_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(THEME_SHAPES_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(THEME_TYPOGRAPHY_OPTION_DEFINITIONS),\
+				...getMigratedOptionKeys(PROMOTION_OPTION_DEFINITIONS)\
 			]
 
 			// 2. Generic loop for all other options
@@ -528,7 +562,7 @@ export default {
 			}
 
 			const safeFamily = String(fontFamily).replace(/[^a-z0-9 _-]/gi, '').trim()
-			const safeUrl = String(fontUrl).replace(/["'\\()]/g, '')
+			const safeUrl = String(fontUrl).replace(/[\"'\\\\()]/g, '')
 			if (!safeFamily || !safeUrl) {
 				existing?.remove()
 				return
@@ -561,7 +595,7 @@ export default {
 		calculateScaleFactor() {
 			const raw = getComputedStyle(document.documentElement).getPropertyValue('--base-scale-factor').trim() || '0.9259vh'
 			const baseValue = parseFloat(raw)
-			const unitMatch = raw.match(/\D+$/)
+			const unitMatch = raw.match(/\\D+$/)
 			const baseUnit = unitMatch ? unitMatch[0] : 'px'
 
 			switch (baseUnit) {
@@ -623,7 +657,7 @@ export default {
 				HALO: { color: 0x3498db, backgroundColor: 0x020305, size: 1.5 },
 			}
 
-			this._vantaEffect = factory({ ...base, ...(presets[effect] || {}) })
+			this._vantaEffect = factory({ ...base, ...(presets[effect] || {}) } )
 		},
 
 		destroyVanta() {
@@ -634,6 +668,3 @@ export default {
 		},
 	},
 }
-
-
-

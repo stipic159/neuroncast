@@ -38,19 +38,19 @@ export default {
 
 	computed: {
 		isEnabled() {
-			return !!this.$opts['preferences.roundResultBanner.enabled']
+			return !!this.$opts?.['preferences.roundResultBanner.enabled']
 		},
 
 		showReasonEnabled() {
-			return this.$opts['preferences.roundResultBanner.showReason'] !== false
+			return this.$opts?.['preferences.roundResultBanner.showReason'] !== false
 		},
 
 		durationMs() {
-			return Number(this.$opts['preferences.roundResultBanner.durationMs']) || 3500
+			return Number(this.$opts?.['preferences.roundResultBanner.durationMs']) || 3500
 		},
 
 		position() {
-			return this.$opts['preferences.roundResultBanner.position'] || 'top-center'
+			return this.$opts?.['preferences.roundResultBanner.position'] || 'top-center'
 		},
 
 		sideClass() {
@@ -79,7 +79,7 @@ export default {
 			if (newPhase !== 'over') return
 			if (!this.isEnabled) return
 
-			const currentKey = buildRoundId(this.$map?.name, this.$round.roundNumber)
+			const currentKey = buildRoundId(this.$map?.name, this.$round?.roundNumber)
 			if (this.seenRoundId === currentKey) return
 
 			this._show(currentKey)
@@ -87,7 +87,7 @@ export default {
 	},
 
 	beforeUnmount() {
-		clearTimeout(this._timer)
+		if (this._timer) clearTimeout(this._timer)
 	},
 
 	methods: {
@@ -95,32 +95,36 @@ export default {
 			// Set deduplication key first — synchronous guard against any re-entry
 			this.seenRoundId = roundKey
 
-			this.winningSide = this.$round.winningSide
+			this.winningSide = this.$round?.winningSide || null
 			const winningIdentity = this._resolveWinningTeamIdentity()
-			this.teamName = winningIdentity?.final.name || this.winningSide
-			this.teamLogo = winningIdentity?.final.logo || null
+			this.teamName = winningIdentity?.final?.name || (this.winningSide === 'CT' ? 'Counter-Terrorists' : (this.winningSide === 'T' ? 'Terrorists' : 'Round Winner'))
+			this.teamLogo = winningIdentity?.final?.logo || null
 			this.winReason = this._deriveWinReason()
 			this.roundImportance = this._deriveRoundImportance()
 			this.narrativeScore = narrativeScoreFor(this.roundImportance)
 			this.logoFailed = false
 			this.visible = true
 
-			clearTimeout(this._timer)
+			if (this._timer) clearTimeout(this._timer)
 			this._timer = setTimeout(() => { this.visible = false }, this.durationMs)
 		},
 
 		_resolveWinningTeamIdentity() {
-			const side = this.$round.winningSide
+			const side = this.$round?.winningSide
 			if (!side) return null
 
-			const context = buildHudTeamIdentityContext({
-				teams: this.$teams,
-				map: this.$map,
-				options: this.$opts,
-				match: this.match,
-			})
-			const resolved = resolveTeamIdentities(context)
-			return side === 'CT' ? resolved.teams.CT : resolved.teams.T
+			try {
+				const context = buildHudTeamIdentityContext({
+					teams: this.$teams,
+					map: this.$map,
+					options: this.$opts,
+					match: this.match,
+				})
+				const resolved = resolveTeamIdentities(context)
+				return side === 'CT' ? resolved?.teams?.CT : resolved?.teams?.T
+			} catch (_) {
+				return null
+			}
 		},
 
 		_deriveWinReason() {
@@ -128,30 +132,29 @@ export default {
 			if (bombState === 'defused') return 'bomb-defused'
 			if (bombState === 'exploded') return 'bomb-exploded'
 
-			const losingSide = this.$round.winningSide === 'CT' ? 2 : 3
+			const losingSide = this.$round?.winningSide === 'CT' ? 2 : 3
 			const anyLoserAlive = (this.$players || []).some(
-				p => p.side === losingSide && p.isAlive
+				p => p && p.side === losingSide && (p.isAlive || p.health > 0)
 			)
 			return anyLoserAlive ? 'time-expired' : 'elimination'
 		},
 
 		_deriveRoundImportance() {
-			const side = this.$round.winningSide
+			const side = this.$round?.winningSide
 			if (!side) return 'normal'
 
 			// Any overtime round is match-critical
-			if (this.$round.isOvertime) return 'critical'
+			if (this.$round?.isOvertime) return 'critical'
 
 			// Winner reaches match point
 			const numericSide = side === 'CT' ? 3 : 2
-			const winningTeam = this.$teams?.find(t => t.side === numericSide)
-			if ((winningTeam?.score ?? 0) >= this.$round.matchPointAtScore) return 'critical'
+			const winningTeam = (this.$teams || []).find(t => t?.side === numericSide)
+			const matchPointScore = Number(this.$round?.matchPointAtScore)
+			if (matchPointScore && (winningTeam?.score ?? 0) >= matchPointScore) return 'critical'
 
 			// Economy signals: loser's consecutive loss streak
-			// consecutiveRoundLosses = 1 → loser broke a winning streak (eco break)
-			// consecutiveRoundLosses >= 3 → extended slide
 			const losingSide = side === 'CT' ? 2 : 3
-			const losingTeam = this.$teams?.find(t => t.side === losingSide)
+			const losingTeam = (this.$teams || []).find(t => t?.side === losingSide)
 			const losses = losingTeam?.consecutiveRoundLosses ?? 0
 			if (losses === 1 || losses >= 3) return 'important'
 
@@ -174,19 +177,10 @@ function narrativeScoreFor(importance) {
 
 /**
  * Derives a short display tag from a team name, preferring esports-style branding.
- *
- * Priority:
- *   1. First word if it looks like an esports tag (short + mixed-case or numeric)
- *   2. Initials of each word (max 3 chars)
- *   3. First 3 chars of name (single-word fallback)
- *   4. Side label ('CT' / 'T')
- *
- * Examples: FaZe Clan→FAZE  NaVi→NAVI  G2 Esports→G2  6614 Gamers→6614
- *           Team Liquid→TL  Kebab Kings→KK  Astralis→AST
  */
 function getTeamTag(teamName, side) {
 	const fallback = side || 'CT'
-	if (!teamName?.trim()) return fallback
+	if (!teamName || typeof teamName !== 'string' || !teamName.trim()) return fallback
 
 	const words = teamName.trim().split(/\s+/).filter(Boolean)
 	if (!words.length) return fallback
@@ -194,14 +188,11 @@ function getTeamTag(teamName, side) {
 	const first = words[0]
 
 	if (words.length === 1) {
-		// Single word: use whole word if ≤4 chars, else first 3 chars
 		return first.length <= 4
 			? first.toUpperCase()
 			: first.slice(0, 3).toUpperCase()
 	}
 
-	// Multi-word: treat first word as esports tag if short + distinctive
-	// "Distinctive" = contains a digit (G2, 6614) or has uppercase after position 0 (FaZe, NaVi)
 	const isEsportsTag = first.length <= 4 && (
 		/\d/.test(first) ||
 		/[A-Z]/.test(first.slice(1))
@@ -209,6 +200,5 @@ function getTeamTag(teamName, side) {
 
 	if (isEsportsTag) return first.toUpperCase()
 
-	// Fall back to initials (max 3 chars)
 	return words.map(w => w[0].toUpperCase()).join('').slice(0, 3)
 }

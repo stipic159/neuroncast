@@ -1,6 +1,6 @@
 <transition name="clutch-pop">
 	<div 
-		v-if="activeClutch && ($opts['match.activeScene'] || 'default') === 'default'" 
+		v-if="activeClutch && ['default', 'ingame', 'radar'].includes($opts['match.activeScene'] || 'default')" 
 		:class="['clutch-banner-root', '--side-' + activeClutch.side.toLowerCase()]"
 	>
 		<div class="clutch-banner-badge">

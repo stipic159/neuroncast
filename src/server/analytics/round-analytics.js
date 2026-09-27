@@ -47,7 +47,9 @@ export const processPlayerAnalytics = (body, wasRoundFreezetime) => {
 
 	const isFreezetime = body.round?.phase === 'freezetime'
 	const isLive = body.round?.phase === 'live' || body.map?.phase === 'live' || body.bomb?.state === 'planted'
-	const roundNumber = body.map?.round + 1 - Number(body.phase_countdowns?.phase === 'over')
+	const roundNumber = body.map?.round !== undefined 
+		? (body.map.round + 1 - Number(body.phase_countdowns?.phase === 'over'))
+		: null
 
 	if (isFreezetime && !wasRoundFreezetime) {
 		additionalState.moneyAtStartOfRound = {}
@@ -74,12 +76,12 @@ export const processPlayerAnalytics = (body, wasRoundFreezetime) => {
 		}
 
 		// C. Round Damages
-		if (roundNumber) {
+		if (roundNumber !== null && !Number.isNaN(roundNumber)) {
 			if (!additionalState.roundDamages[steam64Id]) {
 				additionalState.roundDamages[steam64Id] = {}
 			}
 			const roundDmg = player.state?.round_totaldmg ?? 0
-			if (roundDmg !== 0 || !additionalState.roundDamages[steam64Id].hasOwnProperty(roundNumber)) {
+			if (roundDmg !== 0 || !Object.hasOwn(additionalState.roundDamages[steam64Id], roundNumber)) {
 				additionalState.roundDamages[steam64Id][roundNumber] = roundDmg
 			}
 		}
@@ -125,8 +127,17 @@ export const handleRoundEnd = (body) => {
 	const roundNum = body.map?.round || 0
 	const finalProb = winner === 'CT' ? 1.0 : 0.0
 
-	const lowestProb = additionalState.probHistory.length > 0 ? Math.min(...additionalState.probHistory) : 0.5
-	const highestProb = additionalState.probHistory.length > 0 ? Math.max(...additionalState.probHistory) : 0.5
+	let lowestProb = 0.5
+	let highestProb = 0.5
+	if (additionalState.probHistory.length > 0) {
+		lowestProb = additionalState.probHistory[0]
+		highestProb = additionalState.probHistory[0]
+		for (let i = 1; i < additionalState.probHistory.length; i++) {
+			const p = additionalState.probHistory[i]
+			if (p < lowestProb) lowestProb = p
+			if (p > highestProb) highestProb = p
+		}
+	}
 
 	if (winner === 'CT') {
 		additionalState.maxProbSwing = finalProb - lowestProb
@@ -158,8 +169,9 @@ export const broadcastMvp = (websocket) => {
 	let maxScore = -1
 
 	for (const [id, damages] of Object.entries(additionalState.roundDamages)) {
-		const roundNum = Object.keys(damages).sort((a, b) => b - a)[0]
-		if (!roundNum) continue
+		const roundNums = Object.keys(damages).map(Number).filter(n => !Number.isNaN(n))
+		if (!roundNums.length) continue
+		const roundNum = Math.max(...roundNums)
 		const dmg = damages[roundNum] || 0
 		if (dmg > maxScore) {
 			maxScore = dmg

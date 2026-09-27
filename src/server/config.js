@@ -60,8 +60,6 @@ export const registerConfigRoutes = (router, websocket) => {
 		]
 	})
 
-
-
 	router.get('/analysis', async (context) => {
 		await send(context, 'analysis.html', { root: `${builtinRootDirectory}/src/config` })
 	})
@@ -309,7 +307,7 @@ export const registerConfigRoutes = (router, websocket) => {
 	})
 
 	router.post('/config/import', async (context) => {
-		const { theme, presets } = context.request.body
+		const { theme, presets } = context.request.body || {}
 		if (!theme && !presets) {
 			context.status = 400
 			context.body = { error: 'Invalid setup file' }
@@ -330,8 +328,19 @@ export const registerConfigRoutes = (router, websocket) => {
 			await writeJson(userspaceSettingsPath, theme)
 		}
 
-		if (presets) await writeJson(presetsPath, presets)
+		if (Array.isArray(presets)) {
+			for (const preset of presets) {
+				if (preset && preset.id) {
+					try {
+						saveLayoutPreset(preset.id, preset)
+					} catch (e) {
+						console.warn(`[Config Import] Skipped invalid layout preset ${preset.id}:`, e.message)
+					}
+				}
+			}
+		}
 
+		await websocket.updateCaches()
 		websocket.broadcastRefresh()
 		context.status = 204
 	})
