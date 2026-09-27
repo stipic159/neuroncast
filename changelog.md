@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-09-27
+
+### Added
+- **Windows SendKeys Fallback:** Automatic Windows SendKeys fallback for player switching on VAC-secured CS2 servers when NetCon command injection is restricted.
+
+### Fixed
+- **Mobile Remote Deck Access:** Resolved PWA mounting route issues and bound HTTP server interface to `0.0.0.0` for local network and mobile access.
+- **CS2 NetCon Spectator Controls:** Fixed NetCon spectator player switching (`spec_player <slot>`), socket keepalive connection management, and LAN control authorization.
+- **NetCon Command Targeting & Status:** Enhanced NetCon spec command targeting accuracy, real-time connection status indicators, and payload authentication handling.
+
 ## [3.0.0] - 2026-09-27
 
 ### Added
