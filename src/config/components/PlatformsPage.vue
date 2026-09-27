@@ -40,7 +40,7 @@
 			<header class="panel-header">
 				<div>
 					<div class="section-title-row">
-						<h2>Fastcup Match Sync</h2>
+						<h2>{{ $t("Fastcup Match Sync") }}</h2>
 						<Chip :tone="fastcup.config.providerActive ? 'grn' : 'blu'" :pulse="fastcup.config.providerActive">
 							{{ fastcup.config.providerActive ? $t("Active Provider") : $t("Ready") }}
 						</Chip>
@@ -50,6 +50,7 @@
 			</header>
 
 			<div class="platform-form">
+				<!-- Match ID or Page URL -->
 				<div class="field-group">
 					<label class="field-label">
 						<span>Fastcup Match ID / URL</span>
@@ -57,56 +58,54 @@
 							v-model="fastcup.config.matchId"
 							type="text"
 							class="text-input"
-							placeholder="e.g. 1048294 or https://cs.fastcup.net/match/1048294"
+							placeholder="1048294 or https://cs.fastcup.net/match/1048294"
 							:disabled="fastcupLoading"
 						>
 					</label>
 					<span class="field-hint">Match ID or direct match page URL from cs.fastcup.net.</span>
 				</div>
 
+				<!-- Options Toggles -->
 				<div class="field-row">
-					<label class="toggle-label">
-						<input
-							v-model="fastcup.config.providerActive"
-							type="checkbox"
-							:disabled="fastcupLoading"
-						>
+					<label class="checkbox-container">
+						<input v-model="fastcup.config.providerActive" type="checkbox" :disabled="fastcupLoading">
 						<span>Enable FastCup Sync for HUD</span>
 					</label>
-					<label class="toggle-label">
-						<input
-							v-model="fastcup.config.autoRefresh"
-							type="checkbox"
-							:disabled="fastcupLoading"
-						>
+
+					<label class="checkbox-container">
+						<input v-model="fastcup.config.autoRefresh" type="checkbox" :disabled="fastcupLoading">
 						<span>Auto-Refresh Polling</span>
 					</label>
 				</div>
 
-				<!-- Collapsible Advanced Cookie Settings -->
+				<!-- Advanced Bypass Spoiler -->
 				<div class="advanced-section">
-					<button class="btn-ghost btn-sm" @click="showAdvanced = !showAdvanced">
-						{{ showAdvanced ? '▼ Hide Advanced Protection Settings' : '▶ Advanced Bypass Settings (Session Cookie)' }}
+					<button class="btn-ghost" @click="showAdvanced = !showAdvanced">
+						{{ showAdvanced ? '▼' : '►' }} Advanced Bypass Settings (Session Cookie)
 					</button>
-					<div v-if="showAdvanced" class="field-group advanced-box">
-						<label class="field-label">
-							<span>Session Cookie (Optional for private matches)</span>
-							<input
-								v-model="fastcup.config.sessionCookie"
-								type="text"
-								class="text-input text-mono"
-								placeholder="session=abc123xyz..."
-								:disabled="fastcupLoading"
-							>
-						</label>
-						<span class="field-hint">Required only if match page requires authentication or returns 403 Forbidden.</span>
+
+					<div v-if="showAdvanced" class="advanced-box">
+						<div class="field-group">
+							<label class="field-label">
+								<span>Session Cookie (Optional)</span>
+								<input
+									v-model="fastcup.config.sessionCookie"
+									type="password"
+									class="text-input"
+									placeholder="fastcup_session=..."
+									:disabled="fastcupLoading"
+								>
+							</label>
+							<span class="field-hint">Optional cookie string used to bypass 403 / Cloudflare security on protected Fastcup matches.</span>
+						</div>
 					</div>
 				</div>
 
+				<!-- Primary Action Buttons -->
 				<div class="actions">
 					<button
 						class="btn-primary"
-						:disabled="fastcupLoading || !fastcup.config.matchId"
+						:disabled="fastcupLoading"
 						@click="saveFastcup"
 					>
 						{{ fastcupLoading ? $t("Saving...") : $t("Save Match") }}
@@ -127,6 +126,7 @@
 					</button>
 				</div>
 
+				<!-- Status / Error Callout -->
 				<div
 					v-if="fastcupStatus"
 					:class="['status-callout', { '--error': fastcupError }]"
@@ -136,16 +136,18 @@
 				</div>
 			</div>
 
-			<!-- MATCH PREVIEW CARD -->
-			<div v-if="fastcup.match" class="match-preview-container">
+			<!-- Live Match Preview Card -->
+			<div v-if="fastcup.match && fastcup.match.teams" class="match-preview-container">
 				<div class="preview-header">
-					<div class="preview-meta">
-						<span class="badge-bo">{{ fastcup.match.format }}</span>
-						<span :class="['badge-status', `--${fastcup.match.status}`]">{{ fastcup.match.status.toUpperCase() }}</span>
-						<span class="meta-time">Fetched: {{ formatTime(fastcup.fetchedAt) }}</span>
+					<div class="preview-title">
+						<h4>Match Preview: {{ fastcup.match.teams.team1.name }} vs {{ fastcup.match.teams.team2.name }}</h4>
 					</div>
-					<div class="preview-actions">
-						<Chip tone="acc" :dot="false">SteamID Quorum Active</Chip>
+					<div class="preview-meta">
+						<span class="badge-bo">BO{{ fastcup.match.format || 1 }}</span>
+						<span class="badge-status" :class="{ '--live': fastcup.match.status === 'live' }">
+							{{ (fastcup.match.status || 'unknown').toUpperCase() }}
+						</span>
+						<span v-if="fastcup.match.mapName" class="meta-map">MAP: {{ fastcup.match.mapName }}</span>
 					</div>
 				</div>
 
@@ -481,13 +483,24 @@ export default {
 			const locked = this.fastcup.match?.overrides?.lockedFields || []
 			return locked.includes(fieldPath)
 		},
+		async parseJsonResponse(res) {
+			const contentType = res.headers.get('content-type') || ''
+			if (contentType.includes('application/json')) {
+				return await res.json()
+			}
+			const text = await res.text()
+			if (!res.ok) {
+				throw new Error(`Server returned HTTP ${res.status}: ${text || 'Not Found'}`)
+			}
+			throw new Error('Server returned non-JSON response')
+		},
 
 		// FASTCUP METHODS
 		async loadFastcup() {
 			try {
-				const res = await fetch('/config/fastcup')
+				const res = await fetch('/api/fastcup/config')
 				if (!res.ok) return
-				const data = await res.json()
+				const data = await this.parseJsonResponse(res)
 				if (data.config) this.fastcup.config = { ...this.fastcup.config, ...data.config }
 				if (data.match) this.fastcup.match = data.match
 				if (data.fetchedAt) this.fastcup.fetchedAt = data.fetchedAt
@@ -500,12 +513,12 @@ export default {
 			this.fastcupStatus = 'Saving FastCup configuration...'
 			this.fastcupError = false
 			try {
-				const res = await fetch('/config/fastcup', {
+				const res = await fetch('/api/fastcup/config', {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(this.fastcup.config),
 				})
-				const data = await res.json()
+				const data = await this.parseJsonResponse(res)
 				if (res.ok && data.success) {
 					this.fastcup.config = data.config
 					this.fastcup.match = data.match
@@ -526,8 +539,8 @@ export default {
 			this.fastcupStatus = 'Refreshing FastCup match data...'
 			this.fastcupError = false
 			try {
-				const res = await fetch('/config/fastcup/refresh', { method: 'POST' })
-				const data = await res.json()
+				const res = await fetch('/api/fastcup/refresh', { method: 'POST' })
+				const data = await this.parseJsonResponse(res)
 				if (res.ok && data.success) {
 					this.fastcup.match = data.match
 					this.fastcupStatus = 'FastCup match data refreshed successfully!'
@@ -549,7 +562,7 @@ export default {
 			this.fastcupError = false
 			try {
 				const res = await fetch(`/api/fastcup/preview?matchId=${encodeURIComponent(this.fastcup.config.matchId)}&cookie=${encodeURIComponent(this.fastcup.config.sessionCookie || '')}`)
-				const data = await res.json()
+				const data = await this.parseJsonResponse(res)
 				if (res.ok && data.match) {
 					this.fastcup.match = data.match
 					this.fastcupStatus = 'Preview loaded successfully!'
@@ -567,12 +580,12 @@ export default {
 		async toggleLockField(fieldPath, value) {
 			const isLocked = !this.isFieldLocked(fieldPath)
 			try {
-				const res = await fetch('/config/fastcup/override', {
+				const res = await fetch('/api/fastcup/override', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ fieldPath, value, isLocked }),
 				})
-				const data = await res.json()
+				const data = await this.parseJsonResponse(res)
 				if (res.ok && data.match) {
 					this.fastcup.match = data.match
 				}
@@ -583,7 +596,8 @@ export default {
 		async resetFastcupCache() {
 			this.fastcupLoading = true
 			try {
-				await fetch('/config/fastcup/cache-reset', { method: 'POST' })
+				const res = await fetch('/api/fastcup/cache-reset', { method: 'POST' })
+				await this.parseJsonResponse(res)
 				this.fastcup.match = null
 				this.fastcupStatus = 'FastCup cache and asset storage cleared.'
 			} catch (err) {
@@ -692,6 +706,39 @@ export default {
 	flex-direction: column;
 	gap: 1.25rem;
 }
+
+.panel {
+	background: #161b22;
+	border: 1px solid #30363d;
+	border-radius: 8px;
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.panel-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	border-bottom: 1px solid #30363d;
+	padding-bottom: 16px;
+}
+
+.panel-header h2 {
+	margin: 0;
+	font-size: 1.25rem;
+	color: #f0f6fc;
+}
+
+.panel-header p {
+	color: #8b949e;
+	font-size: 0.88rem;
+	margin: 6px 0 0 0;
+	line-height: 1.4;
+}
+
 .header-panel {
 	display: flex;
 	justify-content: space-between;
@@ -699,102 +746,245 @@ export default {
 	flex-wrap: wrap;
 	gap: 1rem;
 }
-.header-title-row {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	margin-bottom: 0.25rem;
-}
+
+.header-title-row,
 .section-title-row {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
 	margin-bottom: 0.25rem;
 }
+
+/* SEGMENTED TABS */
+.segmented {
+	display: inline-flex;
+	background: #0d1117;
+	border: 1px solid #30363d;
+	border-radius: 6px;
+	padding: 3px;
+	gap: 2px;
+}
+
+.segmented button {
+	background: transparent;
+	border: none;
+	color: #8b949e;
+	padding: 6px 14px;
+	border-radius: 4px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+
+.segmented button:hover {
+	color: #c9d1d9;
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.segmented button.--active {
+	background: #1f6feb;
+	color: #ffffff;
+}
+
+/* FORM STYLING */
 .platform-form {
-	margin-top: 1rem;
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.2rem;
 }
+
 .field-group {
 	display: flex;
 	flex-direction: column;
 	gap: 0.35rem;
 }
+
 .field-label {
 	display: flex;
 	flex-direction: column;
-	gap: 0.25rem;
-	font-weight: 500;
+	gap: 0.35rem;
+	font-weight: 600;
+	font-size: 0.88rem;
+	color: #c9d1d9;
 }
+
 .field-hint {
-	font-size: 0.85rem;
-	color: var(--color-text-dim, #8b949e);
+	font-size: 0.8rem;
+	color: #8b949e;
 }
+
 .field-row {
 	display: flex;
 	gap: 1.5rem;
 	align-items: center;
 }
-.toggle-label {
+
+.text-input {
+	background: #0d1117;
+	border: 1px solid #30363d;
+	color: #c9d1d9;
+	padding: 8px 12px;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	outline: none;
+	width: 100%;
+	box-sizing: border-box;
+	transition: border-color 0.15s ease;
+}
+
+.text-input:focus {
+	border-color: #58a6ff;
+	box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.checkbox-container {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
+	gap: 8px;
+	color: #c9d1d9;
+	font-size: 0.88rem;
 	cursor: pointer;
-	font-size: 0.9rem;
+	user-select: none;
 }
+
+.checkbox-container input[type="checkbox"] {
+	cursor: pointer;
+	width: 16px;
+	height: 16px;
+	accent-color: #1f6feb;
+}
+
+/* ADVANCED SETTINGS */
 .advanced-section {
-	margin-top: 0.5rem;
+	margin-top: 0.25rem;
 }
+
 .advanced-box {
 	margin-top: 0.5rem;
-	padding: 0.75rem;
-	background: rgba(255, 255, 255, 0.03);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	padding: 1rem;
+	background: rgba(13, 17, 23, 0.7);
+	border: 1px solid #30363d;
 	border-radius: 6px;
 }
+
+/* BUTTONS */
 .actions {
 	display: flex;
 	gap: 0.75rem;
 	margin-top: 0.5rem;
 }
+
+.btn-primary {
+	background: #1f6feb;
+	color: #ffffff;
+	border: 1px solid #388bfd;
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.15s;
+}
+
+.btn-primary:hover {
+	background: #388bfd;
+}
+
+.btn-primary:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-secondary {
+	background: #21262d;
+	color: #c9d1d9;
+	border: 1px solid #30363d;
+	padding: 8px 16px;
+	border-radius: 6px;
+	font-size: 0.85rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-secondary:hover {
+	background: #30363d;
+	border-color: #8b949e;
+}
+
+.btn-secondary:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-ghost {
+	background: transparent;
+	color: #8b949e;
+	border: 1px solid #30363d;
+	padding: 6px 12px;
+	border-radius: 6px;
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.15s;
+}
+
+.btn-ghost:hover {
+	background: #21262d;
+	color: #58a6ff;
+	border-color: #58a6ff;
+}
+
+/* STATUS CALLOUT */
 .status-callout {
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
-	padding: 0.6rem 0.8rem;
+	gap: 8px;
+	padding: 10px 14px;
 	background: rgba(46, 160, 67, 0.15);
 	border: 1px solid rgba(46, 160, 67, 0.4);
 	border-radius: 6px;
 	color: #3fb950;
 	font-size: 0.88rem;
 }
+
 .status-callout.--error {
 	background: rgba(248, 81, 73, 0.15);
 	border-color: rgba(248, 81, 73, 0.4);
 	color: #f85149;
 }
+
+/* MATCH PREVIEW CARD */
 .match-preview-container {
-	margin-top: 1.5rem;
+	margin-top: 1rem;
 	padding: 1rem;
-	background: rgba(0, 0, 0, 0.2);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(13, 17, 23, 0.8);
+	border: 1px solid #30363d;
 	border-radius: 8px;
 }
+
 .preview-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	margin-bottom: 1rem;
 	padding-bottom: 0.5rem;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+	border-bottom: 1px solid #30363d;
 }
+
+.preview-header h4 {
+	margin: 0;
+	font-size: 1rem;
+	color: #f0f6fc;
+}
+
 .preview-meta {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
 }
+
 .badge-bo {
 	background: #1f6feb;
 	color: #fff;
@@ -803,6 +993,7 @@ export default {
 	font-weight: bold;
 	font-size: 0.8rem;
 }
+
 .badge-status {
 	padding: 0.2rem 0.5rem;
 	border-radius: 4px;
@@ -811,31 +1002,38 @@ export default {
 	background: #30363d;
 	color: #c9d1d9;
 }
+
 .badge-status.--live {
 	background: #238636;
 	color: #fff;
 }
-.meta-time {
+
+.meta-map {
 	font-size: 0.85rem;
 	color: #8b949e;
+	font-family: monospace;
 }
+
 .teams-preview-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 1rem;
 }
+
 .team-card {
-	background: rgba(255, 255, 255, 0.03);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: #161b22;
+	border: 1px solid #30363d;
 	border-radius: 6px;
 	padding: 0.85rem;
 }
+
 .team-card-header {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
 	margin-bottom: 0.75rem;
 }
+
 .team-logo-img {
 	width: 42px;
 	height: 42px;
@@ -843,195 +1041,277 @@ export default {
 	border-radius: 4px;
 	background: rgba(0, 0, 0, 0.3);
 }
+
 .team-name-row {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
+
 .team-name-row h3 {
 	margin: 0;
 	font-size: 1.1rem;
+	color: #f0f6fc;
 }
+
 .team-tag {
 	font-size: 0.8rem;
 	color: #8b949e;
 }
-.btn-icon-lock {
-	background: transparent;
-	border: none;
-	cursor: pointer;
-	font-size: 0.9rem;
-	opacity: 0.6;
-}
-.btn-icon-lock.--locked {
-	opacity: 1;
-}
+
+.btn-icon-lock,
 .btn-icon-lock-sm {
 	background: transparent;
 	border: none;
 	cursor: pointer;
-	font-size: 0.75rem;
-	opacity: 0.6;
+	font-size: 0.85rem;
+	opacity: 0.5;
+	transition: opacity 0.15s;
 }
+
+.btn-icon-lock:hover,
+.btn-icon-lock-sm:hover,
+.btn-icon-lock.--locked,
 .btn-icon-lock-sm.--locked {
 	opacity: 1;
 }
+
 .players-table {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 }
+
 .player-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	padding: 0.35rem 0.5rem;
-	background: rgba(0, 0, 0, 0.15);
+	background: #0d1117;
+	border: 1px solid #21262d;
 	border-radius: 4px;
 }
+
 .player-avatar {
 	width: 28px;
 	height: 28px;
 	border-radius: 50%;
 	object-fit: cover;
 }
+
 .player-details {
 	display: flex;
 	flex-direction: column;
-	flex: 1;
-	margin-left: 0.5rem;
+	flex-grow: 1;
+	margin: 0 0.75rem;
 }
+
 .player-nick {
 	display: flex;
 	align-items: center;
 	gap: 0.35rem;
-	font-weight: 600;
 	font-size: 0.88rem;
+	font-weight: 600;
+	color: #c9d1d9;
 }
+
 .player-steam {
 	font-size: 0.72rem;
 	color: #8b949e;
 }
+
 .player-elo {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
 }
+
 .elo-val {
 	font-weight: bold;
-	color: #58a6ff;
 	font-size: 0.88rem;
+	color: #58a6ff;
 }
+
 .elo-lbl {
-	font-size: 0.68rem;
+	font-size: 0.65rem;
 	color: #8b949e;
 }
+
+/* VETO BOX */
 .veto-stage-box {
 	margin-top: 1rem;
 	padding-top: 0.75rem;
-	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	border-top: 1px solid #30363d;
 }
+
 .veto-stage-box h4 {
 	margin: 0 0 0.5rem 0;
-	font-size: 0.95rem;
-	color: #c9d1d9;
+	font-size: 0.9rem;
+	color: #8b949e;
 }
+
 .veto-steps-row {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
 }
+
 .veto-chip {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
-	gap: 0.35rem;
+	gap: 0.4rem;
 	padding: 0.3rem 0.6rem;
 	border-radius: 4px;
-	font-size: 0.8rem;
-	background: rgba(255, 255, 255, 0.06);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	font-size: 0.78rem;
+	background: #21262d;
+	border: 1px solid #30363d;
 }
+
 .veto-chip.--ban {
-	border-color: rgba(248, 81, 73, 0.4);
+	border-color: rgba(248, 81, 73, 0.5);
 	background: rgba(248, 81, 73, 0.1);
 }
+
 .veto-chip.--pick {
-	border-color: rgba(46, 160, 67, 0.4);
+	border-color: rgba(46, 160, 67, 0.5);
 	background: rgba(46, 160, 67, 0.1);
 }
-.veto-chip.--decider {
-	border-color: rgba(88, 166, 255, 0.4);
-	background: rgba(88, 166, 255, 0.1);
-}
+
 .veto-num {
+	color: #8b949e;
 	font-weight: bold;
-	opacity: 0.7;
 }
+
 .veto-team {
-	font-weight: 500;
+	color: #c9d1d9;
 }
+
 .veto-act {
 	font-weight: bold;
-	font-size: 0.72rem;
 }
+
+.veto-chip.--ban .veto-act {
+	color: #f85149;
+}
+
+.veto-chip.--pick .veto-act {
+	color: #3fb950;
+}
+
 .veto-map {
-	font-family: monospace;
-	color: #58a6ff;
+	color: #fff;
+	font-weight: 600;
 }
+
+/* CACHE DIAGNOSTICS CARD */
 .cache-diagnostics-box {
-	margin-top: 1.25rem;
+	background: #0d1117;
+	border: 1px solid #30363d;
+	border-radius: 6px;
 	padding: 1rem;
-	background: rgba(255, 255, 255, 0.02);
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
 }
+
 .cache-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 0.75rem;
 }
+
 .cache-title-row {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
+
+.cache-title-row h4 {
+	margin: 0;
+	font-size: 0.95rem;
+	color: #f0f6fc;
+}
+
 .cache-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 	gap: 0.75rem;
 }
+
 .cache-stat {
 	display: flex;
 	flex-direction: column;
 	gap: 0.2rem;
 }
+
 .stat-label {
-	font-size: 0.8rem;
+	font-size: 0.75rem;
 	color: #8b949e;
 }
+
 .stat-value {
-	font-size: 0.9rem;
+	font-size: 0.88rem;
+	color: #c9d1d9;
 }
+
+.failure-callout {
+	background: rgba(248, 81, 73, 0.1);
+	border: 1px solid rgba(248, 81, 73, 0.3);
+	padding: 0.5rem 0.75rem;
+	border-radius: 4px;
+}
+
+.failure-header {
+	font-size: 0.75rem;
+	font-weight: bold;
+	color: #f85149;
+}
+
+.failure-code {
+	font-size: 0.8rem;
+	color: #c9d1d9;
+	font-family: monospace;
+}
+
 .manual-features-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 	gap: 1rem;
-	margin-top: 1rem;
 }
+
 .feature-card {
-	padding: 1rem;
-	background: rgba(255, 255, 255, 0.03);
-	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: #0d1117;
+	border: 1px solid #30363d;
 	border-radius: 6px;
+	padding: 1rem;
 }
+
 .feature-card h4 {
 	margin: 0 0 0.5rem 0;
 	color: #58a6ff;
+	font-size: 0.95rem;
 }
+
 .feature-card p {
 	margin: 0;
-	font-size: 0.88rem;
+	font-size: 0.82rem;
 	color: #8b949e;
+	line-height: 1.4;
+}
+
+.text-mono {
+	font-family: monospace;
+}
+
+.text-grn {
+	color: #3fb950;
+}
+
+.text-red {
+	color: #f85149;
+}
+
+.text-amb {
+	color: #d29922;
 }
 </style>

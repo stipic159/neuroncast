@@ -17,7 +17,15 @@ export default {
 		radarImageUrl() {
 			return this.radarConfig?.radarImageUrl || `/hud/img/radars/ingame/${this.$map.sanitizedName}.png`
 		},
+
+		viewportStyle() {
+			const zoom = this.radarConfig?.zoom || 1.18
+			const originX = this.radarConfig?.origin_x || '50%'
+			const originY = this.radarConfig?.origin_y || '50%'
+			return {
+				transform: `scale(${zoom})`,
+				transformOrigin: `${originX} ${originY}`,
+			}
+		},
 	},
 }
-
-

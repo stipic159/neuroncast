@@ -23,7 +23,7 @@ import WaitingIdle from '/hud/waiting-idle/waiting-idle.vue'
 import ClutchBanner from '/hud/clutch-banner/clutch-banner.vue'
 import { getPlayerDisplayName, getTeamLogoPath } from '/hud/helpers/player-resolver.js'
 import { buildHudTeamIdentityContext, resolveTeamIdentities } from '/hud/helpers/team-identity-resolver.js'
-import { applyResolvedCssVariables, getMigratedOptionKeys, resolveOption, RADAR_OPTION_DEFINITIONS, TOPBAR_OPTION_DEFINITIONS, SIDEBAR_POSITION_OPTION_DEFINITIONS, SIDEBAR_VISIBILITY_OPTION_DEFINITIONS, PLAYERS_ALIVE_OPTION_DEFINITIONS, FOCUSED_PLAYER_OPTION_DEFINITIONS, CURRENT_MAP_OPTION_DEFINITIONS, EVENT_BADGE_OPTION_DEFINITIONS, SPONSOR_OPTION_DEFINITIONS, MAPS_OPTION_DEFINITIONS, THEME_MATERIALS_OPTION_DEFINITIONS, THEME_COLORS_OPTION_DEFINITIONS, THEME_SHAPES_OPTION_DEFINITIONS, THEME_TYPOGRAPHY_OPTION_DEFINITIONS, PROMOTION_OPTION_DEFINITIONS } from '/hud/core/resolve-option.js'
+import { applyResolvedCssVariables, getMigratedOptionKeys, resolveOption, RADAR_OPTION_DEFINITIONS, TOPBAR_OPTION_DEFINITIONS, SIDEBAR_POSITION_OPTION_DEFINITIONS, SIDEBAR_VISIBILITY_OPTION_DEFINITIONS, PLAYERS_ALIVE_OPTION_DEFINITIONS, FOCUSED_PLAYER_OPTION_DEFINITIONS, CURRENT_MAP_OPTION_DEFINITIONS, EVENT_BADGE_OPTION_DEFINITIONS, SERIES_OPTION_DEFINITIONS, SPONSOR_OPTION_DEFINITIONS, MAPS_OPTION_DEFINITIONS, THEME_MATERIALS_OPTION_DEFINITIONS, THEME_COLORS_OPTION_DEFINITIONS, THEME_SHAPES_OPTION_DEFINITIONS, THEME_TYPOGRAPHY_OPTION_DEFINITIONS, PROMOTION_OPTION_DEFINITIONS } from '/hud/core/resolve-option.js'
 import { options } from '/hud/core/state.js'
 
 export default {
@@ -54,6 +54,26 @@ export default {
 	},
 
 	computed: {
+		isEventBadgeVisible() {
+			const val = resolveOption('layout.eventBadge.visible', 'flex')
+			return val !== 'none' && val !== false && val !== 'false'
+		},
+
+		eventBadgeLogo() {
+			return resolveOption('series.logoUrl', '/hud/img/branding/logo-ubg.png') || '/hud/img/branding/logo-ubg.png'
+		},
+
+		eventBadgeTitle() {
+			return resolveOption('series.name.center', 'NeuronCast') || 'NeuronCast'
+		},
+
+		eventBadgeSubtitle() {
+			return resolveOption('series.name.left', '') || ''
+		},
+
+		eventBadgeRight() {
+			return resolveOption('series.name.right', '') || ''
+		},
 		// the KL waiting / result panel is on screen (it has its own series row)
 		klPanelVisible() {
 			return !!this.komplettligaenMatch && ['waiting', 'result'].includes(this.komplettligaenView)
@@ -351,6 +371,9 @@ export default {
 	},
 
 	methods: {
+		resolveOption(key, fallback = null) {
+			return resolveOption(key, fallback)
+		},
 		async loadKomplettligaen() {
 			this.isLoadingKomplettligaen = true
 			try {
@@ -411,23 +434,25 @@ export default {
 
 		applyCssVariableOverrides() {
 			if (!this.$opts) return
+			const target = this.$el || (typeof document !== 'undefined' ? document.documentElement : null)
 
-			// 1. Resolve and apply the decoupled Radar, Top Bar, Sidebar, and Players Alive slices cleanly (CSS Variables only)
-			applyResolvedCssVariables(RADAR_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(TOPBAR_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(SIDEBAR_POSITION_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(SIDEBAR_VISIBILITY_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(PLAYERS_ALIVE_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(FOCUSED_PLAYER_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(CURRENT_MAP_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(EVENT_BADGE_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(SPONSOR_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(MAPS_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(THEME_MATERIALS_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(THEME_COLORS_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(THEME_SHAPES_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(THEME_TYPOGRAPHY_OPTION_DEFINITIONS)
-			applyResolvedCssVariables(PROMOTION_OPTION_DEFINITIONS)
+			// 1. Resolve and apply the decoupled slices cleanly to target element and root
+			applyResolvedCssVariables(RADAR_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(TOPBAR_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(SIDEBAR_POSITION_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(SIDEBAR_VISIBILITY_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(PLAYERS_ALIVE_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(FOCUSED_PLAYER_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(CURRENT_MAP_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(EVENT_BADGE_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(SERIES_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(SPONSOR_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(MAPS_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(THEME_MATERIALS_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(THEME_COLORS_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(THEME_SHAPES_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(THEME_TYPOGRAPHY_OPTION_DEFINITIONS, target)
+			applyResolvedCssVariables(PROMOTION_OPTION_DEFINITIONS, target)
 
 			// Dynamically retrieve the keys and legacy aliases to bypass in the loop
 			const migratedKeys = [
@@ -439,6 +464,7 @@ export default {
 				...getMigratedOptionKeys(FOCUSED_PLAYER_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(CURRENT_MAP_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(EVENT_BADGE_OPTION_DEFINITIONS),
+				...getMigratedOptionKeys(SERIES_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(SPONSOR_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(MAPS_OPTION_DEFINITIONS),
 				...getMigratedOptionKeys(THEME_MATERIALS_OPTION_DEFINITIONS),

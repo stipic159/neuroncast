@@ -6,7 +6,14 @@ export const PROMOTION_OPTION_DEFINITIONS = [
 		fallback: '1.5rem',
 		lifecycle: {
 			introducedIn: 'v1.5.0',
-			canonicalSince: 'v1.5.0'
+			canonicalSince: 'v1.5.0',
+			aliases: {
+				'css.promotion-panel-left': {
+					status: 'transitional',
+					sunsetPhase: 'Phase 3B',
+					removeAfter: 'v2.0.0'
+				}
+			}
 		}
 	},
 	{
@@ -16,7 +23,14 @@ export const PROMOTION_OPTION_DEFINITIONS = [
 		fallback: '1.5rem',
 		lifecycle: {
 			introducedIn: 'v1.5.0',
-			canonicalSince: 'v1.5.0'
+			canonicalSince: 'v1.5.0',
+			aliases: {
+				'css.promotion-panel-bottom': {
+					status: 'transitional',
+					sunsetPhase: 'Phase 3B',
+					removeAfter: 'v2.0.0'
+				}
+			}
 		}
 	},
 	{
@@ -26,7 +40,14 @@ export const PROMOTION_OPTION_DEFINITIONS = [
 		fallback: '26rem',
 		lifecycle: {
 			introducedIn: 'v1.5.0',
-			canonicalSince: 'v1.5.0'
+			canonicalSince: 'v1.5.0',
+			aliases: {
+				'css.promotion-panel-width': {
+					status: 'transitional',
+					sunsetPhase: 'Phase 3B',
+					removeAfter: 'v2.0.0'
+				}
+			}
 		}
 	},
 	{
@@ -36,7 +57,14 @@ export const PROMOTION_OPTION_DEFINITIONS = [
 		fallback: null,
 		lifecycle: {
 			introducedIn: 'v1.5.0',
-			canonicalSince: 'v1.5.0'
+			canonicalSince: 'v1.5.0',
+			aliases: {
+				'layout.promotion.visible': {
+					status: 'transitional',
+					sunsetPhase: 'Phase 3B',
+					removeAfter: 'v2.0.0'
+				}
+			}
 		}
 	}
 ]

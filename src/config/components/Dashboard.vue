@@ -145,7 +145,7 @@
 						<button class="btn-ghost" style="padding: 4px 10px; font-size: 0.75rem;" @click="loadActiveSession(); loadSessions()">{{ $t("🔄 Refresh") }}</button>
 						<div :class="['session-status-badge', activeSessionData ? '--active' : '--inactive']">
 							<span class="status-indicator-dot" :class="{ '--pulsing': activeSessionData }"></span>
-							{{ $text(activeSessionData ? 'Logging Active' : 'Logging Inactive') }}
+							{{ $t(activeSessionData ? 'Logging Active' : 'Logging Inactive') }}
 						</div>
 					</div>
 				</div>
@@ -313,7 +313,10 @@
 						<div style="background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 16px;">
 							<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
 								<h3 style="font-size: 0.9rem; font-weight: 600; color: #adbac7; margin: 0; text-transform: uppercase;">{{ $t("Create Match Session") }}</h3>
-								<button class="btn-ghost" style="padding: 3px 8px; font-size: 0.72rem;" @click="autofillFromMatch" :disabled="sessionLoading || !komplettligaen.matchId" :title="$t('Fill from configured KL match')">{{ $t("Fill from KL Match") }}</button>
+								<div style="display: flex; gap: 6px; flex-wrap: wrap;">
+									<button class="btn-ghost" style="padding: 3px 8px; font-size: 0.72rem;" @click="autofillFromMatch" :disabled="sessionLoading || !komplettligaen.matchId" :title="$t('Fill from configured KL match')">{{ $t("Fill from KL Match") }}</button>
+									<button class="btn-ghost" style="padding: 3px 8px; font-size: 0.72rem;" @click="autofillFromFastcup" :disabled="sessionLoading" :title="$t('Fill from configured FastCup match')">{{ $t("Fill from FastCup") }}</button>
+								</div>
 							</div>
 							<div class="session-form">
 								<div class="form-row">
@@ -475,7 +478,6 @@
 
 <script>
 import { text as translateText, state as languageState } from '/config/i18n.js'
-
 import { state, actions } from '/config/store.js'
 
 export default {
@@ -610,14 +612,14 @@ export default {
 				const res = await fetch('/config/komplettligaen')
 				this.komplettligaen = await res.json()
 			} catch (err) {
-				this.komplettligaenStatus = 'Could not load Komplettligaen config'
+				this.komplettligaenStatus = translateText('Could not load Komplettligaen config')
 				this.komplettligaenError = true
 			}
 		},
 		async saveKomplettligaen() {
 			this.komplettligaenLoading = true
 			this.komplettligaenError = false
-			this.komplettligaenStatus = 'Saving...'
+			this.komplettligaenStatus = translateText('Saving...')
 			try {
 				const res = await fetch('/config/komplettligaen', {
 					method: 'PUT',
@@ -625,10 +627,10 @@ export default {
 					body: JSON.stringify(this.komplettligaen),
 				})
 				this.komplettligaen = await res.json()
-				this.komplettligaenStatus = 'Saved. HUD scenes will refresh.'
+				this.komplettligaenStatus = translateText('Saved. HUD scenes will refresh.')
 				await this.loadCacheStatus()
 			} catch (err) {
-				this.komplettligaenStatus = 'Save failed'
+				this.komplettligaenStatus = translateText('Save failed')
 				this.komplettligaenError = true
 			} finally {
 				this.komplettligaenLoading = false
@@ -637,13 +639,13 @@ export default {
 		async refreshKomplettligaen() {
 			this.komplettligaenLoading = true
 			this.komplettligaenError = false
-			this.komplettligaenStatus = 'Refreshing cache...'
+			this.komplettligaenStatus = translateText('Refreshing cache...')
 			try {
 				await fetch('/config/komplettligaen/refresh', { method: 'POST' })
-				this.komplettligaenStatus = 'Cache cleared. Re-fetching data...'
+				this.komplettligaenStatus = translateText('Cache cleared. Re-fetching data...')
 				await this.testKomplettligaen()
 			} catch (err) {
-				this.komplettligaenStatus = 'Refresh failed'
+				this.komplettligaenStatus = translateText('Refresh failed')
 				this.komplettligaenError = true
 			} finally {
 				this.komplettligaenLoading = false
@@ -652,7 +654,7 @@ export default {
 		async testKomplettligaen() {
 			this.komplettligaenLoading = true
 			this.komplettligaenError = false
-			this.komplettligaenStatus = 'Fetching...'
+			this.komplettligaenStatus = translateText('Fetching...')
 			try {
 				const res = await fetch(`/api/komplettligaen/preview?matchId=${encodeURIComponent(this.komplettligaen.matchId)}`)
 				const data = await res.json()
@@ -661,7 +663,7 @@ export default {
 				this.komplettligaenMatchData = data.match
 				await this.loadCacheStatus()
 			} catch (err) {
-				this.komplettligaenStatus = err.message || 'Fetch failed'
+				this.komplettligaenStatus = err.message || translateText('Fetch failed')
 				this.komplettligaenError = true
 				await this.loadCacheStatus()
 			} finally {
@@ -692,17 +694,17 @@ export default {
 			if (!confirm(translateText('Are you sure you want to completely clear NeuronCast\'s offline tournament cache?'))) return;
 			
 			this.komplettligaenLoading = true
-			this.komplettligaenStatus = 'Resetting cache...'
+			this.komplettligaenStatus = translateText('Resetting cache...')
 			try {
 				const res = await fetch('/config/komplettligaen/cache-reset', { method: 'POST' })
 				if (res.ok) {
-					this.komplettligaenStatus = 'Offline cache reset successfully.'
+					this.komplettligaenStatus = translateText('Offline cache reset successfully.')
 					await this.loadCacheStatus()
 				} else {
-					this.komplettligaenStatus = 'Failed to reset cache'
+					this.komplettligaenStatus = translateText('Failed to reset cache')
 				}
 			} catch (err) {
-				this.komplettligaenStatus = 'Error resetting cache'
+				this.komplettligaenStatus = translateText('Error resetting cache')
 			} finally {
 				this.komplettligaenLoading = false
 			}
@@ -788,7 +790,7 @@ export default {
 			let match = this.komplettligaenMatchData
 			if (!match) {
 				if (!this.komplettligaen.matchId) {
-					this.sessionError = 'No KL match configured. Enter a GG Arena Match ID above first.'
+					this.sessionError = translateText('No KL match configured. Enter a GG Arena Match ID above first.')
 					return
 				}
 				this.sessionLoading = true
@@ -800,7 +802,7 @@ export default {
 					match = data.match
 					this.komplettligaenMatchData = match
 				} catch (err) {
-					this.sessionError = `Could not fetch KL match: ${err.message}`
+					this.sessionError = `${translateText('Could not fetch KL match:')} ${err.message}`
 					return
 				} finally {
 					this.sessionLoading = false
@@ -811,6 +813,39 @@ export default {
 			this.sessionForm.eventName = match.division || 'Komplettligaen'
 			if (match.bestOf) this.sessionForm.format = `BO${match.bestOf}`
 			this.sessionForm.externalMatchId = String(match.id || '')
+		},
+		async autofillFromFastcup() {
+			this.sessionLoading = true
+			this.sessionError = ''
+			try {
+				let matchIdToFetch = this.sessionForm.externalMatchId
+				if (!matchIdToFetch) {
+					const cfgRes = await fetch('/api/fastcup/config')
+					const cfgData = await cfgRes.json()
+					matchIdToFetch = cfgData.config?.matchId || cfgData.match?.matchId
+				}
+
+				if (!matchIdToFetch) {
+					throw new Error(translateText('No FastCup match configured. Enter a FastCup Match ID or URL first.'))
+				}
+
+				const previewRes = await fetch(`/api/fastcup/preview?matchId=${encodeURIComponent(matchIdToFetch)}`)
+				const previewData = await previewRes.json()
+				if (!previewRes.ok || previewData.error) throw new Error(previewData.error || translateText('Fetch failed'))
+
+				const match = previewData.match
+				if (!match || !match.teams) throw new Error(translateText('No FastCup match data available.'))
+
+				this.sessionForm.homeTeam = match.teams.team1?.name || ''
+				this.sessionForm.awayTeam = match.teams.team2?.name || ''
+				this.sessionForm.eventName = 'FastCup'
+				if (match.format) this.sessionForm.format = match.format
+				this.sessionForm.externalMatchId = String(match.matchId || matchIdToFetch)
+			} catch (err) {
+				this.sessionError = `${translateText('Could not fetch FastCup match:')} ${err.message}`
+			} finally {
+				this.sessionLoading = false
+			}
 		},
 		async loadSessions() {
 			try {
@@ -863,7 +898,7 @@ export default {
 		},
 		async createNewSession() {
 			if (!this.sessionForm.homeTeam || !this.sessionForm.awayTeam) {
-				this.sessionError = 'Home and Away team names are required.'
+				this.sessionError = translateText('Home and Away team names are required.')
 				return
 			}
 			this.sessionLoading = true
@@ -888,9 +923,9 @@ export default {
 				})
 				const data = await res.json()
 				if (!res.ok || data.error) {
-					throw new Error(data.error || 'Failed to create session.')
+					throw new Error(data.error || translateText('Failed to create session.'))
 				}
-				this.sessionSuccess = `Session "${data.slug}" started successfully.`
+				this.sessionSuccess = translateText('Session "{slug}" started successfully.', { slug: data.slug })
 				this.sessionForm.homeTeam = ''
 				this.sessionForm.awayTeam = ''
 				this.sessionForm.eventName = ''
@@ -898,7 +933,7 @@ export default {
 				await this.loadActiveSession()
 				await this.loadSessions()
 			} catch (err) {
-				this.sessionError = err.message || 'Error starting session.'
+				this.sessionError = err.message || translateText('Error starting session.')
 			} finally {
 				this.sessionLoading = false
 			}
@@ -912,13 +947,13 @@ export default {
 				const res = await fetch('/api/sessions/end', { method: 'POST' })
 				const data = await res.json()
 				if (!res.ok || data.error) {
-					throw new Error(data.error || 'Failed to end session.')
+					throw new Error(data.error || translateText('Failed to end session.'))
 				}
-				this.sessionSuccess = 'Active session ended successfully.'
+				this.sessionSuccess = translateText('Active session ended successfully.')
 				await this.loadActiveSession()
 				await this.loadSessions()
 			} catch (err) {
-				this.sessionError = err.message || 'Error ending active session.'
+				this.sessionError = err.message || translateText('Error ending active session.')
 			} finally {
 				this.sessionLoading = false
 			}
@@ -931,13 +966,13 @@ export default {
 				const res = await fetch(`/api/sessions/active/${sessionId}`, { method: 'POST' })
 				const data = await res.json()
 				if (!res.ok || data.error) {
-					throw new Error(data.error || 'Failed to activate session.')
+					throw new Error(data.error || translateText('Failed to activate session.'))
 				}
-				this.sessionSuccess = `Session activated successfully.`
+				this.sessionSuccess = translateText('Session activated successfully.')
 				await this.loadActiveSession()
 				await this.loadSessions()
 			} catch (err) {
-				this.sessionError = err.message || 'Error activating session.'
+				this.sessionError = err.message || translateText('Error activating session.')
 			} finally {
 				this.sessionLoading = false
 			}

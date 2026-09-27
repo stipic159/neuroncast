@@ -143,6 +143,8 @@ export default {
   "Control when helper panels appear during freezetime, live rounds, timeouts, and round transitions.": "Control when helper panels appear during freezetime, live rounds, timeouts, and round transitions.",
   "Controls panel outline stroke visibility (alpha level in rgba).": "Controls panel outline stroke visibility (alpha level in rgba).",
   "Controls the alpha opacity transparency of backing containers.": "Controls the alpha opacity transparency of backing containers.",
+  "Could not fetch FastCup match:": "Could not fetch FastCup match:",
+  "Could not fetch FastCup match: {error}": "Could not fetch FastCup match: {error}",
   "Could not fetch KL match: {error}": "Could not fetch KL match: {error}",
   "Could not load Komplettligaen config": "Could not load Komplettligaen config",
   "Create Match Session": "Create Match Session",
@@ -261,7 +263,9 @@ export default {
   "Fastcup integration is coming soon in an upcoming update.": "Fastcup integration is coming soon in an upcoming update.",
   "Fetch failed": "Fetch failed",
   "Fetching...": "Fetching...",
+  "Fill from FastCup": "Fill from FastCup",
   "Fill from KL Match": "Fill from KL Match",
+  "Fill from configured FastCup match": "Fill from configured FastCup match",
   "Fill from configured KL match": "Fill from configured KL match",
   "First GSI Signal:": "First GSI Signal:",
   "First load takes a moment — kept warm after that.": "First load takes a moment — kept warm after that.",
@@ -452,6 +456,8 @@ export default {
   "Neutral Accent Tint": "Neutral Accent Tint",
   "New Package": "New Package",
   "No FastCup logo available for this side.": "No FastCup logo available for this side.",
+  "No FastCup match configured. Enter a FastCup Match ID or URL first.": "No FastCup match configured. Enter a FastCup Match ID or URL first.",
+  "No FastCup match data available.": "No FastCup match data available.",
   "No FastCup team name available.": "No FastCup team name available.",
   "No GG Arena logo available for this slot.": "No GG Arena logo available for this slot.",
   "No GG Arena match loaded.": "No GG Arena match loaded.",
@@ -903,5 +909,5 @@ export default {
   "🟢 Safe: Inside Safe Area": "🟢 Safe: Inside Safe Area",
   "🟢 Theme Synced": "🟢 Theme Synced",
   "🧲 Smart Guides": "🧲 Smart Guides",
-  "🧲 Snap": "🧲 Snap",
-}
+  "🧲 Snap": "🧲 Snap"
+};

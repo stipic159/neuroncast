@@ -1,6 +1,6 @@
 module.exports = {
   apps: [
-    {\
+    {
       name: 'neuroncast',
       script: 'src/server/index.js',
       // Execute with standard node

@@ -10,27 +10,27 @@ body {
 
 .event-badge {
 	position: absolute;
-	display: var(--lan66-event-badge-display, flex);
-	top: var(--lan66-event-badge-top);
-	left: var(--lan66-event-badge-left);
-	width: var(--lan66-event-badge-width);
+	display: var(--lan66-event-badge-display, var(--layout-event-badge-display, flex));
+	top: var(--lan66-event-badge-top, var(--layout-event-badge-top, calc(var(--radar-width, 21%) + 0.9rem)));
+	left: var(--lan66-event-badge-left, var(--layout-event-badge-left, 2%));
+	width: var(--lan66-event-badge-width, var(--style-event-badge-width, clamp(14rem, calc(var(--radar-width, 21%) - 2rem), 22rem)));
 	padding: 0.55rem 0.9rem;
 	align-items: center;
 	justify-content: flex-start;
 	gap: 0.8rem;
 	background:
 		linear-gradient(135deg, rgba(var(--red-rgb), 0.18), rgba(var(--green-rgb), 0.1)),
-		rgba(8, 10, 14, 0.9);
-	border: 0.1rem solid rgba(var(--white-rgb), 0.14);
+		var(--lan66-panel-fill, rgba(8, 10, 14, 0.9));
+	border: 0.1rem solid var(--lan66-panel-border, rgba(var(--white-rgb), 0.14));
 	box-shadow:
 		inset 0 0.08rem 0 rgba(255, 255, 255, 0.05),
 		0 0.85rem 1.9rem rgba(0, 0, 0, 0.28);
 	pointer-events: none;
-	z-index: 40;
+	z-index: 210;
 }
 
 .event-badge__logo {
-	height: var(--lan66-event-badge-logo-height);
+	height: var(--lan66-event-badge-logo-height, var(--style-event-badge-logo-height, 2.1rem));
 	width: auto;
 	object-fit: contain;
 	flex: 0 0 auto;
@@ -53,7 +53,7 @@ body {
 
 .event-badge__title {
 	color: var(--white);
-	font-size: var(--lan66-event-badge-title-size);
+	font-size: var(--lan66-event-badge-title-size, var(--style-event-badge-title-size, 0.98rem));
 	font-weight: 700;
 	letter-spacing: 0.12em;
 	line-height: 1.05;
@@ -63,7 +63,7 @@ body {
 .event-badge__meta {
 	margin-top: 0.16rem;
 	color: var(--white-80);
-	font-size: var(--lan66-event-badge-meta-size);
+	font-size: var(--lan66-event-badge-meta-size, var(--style-event-badge-meta-size, 0.72rem));
 	font-weight: 600;
 	letter-spacing: 0.08em;
 	line-height: 1;
@@ -305,11 +305,11 @@ body {
 .--scene-over .sidebars, .--scene-over .top-bar, .--scene-over .focused-player, .--scene-over .radar,
 .--scene-fulltime .sidebars, .--scene-fulltime .top-bar, .--scene-fulltime .focused-player, .--scene-fulltime .radar,
 .--scene-analytics .sidebars, .--scene-analytics .top-bar, .--scene-analytics .focused-player, .--scene-analytics .radar,
-.--scene-intro .players-alive, .--scene-intro .series-graph, .--scene-intro .current-map, .--scene-intro .event-badge, .--scene-intro .analysis-overlay, .--scene-intro .promotion-panel, .--scene-intro .mvp-card, .--scene-intro .map-winner-overlay,
-.--scene-halftime .players-alive, .--scene-halftime .series-graph, .--scene-halftime .current-map, .--scene-halftime .event-badge, .--scene-halftime .analysis-overlay, .--scene-halftime .promotion-panel, .--scene-halftime .mvp-card, .--scene-halftime .map-winner-overlay,
-.--scene-over .players-alive, .--scene-over .series-graph, .--scene-over .current-map, .--scene-over .event-badge, .--scene-over .analysis-overlay, .--scene-over .promotion-panel, .--scene-over .mvp-card, .--scene-over .map-winner-overlay,
-.--scene-fulltime .players-alive, .--scene-fulltime .series-graph, .--scene-fulltime .current-map, .--scene-fulltime .event-badge, .--scene-fulltime .analysis-overlay, .--scene-fulltime .promotion-panel, .--scene-fulltime .mvp-card, .--scene-fulltime .map-winner-overlay,
-.--scene-analytics .players-alive, .--scene-analytics .series-graph, .--scene-analytics .current-map, .--scene-analytics .event-badge, .--scene-analytics .analysis-overlay, .--scene-analytics .promotion-panel, .--scene-analytics .mvp-card, .--scene-analytics .map-winner-overlay {
+.--scene-intro .players-alive, .--scene-intro .series-graph, .--scene-intro .current-map, .--scene-intro .analysis-overlay, .--scene-intro .promotion-panel, .--scene-intro .mvp-card, .--scene-intro .map-winner-overlay,
+.--scene-halftime .players-alive, .--scene-halftime .series-graph, .--scene-halftime .current-map, .--scene-halftime .analysis-overlay, .--scene-halftime .promotion-panel, .--scene-halftime .mvp-card, .--scene-halftime .map-winner-overlay,
+.--scene-over .players-alive, .--scene-over .series-graph, .--scene-over .current-map, .--scene-over .analysis-overlay, .--scene-over .promotion-panel, .--scene-over .mvp-card, .--scene-over .map-winner-overlay,
+.--scene-fulltime .players-alive, .--scene-fulltime .series-graph, .--scene-fulltime .current-map, .--scene-fulltime .analysis-overlay, .--scene-fulltime .promotion-panel, .--scene-fulltime .mvp-card, .--scene-fulltime .map-winner-overlay,
+.--scene-analytics .players-alive, .--scene-analytics .series-graph, .--scene-analytics .current-map, .--scene-analytics .analysis-overlay, .--scene-analytics .promotion-panel, .--scene-analytics .mvp-card, .--scene-analytics .map-winner-overlay {
 	opacity: 0;
 	pointer-events: none;
 }

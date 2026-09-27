@@ -1,19 +1,14 @@
-import { join } from 'path'
 import { createReadStream } from 'fs'
-import { access } from 'fs/promises'
+import { access, mkdir } from 'fs/promises'
+import { join, basename } from 'path'
 
 import { readJsonIfExists, writeJson } from './helpers/json-file.js'
 import { userspaceDirectory } from './helpers/paths.js'
+import { clearAssetCache, getAssetFilePath, getDefaultAssetPlaceholder } from './integrations/fastcup/asset-cache.js'
 import { fetchFastcupMatch, extractMatchId } from './integrations/fastcup/fetcher.js'
-import { 
-	getAssetFilePath, 
-	clearAssetCache, 
-	getDefaultAssetPlaceholder,
-	ensureAssetDir
-} from './integrations/fastcup/asset-cache.js'
 
 const configPath = join(userspaceDirectory, 'fastcup.json')
-const cachePath = join(userspaceDirectory, 'cache', 'fastcup_match.json')
+const cachePath = join(userspaceDirectory, 'cache/fastcup_match.json')
 
 const defaultConfig = {
 	matchId: '',
@@ -22,13 +17,23 @@ const defaultConfig = {
 	providerActive: false,
 }
 
+const FORBIDDEN_KEYS = new Set(['__proto__', 'prototype', 'constructor'])
+
+const MIME_MAP = {
+	png: 'image/png',
+	jpg: 'image/jpeg',
+	jpeg: 'image/jpeg',
+	svg: 'image/svg+xml',
+	webp: 'image/webp',
+}
+
 let cachedMatchPayload = null
-let lastFetchedTime = 0
 let fetchInProgressPromise = null
-let pollIntervalTimer = null
+let lastFetchedTime = 0
+let pollingTimer = null
 
 /**
- * Gets the current FastCup configuration.
+ * Reads FastCup config from disk, applying defaults.
  */
 export const getFastcupConfig = async () => ({
 	...defaultConfig,
@@ -36,66 +41,65 @@ export const getFastcupConfig = async () => ({
 })
 
 /**
- * Saves updated FastCup configuration.
+ * Saves updated FastCup config to disk.
  */
-export const saveFastcupConfig = async (patch) => {
+export const saveFastcupConfig = async (newFields = {}) => {
 	const current = await getFastcupConfig()
-	const updated = { ...current, ...patch }
+	const updated = {
+		...current,
+		...newFields,
+	}
+	await mkdir(userspaceDirectory, { recursive: true })
 	await writeJson(configPath, updated)
 	return updated
 }
 
 /**
- * Helper to get nested value by dot path (e.g. 'teams.team1.name')
+ * Recursively updates a property in an object given a dot-separated path.
+ * Protected against Prototype Pollution.
  */
-export function getValueByPath(obj, path) {
-	if (!obj || !path) return undefined
-	const parts = path.split('.')
-	let curr = obj
-	for (const part of parts) {
-		if (curr === null || curr === undefined) return undefined
-		curr = curr[part]
-	}
-	return curr
-}
+function setValueByPath(obj, path, value) {
+	if (!obj || typeof obj !== 'object' || typeof path !== 'string') return
 
-/**
- * Helper to set nested value by dot path (e.g. 'teams.team1.name')
- */
-export function setValueByPath(obj, path, val) {
-	if (!obj || !path) return
 	const parts = path.split('.')
 	let curr = obj
+
 	for (let i = 0; i < parts.length - 1; i++) {
-		const part = parts[i]
-		if (!curr[part] || typeof curr[part] !== 'object') {
-			curr[part] = {}
+		const key = parts[i]
+		if (FORBIDDEN_KEYS.has(key)) return
+
+		if (!curr[key] || typeof curr[key] !== 'object') {
+			curr[key] = {}
 		}
-		curr = curr[part]
+		curr = curr[key]
 	}
-	curr[parts[parts.length - 1]] = val
+
+	const lastKey = parts[parts.length - 1]
+	if (!FORBIDDEN_KEYS.has(lastKey)) {
+		curr[lastKey] = value
+	}
 }
 
 /**
- * Merges fresh match data from API with existing user overrides (Override Immutability).
+ * Merges fresh match data from FastCup with active user-overridden fields.
  */
-export function mergePayloadWithOverrides(freshData, existingData) {
-	if (!existingData || !existingData.overrides) return freshData
-
-	const lockedFields = existingData.overrides.lockedFields || []
-	const customData = existingData.overrides.customData || {}
-
-	const result = { ...freshData }
-	result.overrides = {
-		lockedFields: [...lockedFields],
-		customData: { ...customData },
+export function mergePayloadWithOverrides(freshPayload, previousPayload) {
+	if (!previousPayload || !previousPayload.overrides) {
+		return freshPayload
 	}
 
-	// Preserve locked field values from existingData or customData
-	for (const path of lockedFields) {
-		const savedVal = customData[path] !== undefined ? customData[path] : getValueByPath(existingData, path)
-		if (savedVal !== undefined) {
-			setValueByPath(result, path, savedVal)
+	const { lockedFields = [], customData = {} } = previousPayload.overrides
+	const result = {
+		...freshPayload,
+		overrides: {
+			lockedFields: [...lockedFields],
+			customData: { ...customData },
+		},
+	}
+
+	for (const fieldPath of lockedFields) {
+		if (customData[fieldPath] !== undefined) {
+			setValueByPath(result, fieldPath, customData[fieldPath])
 		}
 	}
 
@@ -104,9 +108,6 @@ export function mergePayloadWithOverrides(freshData, existingData) {
 
 /**
  * Returns Adaptive TTL in milliseconds depending on match status.
- * - veto / in_progress -> 10 seconds
- * - live -> 60 seconds
- * - finished -> 600 seconds
  */
 export function getAdaptiveTtlMs(status) {
 	if (status === 'veto' || status === 'in_progress') return 10 * 1000
@@ -127,7 +128,7 @@ export const loadCachedMatchFromDisk = async () => {
 			return stored
 		}
 	} catch (err) {
-		// Cache read error
+		console.warn('[FastCup] Failed to read disk cache:', err.message)
 	}
 	return null
 }
@@ -181,12 +182,17 @@ export const getFastcupBundle = async (forceRefresh = false) => {
 			cachedMatchPayload = merged
 			lastFetchedTime = Date.now()
 
-			await writeJson(cachePath, merged).catch(() => {})
+			await writeJson(cachePath, merged).catch((err) => {
+				console.warn('[FastCup] Failed to write match cache to disk:', err.message)
+			})
+
+			return merged
 		} catch (err) {
-			// On error, keep existing cached data if available
-			if (!cachedMatchPayload) {
-				cachedMatchPayload = null
+			console.warn(`[FastCup] Fetch failed for match ${matchId}:`, err.message)
+			if (currentPayload) {
+				return currentPayload
 			}
+			throw err
 		} finally {
 			fetchInProgressPromise = null
 		}
@@ -215,6 +221,10 @@ export const previewFastcupMatch = async (matchIdOrUrl, sessionCookie = '') => {
  * Sets or removes a custom override for a field.
  */
 export const setFastcupOverride = async (fieldPath, value, isLocked = true) => {
+	if (typeof fieldPath !== 'string' || fieldPath.split('.').some((k) => FORBIDDEN_KEYS.has(k))) {
+		throw new Error('Invalid or restricted fieldPath parameter.')
+	}
+
 	const diskCached = await loadCachedMatchFromDisk()
 	if (!diskCached && !cachedMatchPayload) {
 		throw new Error('No active FastCup match loaded to apply overrides.')
@@ -238,7 +248,10 @@ export const setFastcupOverride = async (fieldPath, value, isLocked = true) => {
 	payload.overrides.lockedFields = Array.from(lockedSet)
 	cachedMatchPayload = payload
 
-	await writeJson(cachePath, payload).catch(() => {})
+	await writeJson(cachePath, payload).catch((err) => {
+		console.warn('[FastCup] Failed to persist override to cache:', err.message)
+	})
+
 	return payload
 }
 
@@ -249,15 +262,59 @@ export const resetFastcupCache = async () => {
 	cachedMatchPayload = null
 	lastFetchedTime = 0
 	await clearAssetCache()
-	await writeJson(cachePath, {}).catch(() => {})
+	await writeJson(cachePath, {}).catch((err) => {
+		console.warn('[FastCup] Failed to clear disk cache:', err.message)
+	})
+}
+
+/**
+ * Stops active background polling.
+ */
+export function stopFastcupPolling() {
+	if (pollingTimer) {
+		clearTimeout(pollingTimer)
+		pollingTimer = null
+	}
+}
+
+/**
+ * Starts background polling with adaptive intervals based on match state.
+ */
+export function startFastcupPolling(websocket) {
+	stopFastcupPolling()
+
+	const poll = async () => {
+		let delay = 15000
+
+		try {
+			const config = await getFastcupConfig()
+			if (config.providerActive && config.autoRefresh && config.matchId) {
+				const bundle = await getFastcupBundle()
+
+				if (bundle.status === 'fetched' && websocket && typeof websocket.broadcastToWebsockets === 'function') {
+					websocket.broadcastToWebsockets('fastcup:updated', { config, match: bundle.match })
+				}
+
+				if (bundle.match?.status) {
+					delay = Math.max(5000, getAdaptiveTtlMs(bundle.match.status))
+				}
+			}
+		} catch (err) {
+			console.warn('[FastCup Polling] Tick error:', err.message)
+		} finally {
+			pollingTimer = setTimeout(poll, delay)
+		}
+	}
+
+	pollingTimer = setTimeout(poll, 1000)
 }
 
 /**
  * Registers Koa HTTP routes for FastCup integration.
  */
 export function registerFastcupRoutes(router, websocket) {
-	// GET /config/fastcup - Get configuration & status
-	router.get('/config/fastcup', async (ctx) => {
+	// GET /config/fastcup or /api/fastcup/config
+	router.get(['/config/fastcup', '/api/fastcup/config'], async (ctx) => {
 		const bundle = await getFastcupBundle()
 		ctx.body = {
 			config: bundle.config,
@@ -267,17 +324,16 @@ export function registerFastcupRoutes(router, websocket) {
 		}
 	})
 
-	// PUT /config/fastcup - Update configuration
-	router.put('/config/fastcup', async (ctx) => {
+	// PUT /config/fastcup or /api/fastcup/config
+	router.put(['/config/fastcup', '/api/fastcup/config'], async (ctx) => {
 		const body = ctx.request.body || {}
 		const updatedConfig = await saveFastcupConfig({
 			matchId: body.matchId !== undefined ? String(body.matchId) : undefined,
 			sessionCookie: body.sessionCookie !== undefined ? String(body.sessionCookie) : undefined,
-			autoRefresh: body.autoRefresh !== undefined ? !!body.autoRefresh : undefined,
-			providerActive: body.providerActive !== undefined ? !!body.providerActive : undefined,
+			autoRefresh: body.autoRefresh !== undefined ? Boolean(body.autoRefresh) : undefined,
+			providerActive: body.providerActive !== undefined ? Boolean(body.providerActive) : undefined,
 		})
 
-		// Trigger background fetch for the new match ID
 		const bundle = await getFastcupBundle(true)
 		if (websocket && typeof websocket.broadcastToWebsockets === 'function') {
 			websocket.broadcastToWebsockets('fastcup:updated', { config: updatedConfig, match: bundle.match })
@@ -290,7 +346,7 @@ export function registerFastcupRoutes(router, websocket) {
 		}
 	})
 
-	// GET /api/fastcup/preview - Preview match data
+	// GET /api/fastcup/preview
 	router.get('/api/fastcup/preview', async (ctx) => {
 		const matchId = ctx.query.matchId || ctx.query.id
 		const cookie = ctx.query.cookie || ''
@@ -309,8 +365,8 @@ export function registerFastcupRoutes(router, websocket) {
 		}
 	})
 
-	// POST /config/fastcup/override - Lock/Unlock user field override
-	router.post('/config/fastcup/override', async (ctx) => {
+	// POST /config/fastcup/override or /api/fastcup/override
+	router.post(['/config/fastcup/override', '/api/fastcup/override'], async (ctx) => {
 		const { fieldPath, value, isLocked } = ctx.request.body || {}
 		if (!fieldPath) {
 			ctx.status = 400
@@ -330,8 +386,8 @@ export function registerFastcupRoutes(router, websocket) {
 		}
 	})
 
-	// POST /config/fastcup/refresh - Force immediate data refresh
-	router.post('/config/fastcup/refresh', async (ctx) => {
+	// POST /config/fastcup/refresh or /api/fastcup/refresh
+	router.post(['/config/fastcup/refresh', '/api/fastcup/refresh'], async (ctx) => {
 		try {
 			const bundle = await getFastcupBundle(true)
 			if (websocket && typeof websocket.broadcastToWebsockets === 'function') {
@@ -344,46 +400,34 @@ export function registerFastcupRoutes(router, websocket) {
 		}
 	})
 
-	// POST /config/fastcup/cache-reset - Clear cache & assets
-	router.post('/config/fastcup/cache-reset', async (ctx) => {
+	// POST /config/fastcup/cache-reset or /api/fastcup/cache-reset
+	router.post(['/config/fastcup/cache-reset', '/api/fastcup/cache-reset'], async (ctx) => {
 		await resetFastcupCache()
 		ctx.body = { success: true, message: 'FastCup cache and asset storage cleared.' }
 	})
 
-	// GET /api/fastcup/assets/:file - Serve cached image assets
+	// GET /api/fastcup/assets/:file
 	router.get('/api/fastcup/assets/:file', async (ctx) => {
-		const filename = ctx.params.file
+		const rawFilename = ctx.params.file
+		const filename = basename(rawFilename)
+
+		// Path Traversal check: only allow safe alphanumerics, dots, hyphens and underscores
+		if (!filename || filename !== rawFilename || !/^[\w.-]+$/.test(filename)) {
+			ctx.status = 400
+			ctx.body = { error: 'Invalid asset filename' }
+			return
+		}
+
 		const filePath = getAssetFilePath(filename)
 
 		try {
 			await access(filePath)
-			ctx.type = filename.endsWith('.png') ? 'image/png' : (filename.endsWith('.jpg') || filename.endsWith('.jpeg') ? 'image/jpeg' : (filename.endsWith('.svg') ? 'image/svg+xml' : 'application/octet-stream'))
+			const ext = filename.split('.').pop()?.toLowerCase()
+			ctx.type = MIME_MAP[ext] || 'application/octet-stream'
 			ctx.body = createReadStream(filePath)
-		} catch (err) {
-			// Asset missing, return SVG default placeholder
+		} catch {
 			ctx.type = 'image/svg+xml'
 			ctx.body = getDefaultAssetPlaceholder(filename.includes('team') ? 'logo' : 'avatar')
 		}
 	})
-}
-
-/**
- * Initializes background polling for active FastCup match.
- */
-export function startFastcupPolling(websocket) {
-	if (pollIntervalTimer) clearInterval(pollIntervalTimer)
-
-	pollIntervalTimer = setInterval(async () => {
-		try {
-			const config = await getFastcupConfig()
-			if (!config.providerActive || !config.autoRefresh || !config.matchId) return
-
-			const bundle = await getFastcupBundle(false)
-			if (bundle.status === 'fetched' && websocket && typeof websocket.broadcastToWebsockets === 'function') {
-				websocket.broadcastToWebsockets('fastcup:updated', { config: bundle.config, match: bundle.match })
-			}
-		} catch (err) {
-			// Polling background silence
-		}
-	}, 15 * 1000)
 }

@@ -118,10 +118,12 @@
 
 .top-bar-score.--ct {
 	background: var(--team-surface-gloss), var(--ct-background);
+	color: rgb(var(--counter-terrorists-text-rgb, var(--white-rgb)));
 }
 
 .top-bar-score.--t {
 	background: var(--team-surface-gloss), var(--t-background);
+	color: rgb(var(--terrorists-text-rgb, var(--white-rgb)));
 }
 
 .top-bar-round-stack {

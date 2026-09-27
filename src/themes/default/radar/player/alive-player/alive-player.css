@@ -36,10 +36,11 @@
 	align-items: center;
 	justify-content: center;
 
-	height: 1.6rem;
+	height: 1.05rem;
 	aspect-ratio: 1;
 
-	font-size: 1.25rem;
+	font-size: 0.78rem;
+	font-weight: 700;
 	z-index: 1;
 }
 
@@ -53,7 +54,7 @@
 	height: 100%;
 
 	border-radius: 50%;
-	border: 0.1rem solid var(--white);
+	border: 0.08rem solid var(--white);
 	box-sizing: border-box;
 	isolation: isolate;
 	z-index: 1;
@@ -81,11 +82,9 @@
 	height: 0;
 	margin: 0 auto;
 
-	border-bottom: 0.6rem solid var(--white);
-	border-left: 0.5rem solid transparent;
-	border-right: 0.5rem solid transparent;
+	border-bottom: 0.42rem solid var(--white);
+	border-left: 0.35rem solid transparent;
+	border-right: 0.35rem solid transparent;
 	transform: translateY(-70%);
 	z-index: -1;
 }
-
-

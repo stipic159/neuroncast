@@ -27,9 +27,9 @@
 	--terrorists-border-rgb: var(--theme-colors-t-border);
 	--terrorists-text-rgb: var(--theme-colors-t-text);
 	--ct-background:
-		linear-gradient(135deg, rgba(53, 154, 255, 0.96) 0%, rgba(24, 91, 214, 0.96) 48%, rgba(10, 42, 118, 0.98) 100%);
+		linear-gradient(135deg, rgba(var(--counter-terrorists-fill-rgb, 53, 154, 255), 0.96) 0%, rgba(var(--counter-terrorists-fill-rgb, 24, 91, 214), 0.82) 48%, rgba(var(--counter-terrorists-fill-rgb, 10, 42, 118), 0.65) 100%);
 	--t-background:
-		linear-gradient(135deg, rgba(255, 187, 77, 0.96) 0%, rgba(231, 122, 18, 0.96) 48%, rgba(122, 59, 0, 0.98) 100%);
+		linear-gradient(135deg, rgba(var(--terrorists-fill-rgb, 255, 187, 77), 0.96) 0%, rgba(var(--terrorists-fill-rgb, 231, 122, 18), 0.82) 48%, rgba(var(--terrorists-fill-rgb, 122, 59, 0), 0.65) 100%);
 	--ct-health-fill:
 		linear-gradient(90deg, #78d7ff 0%, #1f82ff 46%, #0742b8 100%);
 	--t-health-fill:
@@ -56,11 +56,20 @@
 	--skew-160: var(--theme-shapes-skew-complement);
 
 	/* Refine margins specifically for the 16:9 Stage centering */
+	--lan66-event-badge-top: calc(var(--radar-width, 21%) + 0.9rem);
+	--layout-event-badge-top: var(--lan66-event-badge-top);
 	--lan66-event-badge-left: 2%;
-	--lan66-event-badge-width: clamp(14rem, calc(var(--radar-width) - 2rem), 22rem);
+	--layout-event-badge-left: var(--lan66-event-badge-left);
+	--lan66-event-badge-width: clamp(14rem, calc(var(--radar-width, 21%) - 2rem), 22rem);
+	--style-event-badge-width: var(--lan66-event-badge-width);
 	--lan66-event-badge-logo-height: 2.1rem;
+	--style-event-badge-logo-height: var(--lan66-event-badge-logo-height);
 	--lan66-event-badge-title-size: 0.98rem;
+	--style-event-badge-title-size: var(--lan66-event-badge-title-size);
 	--lan66-event-badge-meta-size: 0.72rem;
+	--style-event-badge-meta-size: var(--lan66-event-badge-meta-size);
+	--lan66-event-badge-display: flex;
+	--layout-event-badge-display: var(--lan66-event-badge-display);
 
 	--lan66-current-map-bottom: var(--viewport-margin-bottom);
 	--lan66-current-map-right: var(--viewport-margin-right);
@@ -270,9 +279,9 @@
 	--counter-terrorists-fill-rgb: var(--theme-colors-ct-fill);
 	--terrorists-fill-rgb: var(--theme-colors-t-fill);
 	--ct-background:
-		linear-gradient(180deg, #2c86ff 0%, #1356bf 52%, #08265f 100%);
+		linear-gradient(180deg, rgba(var(--counter-terrorists-fill-rgb, 18, 83, 185), 0.96) 0%, rgba(var(--counter-terrorists-fill-rgb, 18, 83, 185), 0.8) 52%, rgba(0, 0, 0, 0.6) 100%);
 	--t-background:
-		linear-gradient(180deg, #ffc65c 0%, #d88719 52%, #6d3600 100%);
+		linear-gradient(180deg, rgba(var(--terrorists-fill-rgb, 206, 129, 20), 0.96) 0%, rgba(var(--terrorists-fill-rgb, 206, 129, 20), 0.8) 52%, rgba(0, 0, 0, 0.6) 100%);
 	--ct-health-fill:
 		linear-gradient(90deg, #87ddff 0%, #2e83ff 42%, #0c318f 100%);
 	--t-health-fill:
@@ -334,9 +343,9 @@
 	--counter-terrorists-fill-rgb: var(--theme-colors-ct-fill);
 	--terrorists-fill-rgb: var(--theme-colors-t-fill);
 	--ct-background:
-		linear-gradient(90deg, rgba(0, 147, 255, 0.92), rgba(8, 44, 137, 0.9));
+		linear-gradient(90deg, rgba(var(--counter-terrorists-fill-rgb, 0, 117, 255), 0.92), rgba(var(--counter-terrorists-fill-rgb, 8, 44, 137), 0.65));
 	--t-background:
-		linear-gradient(90deg, rgba(255, 176, 37, 0.92), rgba(155, 58, 0, 0.9));
+		linear-gradient(90deg, rgba(var(--terrorists-fill-rgb, 255, 176, 37), 0.92), rgba(var(--terrorists-fill-rgb, 155, 58, 0), 0.65));
 	--ct-health-fill:
 		linear-gradient(90deg, #62e8ff 0%, #008fff 54%, #044ac7 100%);
 	--t-health-fill:
@@ -404,9 +413,9 @@
 	--terrorists-fill-rgb: var(--theme-colors-t-fill);
 	--terrorists-border-rgb: var(--theme-colors-t-border);
 	--ct-background:
-		linear-gradient(135deg, #00e4ff 0%, #006aff 44%, #121252 100%);
+		linear-gradient(135deg, rgba(var(--counter-terrorists-fill-rgb, 0, 190, 255), 0.96) 0%, rgba(var(--counter-terrorists-fill-rgb, 0, 190, 255), 0.8) 44%, rgba(0, 0, 0, 0.6) 100%);
 	--t-background:
-		linear-gradient(135deg, #fff35c 0%, #ff9a1f 44%, #751e00 100%);
+		linear-gradient(135deg, rgba(var(--terrorists-fill-rgb, 255, 214, 43), 0.96) 0%, rgba(var(--terrorists-fill-rgb, 255, 214, 43), 0.8) 44%, rgba(0, 0, 0, 0.6) 100%);
 	--ct-health-fill:
 		linear-gradient(100deg, #b7fff8 0%, #00c8ff 38%, #214cff 78%, #121252 100%);
 	--t-health-fill:

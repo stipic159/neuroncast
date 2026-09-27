@@ -7,6 +7,7 @@ import { PLAYERS_ALIVE_OPTION_DEFINITIONS } from '/hud/core/option-slices/player
 import { FOCUSED_PLAYER_OPTION_DEFINITIONS } from '/hud/core/option-slices/focused-player.js'
 import { CURRENT_MAP_OPTION_DEFINITIONS } from '/hud/core/option-slices/current-map.js'
 import { EVENT_BADGE_OPTION_DEFINITIONS } from '/hud/core/option-slices/event-badge.js'
+import { SERIES_OPTION_DEFINITIONS } from '/hud/core/option-slices/series.js'
 import { SPONSOR_OPTION_DEFINITIONS } from '/hud/core/option-slices/sponsors.js'
 import { MAPS_OPTION_DEFINITIONS } from '/hud/core/option-slices/maps.js'
 import { PROMOTION_OPTION_DEFINITIONS } from '/hud/core/option-slices/promotion.js'
@@ -25,6 +26,7 @@ export {
 	FOCUSED_PLAYER_OPTION_DEFINITIONS,
 	CURRENT_MAP_OPTION_DEFINITIONS,
 	EVENT_BADGE_OPTION_DEFINITIONS,
+	SERIES_OPTION_DEFINITIONS,
 	SPONSOR_OPTION_DEFINITIONS,
 	MAPS_OPTION_DEFINITIONS,
 	PROMOTION_OPTION_DEFINITIONS,
@@ -46,6 +48,7 @@ const allDefinitionsLists = [
 	FOCUSED_PLAYER_OPTION_DEFINITIONS,
 	CURRENT_MAP_OPTION_DEFINITIONS,
 	EVENT_BADGE_OPTION_DEFINITIONS,
+	SERIES_OPTION_DEFINITIONS,
 	SPONSOR_OPTION_DEFINITIONS,
 	MAPS_OPTION_DEFINITIONS,
 	PROMOTION_OPTION_DEFINITIONS,
@@ -104,7 +107,23 @@ function hexToRgb(hex) {
  * Wraps resolveOption for CSS-specific processing.
  */
 export function resolveCssOption(canonicalKey, fallback = null) {
-	const val = resolveOption(canonicalKey, fallback)
+	let val = resolveOption(canonicalKey, fallback)
+	if (val === undefined || val === null) return val
+
+	// Normalize boolean or visibility values to valid CSS display strings
+	if (
+		canonicalKey.endsWith('.visible') ||
+		canonicalKey.includes('.visible') ||
+		canonicalKey.endsWith('-display')
+	) {
+		if (val === true || val === 'true' || val === 'flex' || val === 'block') {
+			return (fallback === 'block' || fallback === 'flex') ? fallback : 'flex'
+		}
+		if (val === false || val === 'false' || val === 'none') {
+			return 'none'
+		}
+	}
+
 	if (typeof val === 'string' && val.startsWith('#') && (canonicalKey.includes('colors.') || canonicalKey.endsWith('-rgb'))) {
 		return hexToRgb(val)
 	}
@@ -130,20 +149,28 @@ export function getMigratedOptionKeys(definitions) {
 }
 
 /**
- * Applies a list of option definitions as CSS variables on document.documentElement.
+ * Applies a list of option definitions as CSS variables on target (defaults to document.documentElement).
+ * Also synchronizes document.documentElement if a distinct element target was provided.
  * @param {Array} definitions - The array of definitions to apply
+ * @param {HTMLElement} [target=document.documentElement] - Target element to apply styles to
  */
-export function applyResolvedCssVariables(definitions) {
+export function applyResolvedCssVariables(definitions, target = (typeof document !== 'undefined' ? document.documentElement : null)) {
+	if (!target || typeof document === 'undefined') return
+
+	const root = document.documentElement
 	definitions.forEach(def => {
 		const val = resolveCssOption(def.canonical, def.fallback)
 		if (val === undefined || val === null) return
 
 		if (def.cssVars) {
 			def.cssVars.forEach(v => {
+				const strVal = String(val)
 				if (val === '') {
-					document.documentElement.style.removeProperty(v)
+					target.style.removeProperty(v)
+					if (target !== root) root.style.removeProperty(v)
 				} else {
-					document.documentElement.style.setProperty(v, val)
+					target.style.setProperty(v, strVal)
+					if (target !== root) root.style.setProperty(v, strVal)
 				}
 			})
 		}

@@ -500,20 +500,20 @@
 		<FocusedPlayer v-if="$map.name" />
 
 		<div
-			v-if="$map.name && ($opts['series.name.center'] || $opts['series.name.left'] || $opts['series.name.right'])"
+			v-if="isEventBadgeVisible"
 			class="event-badge"
 		>
-			<img class="event-badge__logo" :src="$opts['series.logoUrl'] || '/hud/img/branding/logo-ubg.png'" alt="Event logo">
+			<img class="event-badge__logo" :src="eventBadgeLogo" alt="Event logo">
 
 			<div class="event-badge__copy">
 				<div class="event-badge__title">
-					{{ $opts['series.name.center'] || 'NeuronCast' }}
+					{{ eventBadgeTitle }}
 				</div>
 
-				<div class="event-badge__meta">
-					<span v-if="$opts['series.name.left']">{{ $opts['series.name.left'] }}</span>
-					<span v-if="$opts['series.name.left'] && $opts['series.name.right']" class="event-badge__separator">|</span>
-					<span v-if="$opts['series.name.right']">{{ $opts['series.name.right'] }}</span>
+				<div v-if="eventBadgeSubtitle || eventBadgeRight" class="event-badge__meta">
+					<span v-if="eventBadgeSubtitle">{{ eventBadgeSubtitle }}</span>
+					<span v-if="eventBadgeSubtitle && eventBadgeRight" class="event-badge__separator">|</span>
+					<span v-if="eventBadgeRight">{{ eventBadgeRight }}</span>
 				</div>
 			</div>
 		</div>
@@ -542,10 +542,10 @@
 		<div class="standby">
 			<div class="standby-card">
 				<div class="standby-brand">
-					<img class="standby-logo" :src="$opts['series.logoUrl'] || '/hud/img/branding/logo-ubg.png'" alt="Event logo">
+					<img class="standby-logo" :src="eventBadgeLogo" alt="Event logo">
 					<div>
-						<div class="standby-eyebrow">6614Gamers presents</div>
-						<div class="standby-title">NeuronCast</div>
+						<div class="standby-eyebrow">{{ eventBadgeSubtitle || '6614Gamers presents' }}</div>
+						<div class="standby-title">{{ eventBadgeTitle }}</div>
 					</div>
 				</div>
 
