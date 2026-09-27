@@ -1,3 +1,4 @@
+import fs from 'fs'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -19,7 +20,7 @@ export const customRootDirectory = runningInBinary
 // directories
 export const builtinThemesDirectory = `${builtinRootDirectory}/src/themes`
 export const customThemesDirectory = runningInBinary
-	? `${customRootDirectory}/cs-hud`
+	? (fs.existsSync(`${customRootDirectory}/neuroncast`) ? `${customRootDirectory}/neuroncast` : `${customRootDirectory}/cs-hud`)
 	: `${customRootDirectory}/src/themes`
 
 export const userspaceDirectory = `${customThemesDirectory}/userspace`

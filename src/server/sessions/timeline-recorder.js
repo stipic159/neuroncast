@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { writeJsonAtomic, readJsonIfExists } from '../helpers/json-file.js'
 import path from 'path'
 import { gsiState } from '../state.js'
 import {
@@ -26,21 +27,7 @@ const lastState = {
 	playerDeaths: {}  // steamid -> cumulative deaths
 }
 
-/**
- * Atomic write helper to write JSON files cleanly
- */
-function writeJsonAtomic(filePath, data) {
-	const tempPath = filePath + '.tmp'
-	try {
-		fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8')
-		fs.renameSync(tempPath, filePath)
-	} catch (err) {
-		console.warn(`[TimelineRecorder] Failed atomic write to ${filePath}:`, err)
-		try {
-			if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
-		} catch (_) {}
-	}
-}
+// (writeJsonAtomic imported from ../helpers/json-file.js)
 
 /**
  * Builds a standard event envelope
@@ -200,16 +187,14 @@ export function processGsiFrame(body = {}) {
 				
 				// Write initial map file
 				const mapsPath = path.join(getSessionPath(active.id), 'maps.json')
-				if (fs.existsSync(mapsPath)) {
-					try {
-						const mapsList = JSON.parse(fs.readFileSync(mapsPath, 'utf8') || '[]')
-						if (!mapsList.includes(lastState.mapName)) {
-							mapsList.push(lastState.mapName)
-							writeJsonAtomic(mapsPath, mapsList)
-							updateSessionSummary(active.id, { mapsObserved: mapsList.length })
-						}
-					} catch (_) {}
-				}
+				readJsonIfExists(mapsPath).then(mapsList => {
+					const list = Array.isArray(mapsList) ? mapsList : []
+					if (!list.includes(lastState.mapName)) {
+						list.push(lastState.mapName)
+						writeJsonAtomic(mapsPath, list).catch(() => {})
+						updateSessionSummary(active.id, { mapsObserved: list.length })
+					}
+				}).catch(() => {})
 			}
 			return
 		}
@@ -243,14 +228,14 @@ export function processGsiFrame(body = {}) {
 			const sPath = getSessionPath(active.id)
 			if (sPath) {
 				const mapsPath = path.join(sPath, 'maps.json')
-				try {
-					const mapsList = JSON.parse(fs.readFileSync(mapsPath, 'utf8') || '[]')
-					if (!mapsList.includes(currentMapName)) {
-						mapsList.push(currentMapName)
-						writeJsonAtomic(mapsPath, mapsList)
-						updateSessionSummary(active.id, { mapsObserved: mapsList.length })
+				readJsonIfExists(mapsPath).then(mapsList => {
+					const list = Array.isArray(mapsList) ? mapsList : []
+					if (!list.includes(currentMapName)) {
+						list.push(currentMapName)
+						writeJsonAtomic(mapsPath, list).catch(() => {})
+						updateSessionSummary(active.id, { mapsObserved: list.length })
 					}
-				} catch (_) {}
+				}).catch(() => {})
 			}
 			
 			lastState.mapName = currentMapName

@@ -1,4 +1,6 @@
 import https from 'node:https'
+import { MatchupSchema, StandingsTableSchema, TeamGamesSchema } from '../../fallbacks/schemas.js'
+import { getMatchFallback, getTableFallback, getTeamGamesFallback } from '../../fallbacks/payload-fallbacks.js'
 
 const COMPETITION_SLUG = "komplettligaen-counter-strike-hosten-2026";
 const COMPETITION_ID = "13908";
@@ -63,12 +65,20 @@ async function getJson(url) {
 }
 
 function extractPage(html) {
-  const match = html.match(/<div id="app" data-page="([\s\S]*?)"/);
+  if (typeof html !== 'string') {
+    throw new Error('Could not find GG Arena page data: invalid HTML string');
+  }
+  const match = html.match(/<div[^>]*\bid=["']app["'][^>]*\bdata-page=["']([\s\S]*?)["'][^>]*>/i)
+    || html.match(/\bdata-page=["']([\s\S]*?)["']/i);
   if (!match) {
     throw new Error("Could not find GG Arena page data");
   }
 
-  return JSON.parse(decodeHtml(match[1]));
+  try {
+    return JSON.parse(decodeHtml(match[1]));
+  } catch (err) {
+    throw new Error(`Failed to parse GG Arena data-page JSON: ${err.message}`);
+  }
 }
 
 async function fetchPage(url) {
@@ -809,7 +819,12 @@ async function scrapeMatch(matchId) {
     match.away.stats = [];
   }
 
-  return match;
+  const validated = MatchupSchema.safeParse(match);
+  if (!validated.success) {
+    console.warn(`[Scraper Warning] MatchupSchema partial validation mismatch for match ${matchId}:`, validated.error.issues);
+    return { ...getMatchFallback(matchId), ...match };
+  }
+  return validated.data;
 }
 
 async function scrapeTeamGames(matchId, teamId = null) {
@@ -834,12 +849,18 @@ async function scrapeTeamGames(matchId, teamId = null) {
     teams = [selectedTeam, opponent].filter(Boolean);
   }
 
-  return {
+  const result = {
     matchId: match.id,
     division: match.division,
     selectedTeamId: teamId || null,
     teams: teams.map((team) => teamSchedule(team, matchups)),
   };
+  const validated = TeamGamesSchema.safeParse(result);
+  if (!validated.success) {
+    console.warn('[Scraper Warning] TeamGamesSchema validation mismatch:', validated.error.issues);
+    return { ...getTeamGamesFallback(matchId), ...result };
+  }
+  return validated.data;
 }
 
 async function scrapeDivision() {
@@ -851,7 +872,7 @@ async function scrapeTable(divisionId = DIVISION_ID, division = "") {
   const response = await getJson(`https://www.ggarena.no/api/paradise/division/${divisionId}/tables`);
   const rows = Array.isArray(response.data) ? response.data : [];
 
-  return {
+  const table = {
     divisionId,
     division,
     headers: ["#", "Lag", "K", "V", "U", "T", "+/-", "Straff", "P"],
@@ -872,6 +893,12 @@ async function scrapeTable(divisionId = DIVISION_ID, division = "") {
       };
     }),
   };
+  const validated = StandingsTableSchema.safeParse(table);
+  if (!validated.success) {
+    console.warn('[Scraper Warning] StandingsTableSchema validation mismatch:', validated.error.issues);
+    return { ...getTableFallback(), ...table };
+  }
+  return validated.data;
 }
 
 export { BASE_URL, DIVISION_ID, fetchPage, flatten, scrapeDivision, scrapeMatch, scrapeOpponentResearch, scrapeTeamGames, scrapeTable, simplifyMatch }

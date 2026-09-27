@@ -13,7 +13,7 @@ export default defineConfig({
   reporter: 'list',
   use: {
     // Optional installed browser for offline workstations (e.g. msedge).
-    channel: process.env.EON_TEST_BROWSER || undefined,
+    channel: process.env.NEURON_TEST_BROWSER || process.env.EON_TEST_BROWSER || undefined,
     baseURL: 'http://localhost:31982',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',

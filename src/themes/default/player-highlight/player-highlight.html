@@ -1,4 +1,4 @@
-<div :class="['player-highlight', sideClass, '--fx-' + fxKind, { '--shown': visible && !!player, '--leaving': leaving }]">
+<div :class="['player-highlight', sideClass, '--fx-' + fxKind, { '--shown': visible && !!player, '--leaving': leaving }]" :data-stage-ready="visible && !!player ? 'true' : 'false'">
 	<div class="ph-stage" ref="stage">
 		<!-- rear FX layer: god rays / heartbeat glow behind the hero -->
 		<canvas ref="fxback" class="ph-fx-back"></canvas>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuronCast Operator Readiness Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at top left, #0e1117, #07090e);
+            --card-bg: rgba(22, 28, 38, 0.6);
+            --card-border: 1px solid rgba(255, 255, 255, 0.08);
+            
+            --color-pass: #2ecc71;
+            --color-warn: #f1c40f;
+            --color-fail: #e74c3c;
+            --color-text: #adbac7;
+            --color-text-muted: #768390;
+            --color-text-bright: #f0f6fc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--color-text);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1.5rem;
+        }
+
+        .logo-section h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            color: var(--color-text-bright);
+            background: linear-gradient(90deg, #58a6ff, #1f6feb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-section p {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            letter-spacing: 0.05em;
+            margin-top: 0.2rem;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .badge-ready {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            color: var(--color-pass);
+        }
+
+        .badge-degraded {
+            background: rgba(241, 196, 15, 0.15);
+            border: 1px solid rgba(241, 196, 15, 0.3);
+            color: var(--color-warn);
+        }
+
+        .badge-not-ready {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: var(--color-fail);
+        }
+
+        /* Status Hero */
+        .status-hero {
+            background: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.5s ease;
+        }
+
+        .indicator-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 4px solid var(--status-color-alpha, rgba(46, 204, 113, 0.15));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .indicator-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--status-color, var(--color-pass));
+            box-shadow: 0 0 25px var(--status-color, var(--color-pass));
+            transition: all 0.5s ease;
+        }
+
+        .hero-details {
+            flex-grow: 1;
+        }
+
+        .state-title {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        .state-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            margin-top: 0.2rem;
+            color: var(--color-text-bright);
+            transition: color 0.5s ease;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 3rem;
+            margin-top: 1.2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1rem;
+        }
+
+        .hero-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .hero-meta-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-meta-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--color-text-bright);
+        }
+
+        /* Checklist Panel */
+        .checklist-panel {
+            background: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--color-text-bright);
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.75rem;
+        }
+
+        .checklist-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .checklist-table th {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .checklist-table td {
+            padding: 1.2rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        .check-label {
+            font-weight: 600;
+            color: var(--color-text-bright);
+            width: 25%;
+        }
+
+        .check-status {
+            width: 15%;
+        }
+
+        .check-status span {
+            padding: 0.25rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .status-pass {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            color: var(--color-pass);
+        }
+
+        .status-warn {
+            background: rgba(241, 196, 15, 0.1);
+            border: 1px solid rgba(241, 196, 15, 0.2);
+            color: var(--color-warn);
+        }
+
+        .status-fail {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            color: var(--color-fail);
+        }
+
+        .check-message {
+            color: var(--color-text);
+            width: 60%;
+        }
+
+        footer {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-section">
+                <h1>NEURONCAST BROADCAST</h1>
+                <p>Operator Readiness & Telemetry Checks</p>
+            </div>
+            <div id="globalBadge" class="badge badge-degraded">CHECKING</div>
+        </header>
+
+        <!-- Status Hero -->
+        <div id="heroCard" class="status-hero">
+            <div class="indicator-ring">
+                <div class="indicator-dot"></div>
+            </div>
+            <div class="hero-details">
+                <div class="state-title">Broadcast Readiness State</div>
+                <div id="stateValue" class="state-value">ANALYZING STATUS...</div>
+                <div class="hero-meta">
+                    <div class="hero-meta-item">
+                        <div class="hero-meta-label">Validator Status</div>
+                        <div id="themeValidationMeta" class="hero-meta-value">-</div>
+                    </div>
+                    <div class="hero-meta-item">
+                        <div class="hero-meta-label">Active Overlay Sources</div>
+                        <div id="activeOverlayMeta" class="hero-meta-value">-</div>
+                    </div>
+                    <div class="hero-meta-item">
+                        <div class="hero-meta-label">Last Checked</div>
+                        <div id="lastPingTime" class="hero-meta-value">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklist Grid -->
+        <div class="checklist-panel">
+            <div class="panel-title">Pre-Broadcast Telemetry Checklist</div>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Metric Target</th>
+                        <th>Status Check</th>
+                        <th>Diagnostics Message / Details</th>
+                    </tr>
+                </thead>
+                <tbody id="checklist-tbody">
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: var(--color-text-muted); padding: 3rem;">
+                            Fetching system readiness checklist...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            NeuronCast Operations • <a href="/operator/status" style="color: #3b82f6; text-decoration: none;">Uptime Telemetry Console</a>
+        </footer>
+    </div>
+
+    <script>
+        const heroCard = document.getElementById('heroCard');
+        const stateValue = document.getElementById('stateValue');
+        const globalBadge = document.getElementById('globalBadge');
+        const checklistTbody = document.getElementById('checklist-tbody');
+        
+        const themeValidationMeta = document.getElementById('themeValidationMeta');
+        const activeOverlayMeta = document.getElementById('activeOverlayMeta');
+        const lastPingTime = document.getElementById('lastPingTime');
+
+        const colors = {
+            ready: '#2ecc71',
+            degraded: '#f1c40f',
+            'not-ready': '#e74c3c'
+        };
+
+        const colorsAlpha = {
+            ready: 'rgba(46, 204, 113, 0.15)',
+            degraded: 'rgba(241, 196, 15, 0.15)',
+            'not-ready': 'rgba(231, 76, 60, 0.15)'
+        };
+
+        async function updateReadiness() {
+            try {
+                const res = await fetch('/api/readiness');
+                if (!res.ok) throw new Error('HTTP Status ' + res.status);
+                const data = await res.json();
+
+                const state = data.readiness;
+                const stateUpper = state.replace('-', ' ').toUpperCase();
+
+                // Update Hero Card details
+                stateValue.textContent = stateUpper;
+                stateValue.style.color = colors[state];
+
+                heroCard.style.setProperty('--status-color', colors[state]);
+                heroCard.style.setProperty('--status-color-alpha', colorsAlpha[state]);
+                heroCard.style.borderColor = colors[state];
+
+                // Update badge
+                globalBadge.className = 'badge ' + (
+                    state === 'ready' ? 'badge-ready' : 
+                    state === 'degraded' ? 'badge-degraded' : 'badge-not-ready'
+                );
+                globalBadge.textContent = stateUpper;
+
+                // Update general metadata items
+                const validatorCheck = data.checks.find(c => c.id === 'theme-validator');
+                if (validatorCheck) {
+                    themeValidationMeta.textContent = validatorCheck.status.toUpperCase();
+                    themeValidationMeta.style.color = colors[validatorCheck.status === 'pass' ? 'ready' : 'not-ready'];
+                }
+
+                const clientCheck = data.checks.find(c => c.id === 'hud-clients');
+                if (clientCheck) {
+                    const count = clientCheck.details?.connectedClientsCount ?? 0;
+                    activeOverlayMeta.textContent = count + ' Connected';
+                    activeOverlayMeta.style.color = colors[count > 0 ? 'ready' : 'degraded'];
+                }
+
+                lastPingTime.textContent = new Date(data.generatedAt).toLocaleTimeString();
+
+                // Re-build Checklist Table body
+                checklistTbody.innerHTML = '';
+                data.checks.forEach(check => {
+                    const row = document.createElement('tr');
+                    
+                    const labelTd = document.createElement('td');
+                    labelTd.className = 'check-label';
+                    labelTd.textContent = check.label;
+
+                    const statusTd = document.createElement('td');
+                    statusTd.className = 'check-status';
+                    const statusSpan = document.createElement('span');
+                    statusSpan.className = 'status-' + check.status;
+                    statusSpan.textContent = check.status === 'pass' ? 'PASS' : check.status === 'warn' ? 'WARN' : 'FAIL';
+                    statusTd.appendChild(statusSpan);
+
+                    const messageTd = document.createElement('td');
+                    messageTd.className = 'check-message';
+                    messageTd.innerHTML = '<strong>' + check.message + '</strong>';
+
+                    // Append debugging sub-details if warning or failing
+                    if (check.status !== 'pass' && check.details) {
+                        const detailBlock = document.createElement('div');
+                        detailBlock.style.background = 'rgba(0,0,0,0.2)';
+                        detailBlock.style.padding = '8px';
+                        detailBlock.style.borderRadius = '4px';
+                        detailBlock.style.marginTop = '8px';
+                        detailBlock.style.fontSize = '0.75rem';
+                        detailBlock.style.fontFamily = 'JetBrains Mono, monospace';
+                        detailBlock.style.whiteSpace = 'pre-wrap';
+                        detailBlock.style.color = 'rgba(255,255,255,0.6)';
+
+                        if (check.id === 'legacy-aliases' && Array.isArray(check.details.keys)) {
+                            detailBlock.textContent = 'Migratable Keys detected:\n' + 
+                                check.details.keys.map(function(k) { return '  - ' + k.key + ' -> ' + k.migratesTo; }).join('\n');
+                            messageTd.appendChild(detailBlock);
+                        } else if (check.id === 'theme-validator' && check.details.report) {
+                            const rep = check.details.report;
+                            let msg = 'Validator Logs:\n';
+                            if (rep.errors && rep.errors.length) {
+                                msg += rep.errors.map(function(e) { return '  [ERROR] ' + e.message + ' (' + e.context + ')'; }).join('\n') + '\n';
+                            }
+                            if (rep.warnings && rep.warnings.length) {
+                                msg += rep.warnings.map(function(w) { return '  [WARN] ' + w.message + ' (' + w.context + ')'; }).join('\n');
+                            }
+                            detailBlock.textContent = msg;
+                            messageTd.appendChild(detailBlock);
+                        } else if (check.id === 'scraper-cache' && check.details) {
+                            const d = check.details;
+                            detailBlock.textContent = 'Caches Audit:\n' +
+                                '  - komplettligaen: ' + (d.komplettligaen?.exists ? 'Available (' + d.komplettligaen.ageMinutes + 'm old)' : 'Missing') + '\n' +
+                                '  - matches: ' + (d.matches?.exists ? 'Available (' + d.matches.ageMinutes + 'm old)' : 'Missing') + '\n' +
+                                '  - standings: ' + (d.standings?.exists ? 'Available (' + d.standings.ageMinutes + 'm old)' : 'Missing');
+                            messageTd.appendChild(detailBlock);
+                        }
+                    }
+
+                    row.appendChild(labelTd);
+                    row.appendChild(statusTd);
+                    row.appendChild(messageTd);
+                    
+                    checklistTbody.appendChild(row);
+                });
+
+            } catch (err) {
+                // Connection Failure
+                stateValue.textContent = 'OFFLINE';
+                stateValue.style.color = colors['not-ready'];
+
+                heroCard.style.setProperty('--status-color', colors['not-ready']);
+                heroCard.style.setProperty('--status-color-alpha', colorsAlpha['not-ready']);
+                heroCard.style.borderColor = colors['not-ready'];
+
+                globalBadge.className = 'badge badge-not-ready';
+                globalBadge.textContent = 'OFFLINE';
+
+                themeValidationMeta.textContent = 'FAIL';
+                themeValidationMeta.style.color = colors['not-ready'];
+
+                activeOverlayMeta.textContent = '-';
+                activeOverlayMeta.style.color = colors['not-ready'];
+
+                lastPingTime.textContent = 'FAIL';
+
+                checklistTbody.innerHTML = '<tr>' +
+                    '<td colspan="3" style="text-align: center; color: var(--color-fail); padding: 3rem; font-weight: bold;">' +
+                        'NeuronCast Server is unreachable: ' + err.message +
+                    '</td>' +
+                '</tr>';
+            }
+        }
+
+        updateReadiness();
+        setInterval(updateReadiness, 2000);
+    </script>
+</body>
+</html>

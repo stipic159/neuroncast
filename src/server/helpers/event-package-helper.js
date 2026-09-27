@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { writeJsonAtomic } from './json-file.js'
 import path from 'path'
 import { userspaceDirectory, userspaceSettingsPath } from './paths.js'
 import { applyThemeToOptions } from './theme-designer-helper.js'
@@ -19,20 +20,7 @@ export function ensurePackagesDir() {
 	}
 }
 
-function writeJsonAtomic(filePath, data) {
-	const tempPath = filePath + '.tmp'
-	try {
-		fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8')
-		fs.renameSync(tempPath, filePath)
-		return true
-	} catch (err) {
-		console.error(`[EventPackageHelper] Atomic save failed for ${filePath}:`, err)
-		try {
-			if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
-		} catch (_) {}
-		throw err
-	}
-}
+// writeJsonAtomic imported from ./json-file.js
 
 export function sanitizePackageSlug(id) {
 	if (!id || typeof id !== 'string') {

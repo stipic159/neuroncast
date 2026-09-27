@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { writeJsonAtomic } from '../helpers/json-file.js'
 import path from 'path'
 import { userspaceDirectory } from '../helpers/paths.js'
 import { gsiState } from '../state.js'
@@ -35,22 +36,7 @@ function sanitizeSlugPart(str) {
 		.replace(/^-+|-+$/g, '')     // Trim leading/trailing hyphens
 }
 
-/**
- * Atomic write helper for JSON files
- */
-function writeJsonAtomic(filePath, data) {
-	const tempPath = filePath + '.tmp'
-	try {
-		fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8')
-		fs.renameSync(tempPath, filePath)
-	} catch (err) {
-		console.warn(`[SessionStore] Failed atomic write to ${filePath}:`, err)
-		try {
-			if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
-		} catch (_) {}
-		throw err
-	}
-}
+// writeJsonAtomic imported from ../helpers/json-file.js
 
 // ── Summary write coalescing ──
 // Every recorded timeline event used to read + atomically rewrite summary.json
@@ -102,7 +88,7 @@ function flushSummary(sessionId) {
 	if (!summary || !sPath) return
 
 	try {
-		writeJsonAtomic(path.join(sPath, 'summary.json'), summary)
+		writeJsonAtomic(path.join(sPath, 'summary.json'), summary).catch(e => console.warn("[SessionStore] Summary flush failed:", e.message))
 	} catch (err) {
 		console.warn(`[SessionStore] Failed to flush summary for ${sessionId}:`, err.message)
 	}

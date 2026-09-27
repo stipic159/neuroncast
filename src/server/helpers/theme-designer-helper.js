@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { writeJsonAtomic } from './json-file.js'
 import path from 'path'
 import { userspaceDirectory, userspaceSettingsPath } from './paths.js'
 import { EVENT_THEME_PRESETS } from './theme-presets.js'
@@ -18,23 +19,8 @@ function ensureEventThemesDir() {
 	}
 }
 
-/**
- * Safely writes a JSON file atomically to prevent disk write interruptions
- */
-function writeJsonAtomic(filePath, data) {
-	const tempPath = filePath + '.tmp'
-	try {
-		fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8')
-		fs.renameSync(tempPath, filePath)
-		return true
-	} catch (err) {
-		console.error(`[ThemeDesignerHelper] Atomic save failed for ${filePath}:`, err)
-		try {
-			if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
-		} catch (_) {}
-		throw err
-	}
-}
+// writeJsonAtomic imported from ./json-file.js
+
 
 /**
  * Sanitizes a custom theme slug to prevent path traversal and shell injection

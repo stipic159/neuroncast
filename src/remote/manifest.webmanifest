@@ -1,0 +1,18 @@
+{
+  "name": "NeuronCast Remote",
+  "short_name": "NeuronRemote",
+  "description": "Autonomous CS2 Production & Broadcast Remote Deck",
+  "start_url": "/remote/",
+  "scope": "/remote/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "icons": [
+    {
+      "src": "/dependencies/images/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

@@ -1,22 +1,9 @@
 import fs from 'fs'
+import { writeJsonAtomic } from '../helpers/json-file.js'
 import path from 'path'
 import { getSessionPath, updateSessionSummary } from './session-store.js'
 
-/**
- * Atomic write helper for JSON files
- */
-function writeJsonAtomic(filePath, data) {
-	const tempPath = filePath + '.tmp'
-	try {
-		fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf8')
-		fs.renameSync(tempPath, filePath)
-	} catch (err) {
-		console.warn(`[StatsAggregator] Failed atomic write to ${filePath}:`, err)
-		try {
-			if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath)
-		} catch (_) {}
-	}
-}
+// writeJsonAtomic imported from ../helpers/json-file.js
 
 /**
  * Rebuilds stats.json for a given session by replaying timeline.jsonl and snapshots.jsonl
@@ -331,7 +318,7 @@ export function rebuildSessionStats(sessionId) {
 
 	// Write stats.json atomically
 	const statsPath = path.join(sPath, 'stats.json')
-	writeJsonAtomic(statsPath, stats)
+	writeJsonAtomic(statsPath, stats).catch(e => console.warn("[StatsAggregator] Atomic write failed:", e.message))
 	
 	// Update events count in summary.json
 	updateSessionSummary(sessionId, { eventsRecorded: timelineEvents.length })

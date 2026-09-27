@@ -3,9 +3,32 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This project does not adhere to Semantic Versioning.
 
 ## [Unreleased]
+
+## [3.0.0] - 2026-09-27
+
+### Added
+- **Zod Structural Validation Schemas:** Integrated Zod schemas (`src/server/fallbacks/schemas.js`) for tournament data structures (GG Arena, Komplettligaen, FastCup), ensuring resilience against API variations.
+- **CS2 Observer NetCon TCP Integration:** Real-time spectator camera switching (`spec_player <slot>`) via native CS2 NetCon TCP socket (`-netconport 2121`).
+- **CS2 Auto-Detection & 1-Click Config:** Automatic CS2 path resolution via Windows Registry / Linux paths and `libraryfolders.vdf`, with one-click installation of `gamestate_integration_neuroncast.cfg`.
+- **Mobile Remote Deck PWA & Instant Sync:** Mobile Remote turned into PWA with Service Worker (`src/remote/sw.js`), Web App Manifest (`manifest.webmanifest`), Screen Wake Lock API, and instant reactive WebSocket state sync (eliminating HTTP polling).
+- **Standalone Operator Status & Readiness Pages:** Extracted HTML templates (`public/operator/status.html`, `public/operator/readiness.html`) and route controller (`src/server/routes/operator-routes.js`).
+- **Dedicated Realtime Round Analytics Engine:** Extracted win probability modeling, clutch swing detection, MVP calculation, and async highlight logging to `src/server/analytics/round-analytics.js`.
+- **Deterministic E2E Test Hooks:** Added reactive `data-stage-ready` attributes on player highlight overlay for Playwright E2E test synchronization.
+
+### Changed
+- **Async Non-Blocking I/O Migration:** Converted all file persistence helpers (`timeline-recorder.js`, `stats-aggregator.js`, `session-store.js`, `event-package-helper.js`, `theme-designer-helper.js`, `layout-preset-helper.js`) from synchronous `writeFileSync` to non-blocking `writeJsonAtomic` on `node:fs/promises`.
+- **`gsi.js` Monolith Refactoring:** Refactored `src/server/gsi.js` from ~1950 lines into a clean ~250-line GSI telemetry tick receiver.
+- **Legacy Env Variable Migration:** Standardized environment variable naming to `NEURON_*` with backwards-compatible fallbacks for `EON_*`.
+
+### Fixed
+- Unhandled scraper crash exceptions when parsing malformed or partial tournament HTML/JSON payloads.
+- High-rate 20Hz GSI event loop blocking caused by synchronous disk writes.
+- Fixed 5-second hardcoded timeouts in Playwright overlay visual tests.
+
+### Removed
+- Removed redundant `src/electron/yarn.lock` lockfile to unify project dependencies on root `package.json`.
 
 
 ## [2.7.0] - 2025-09-26
@@ -98,19 +121,3 @@ This project does not adhere to Semantic Versioning.
 * Add Team Name Overrides
 * Add Team Logos
 * Add overlay images (e.g. for sponsors)
-* Add CSS variable `--sidebar-vertical-spacing` (default: `0.5rem`) to control margin between all elements
-* Add Player Name Overrides
-* Add option to highlight focused player's HP in red if it's less than a configured value
-
-### Changed
-* Grenade counts in team grenades panels will now be grayed out if the team has no grenades of the type
-
-
-## [2.0.0] - 2023-09-30
-* Complete rewrite; expect everything to work differently than before.
-* The previous version will likely continue to work (even with CS2), but will not receive updates or support.
-
-
-## Earlier releases
-Before the [v2 Rewrite](https://github.com/drweissbrot/cs-hud/issues/52), this project did not use versioning, nor did it keep a changelog.
-This file will only include changes from v2 onwards.

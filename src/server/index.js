@@ -12,6 +12,8 @@ import { initSettings, getSettings, getThemeTree } from './settings.js'
 import { registerConfigRoutes } from './config.js'
 import { registerDependencyRoutes } from './dependencies.js'
 import { registerGsiRoutes } from './gsi.js'
+import { registerOperatorRoutes } from './routes/operator-routes.js'
+import { registerCs2Routes } from './routes/cs2-routes.js'
 import { registerDiagnosticsRoutes } from './diagnostics.js'
 import { registerHudRoutes, concatStaticFileFromThemeTreeRecursively } from './hud.js'
 import { registerKomplettligaenRoutes } from './komplettligaen.js'
@@ -107,6 +109,7 @@ const run = async () => {
 	registerDiagnosticsRoutes(router, websocket)
 	registerDependencyRoutes(router)
 	registerGsiRoutes(router, websocket)
+	registerOperatorRoutes(router, websocket)
 	registerHudRoutes(router)
 	registerKomplettligaenRoutes(router, websocket)
 	registerFastcupRoutes(router, websocket)
@@ -115,6 +118,7 @@ const run = async () => {
 	registerVersionRoutes(router)
 	registerSessionRoutes(router)
 	registerObsRoutes(router, websocket)
+	registerCs2Routes(router)
 	startFastcupPolling(websocket)
 
 	app.use(router.routes())

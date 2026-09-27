@@ -389,7 +389,7 @@ export const getDevGsiState = () => {
 		},
 	}
 
-	if (process.env.EON_UI_STRESS_FIXTURE === 'compact-hud') {
+	if ((process.env.NEURON_UI_STRESS_FIXTURE || process.env.EON_UI_STRESS_FIXTURE) === 'compact-hud') {
 		applyCompactHudStressFixture(state)
 	}
 
@@ -426,7 +426,7 @@ export const getDevAdditionalState = () => {
 		mvpDisplay: null,
 	}
 
-	if (process.env.EON_UI_STRESS_FIXTURE === 'compact-hud') {
+	if ((process.env.NEURON_UI_STRESS_FIXTURE || process.env.EON_UI_STRESS_FIXTURE) === 'compact-hud') {
 		for (let index = 1; index <= 10; index++) {
 			const steamid = `765611980000000${String(index).padStart(2, '0')}`
 			additionalState.roundDamages[steamid] = {
