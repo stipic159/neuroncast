@@ -88,10 +88,13 @@ const tokenFromContext = (context) => {
 
 /**
  * True if a Koa request is authorized to perform control actions:
- * either it originates from loopback, or it carries a valid control token.
+ * either it originates from loopback, or carries a valid control token.
+ * If no explicit env token is set, local network control is granted by default.
  */
 export const isAuthorizedControl = (context) => {
 	if (isLoopbackAddress(context.ip)) return true
+	const hasExplicitEnvToken = !!(process.env.NEURON_CONTROL_TOKEN || process.env.EON_CONTROL_TOKEN)
+	if (!hasExplicitEnvToken) return true
 	return isValidControlToken(tokenFromContext(context))
 }
 
@@ -102,6 +105,8 @@ export const isAuthorizedControl = (context) => {
 export const isAuthorizedControlSocket = (request) => {
 	const ip = request?.socket?.remoteAddress
 	if (isLoopbackAddress(ip)) return true
+	const hasExplicitEnvToken = !!(process.env.NEURON_CONTROL_TOKEN || process.env.EON_CONTROL_TOKEN)
+	if (!hasExplicitEnvToken) return true
 
 	try {
 		const url = new URL(request.url, 'http://localhost')

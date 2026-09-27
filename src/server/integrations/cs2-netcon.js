@@ -14,6 +14,7 @@ class Cs2Netcon {
 		this.connected = false
 		this.reconnectTimer = null
 		this.autoReconnect = true
+		this.pendingCommands = []
 	}
 
 	connect() {
@@ -22,13 +23,24 @@ class Cs2Netcon {
 		const socket = new net.Socket()
 		this.socket = socket
 
-		socket.setTimeout(3000)
-
 		socket.connect(this.port, this.host, () => {
 			this.connected = true
+			socket.setKeepAlive(true, 5000)
 			console.log(`[CS2 NetCon] Connected to CS2 console at ${this.host}:${this.port}`)
+			
 			if (this.password) {
 				socket.write(`${this.password}\n`)
+			}
+
+			// Flush any pending commands queued while connecting
+			if (this.pendingCommands.length > 0) {
+				const queue = [...this.pendingCommands]
+				this.pendingCommands = []
+				for (const cmd of queue) {
+					try {
+						socket.write(`${cmd}\n`)
+					} catch (_) {}
+				}
 			}
 		})
 
@@ -36,12 +48,7 @@ class Cs2Netcon {
 			// Console output received from CS2
 		})
 
-		socket.on('timeout', () => {
-			socket.destroy()
-		})
-
-		socket.on('error', (err) => {
-			// Suppress spam when CS2 is simply not running or netcon is disabled
+		socket.on('error', (_err) => {
 			this.connected = false
 		})
 
@@ -50,7 +57,7 @@ class Cs2Netcon {
 			this.socket = null
 			if (this.autoReconnect) {
 				if (this.reconnectTimer) clearTimeout(this.reconnectTimer)
-				this.reconnectTimer = setTimeout(() => this.connect(), 4000)
+				this.reconnectTimer = setTimeout(() => this.connect(), 3000)
 			}
 		})
 	}
@@ -72,25 +79,74 @@ class Cs2Netcon {
 
 	sendCommand(command) {
 		if (!command || typeof command !== 'string') return false
-		if (!this.connected || !this.socket) {
-			// Attempt on-demand connection
+		const cleanCmd = command.trim()
+
+		if (this.connected && this.socket) {
+			try {
+				this.socket.write(`${cleanCmd}\n`)
+				return true
+			} catch (err) {
+				console.warn('[CS2 NetCon] Failed to send command:', err.message)
+				this.connected = false
+				return false
+			}
+		} else {
+			// Queue command and attempt connection
+			if (this.pendingCommands.length < 10) {
+				this.pendingCommands.push(cleanCmd)
+			}
 			this.connect()
-			return false
-		}
-		try {
-			this.socket.write(`${command.trim()}\n`)
-			return true
-		} catch (err) {
-			console.warn('[CS2 NetCon] Failed to send command:', err.message)
 			return false
 		}
 	}
 
-	specPlayer(slot) {
-		// slot: 1..10 (or 0)
-		const slotNum = String(slot).trim()
-		// CS2 uses slot1..slot10 (or slot0) or spec_player
-		return this.sendCommand(`slot${slotNum}`)
+	/**
+	 * Spectates a player by slot number, raw slot index, or SteamID64.
+	 * CS2 NetCon commands executed:
+	 * 1. spec_player_by_accountid <accountId> (if steamid provided)
+	 * 2. spec_player <rawSlot> (0-indexed position: 0..9)
+	 * 3. slot<slot> (1-based spectator key: 1..10 or 0)
+	 */
+	specPlayer(target) {
+		const commands = []
+
+		if (target && typeof target === 'object') {
+			const { slot, rawSlot, steamid } = target
+
+			if (steamid) {
+				try {
+					const accountId = (BigInt(steamid) & 0xFFFFFFFFn).toString()
+					commands.push(`spec_player_by_accountid ${accountId}`)
+				} catch (_) {}
+			}
+			if (rawSlot !== undefined && rawSlot !== null && !isNaN(Number(rawSlot))) {
+				commands.push(`spec_player ${Number(rawSlot)}`)
+			}
+			if (slot !== undefined && slot !== null) {
+				commands.push(`slot${String(slot).trim()}`)
+			}
+		} else if (target !== undefined && target !== null) {
+			const val = String(target).trim()
+			if (/^7656\d{13}$/.test(val)) {
+				try {
+					const accountId = (BigInt(val) & 0xFFFFFFFFn).toString()
+					commands.push(`spec_player_by_accountid ${accountId}`)
+				} catch (_) {}
+			} else {
+				commands.push(`spec_player ${val}`)
+				commands.push(`slot${val}`)
+			}
+		}
+
+		if (commands.length === 0) return false
+
+		let sentAny = false
+		for (const cmd of commands) {
+			if (this.sendCommand(cmd)) {
+				sentAny = true
+			}
+		}
+		return sentAny
 	}
 
 	getStatus() {

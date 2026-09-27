@@ -323,7 +323,7 @@ const RemoteApp = {
 							v-for="p in observerPlayers.ct" 
 							:key="p.steamid"
 							:class="['player-card', { '--dead': p.isDead, '--spectated': p.isSpectated }]"
-							@click="specPlayer(p.slot)"
+							@click="specPlayer(p)"
 						>
 							<div class="slot-badge --ct">
 								{{ p.slot }}
@@ -374,7 +374,7 @@ const RemoteApp = {
 							v-for="p in observerPlayers.t" 
 							:key="p.steamid"
 							:class="['player-card', { '--dead': p.isDead, '--spectated': p.isSpectated }]"
-							@click="specPlayer(p.slot)"
+							@click="specPlayer(p)"
 						>
 							<div class="slot-badge --t">
 								{{ p.slot }}
@@ -595,10 +595,16 @@ const RemoteApp = {
 			if (!name) return ''
 			return WEAPON_MAP[name] || name.replace('weapon_', '').toUpperCase()
 		},
-		async specPlayer(slot) {
+		async specPlayer(player) {
 			this.vibrate(35)
 			try {
-				await this.sendControlRequest(`/api/cs2/spec/${slot}`)
+				const payload = (typeof player === 'object' && player) ? {
+					slot: player.slot,
+					rawSlot: player.rawSlot,
+					steamid: player.steamid
+				} : { slot: player }
+
+				await this.sendControlRequest('/api/cs2/spec', payload)
 			} catch (_) {}
 		},
 		triggerSpotlight(player) {

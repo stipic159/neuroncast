@@ -29,10 +29,24 @@ export function registerCs2Routes(router) {
 		context.body = result
 	})
 
+	// POST /api/cs2/spec (Rich object targeting)
+	router.post('/api/cs2/spec', (context) => {
+		const { slot, rawSlot, steamid } = context.request.body || {}
+		const success = cs2Netcon.specPlayer({ slot, rawSlot, steamid })
+		context.body = {
+			success,
+			slot,
+			rawSlot,
+			steamid,
+			connected: cs2Netcon.connected
+		}
+	})
+
 	// POST /api/cs2/spec/:slot
 	router.post('/api/cs2/spec/:slot', (context) => {
 		const { slot } = context.params
-		const success = cs2Netcon.specPlayer(slot)
+		const { rawSlot, steamid } = context.request.body || {}
+		const success = cs2Netcon.specPlayer({ slot, rawSlot, steamid })
 		context.body = {
 			success,
 			slot,
